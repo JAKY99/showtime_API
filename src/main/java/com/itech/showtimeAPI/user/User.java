@@ -1,12 +1,12 @@
 package com.itech.showtimeAPI.user;
 
 import lombok.Data;
-import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Encrypted;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,6 +23,10 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
+    @Field
+    @Encrypted
+    private String passWord;
+
     private LocalDate dob;
     private String country;
     private Long nbWatchedMovies;
@@ -37,6 +41,7 @@ public class User {
     public User(String firstName,
                 String lastName,
                 String email,
+                String passWord,
                 LocalDate dob,
                 String country,
                 Long nbWatchedMovies,
@@ -50,6 +55,7 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.passWord = passWord;
         this.dob = dob;
         this.country = country;
         this.nbWatchedMovies = nbWatchedMovies;
@@ -60,5 +66,19 @@ public class User {
         this.watchedTvShows = watchedTvShows;
         this.favoriteMovies = favoriteMovies;
         this.favoriteTvShows = favoriteTvShows;
+    }
+
+    public User(String firstName,
+                String lastName,
+                String email,
+                String passWord,
+                LocalDate dob,
+                String country) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.passWord = passWord;
+        this.dob = dob;
+        this.country = country;
     }
 }
