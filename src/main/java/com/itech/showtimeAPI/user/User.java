@@ -23,8 +23,7 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    @Field
-    @Encrypted
+
     private String passWord;
 
     private LocalDate dob;
