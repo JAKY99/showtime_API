@@ -1,4 +1,4 @@
-package com.itech.showtimeAPI.user;
+package com.itech.showtimeAPI.admin;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,13 +9,11 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/users")
-public class UserController {
+@RequestMapping("/api/v1/admins")
+public class AdminController {
 
-    private final UserService userService;
+    private final AdminService adminService;
 
     @GetMapping
-    public List<User> fetchAllUsers() {
-        return userService.getAllUsers();
-    }
+    public List<Admin>  fetchAllAdmins() { return adminService.getAllAdmins(); }
 }

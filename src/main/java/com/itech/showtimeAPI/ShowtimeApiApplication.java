@@ -1,5 +1,7 @@
 package com.itech.showtimeAPI;
 
+import com.itech.showtimeAPI.admin.Admin;
+import com.itech.showtimeAPI.repository.AdminRepository;
 import com.itech.showtimeAPI.repository.UserRepository;
 import com.itech.showtimeAPI.user.User;
 import org.springframework.boot.CommandLineRunner;
@@ -17,6 +19,27 @@ public class ShowtimeApiApplication {
 		SpringApplication.run(ShowtimeApiApplication.class, args);
 	}
 
-
+/*	@Bean
+	CommandLineRunner runner(UserRepository userRepository) {
+		return args -> {
+			User user = new User(
+					"Achot",
+					"Barseghyan",
+					"barseghyan.achot@gmail.com",
+					"secretPassword",
+					LocalDate.of(1999,8,1),
+					"france",
+					0L,
+					0L,
+					0F,
+					0F,
+					List.of(""),
+					List.of(""),
+					List.of(""),
+					List.of("")
+			);
+			userRepository.insert(user);
+		};
+	}*/
 
 }
