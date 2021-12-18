@@ -69,4 +69,18 @@ public class User {
         this.favoriteMovies = favoriteMovies;
         this.favoriteTvShows = favoriteTvShows;
     }
+
+    public User(String firstName,
+                String lastName,
+                String email,
+                String passWord,
+                LocalDate dob,
+                String country) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.passWord = passWord;
+        this.dob = dob;
+        this.country = country;
+    }
 }
