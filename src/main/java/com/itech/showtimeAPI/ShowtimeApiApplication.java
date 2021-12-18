@@ -17,4 +17,6 @@ public class ShowtimeApiApplication {
 		SpringApplication.run(ShowtimeApiApplication.class, args);
 	}
 
+
+
 }
