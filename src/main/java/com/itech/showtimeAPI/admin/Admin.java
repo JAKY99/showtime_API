@@ -1,16 +1,17 @@
 package com.itech.showtimeAPI.admin;
 
-import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Encrypted;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import lombok.Data;
+
 @Data
 @Document
 public class Admin {
-
+    
     @Id
     private String id;
     private String name;
@@ -18,6 +19,8 @@ public class Admin {
     @Indexed(unique = true)
     private String email;
 
+    @Field
+    @Encrypted
     private String passWord;
 
     public Admin(String name, String email, String passWord) {
@@ -25,4 +28,5 @@ public class Admin {
         this.email = email;
         this.passWord = passWord;
     }
+
 }
