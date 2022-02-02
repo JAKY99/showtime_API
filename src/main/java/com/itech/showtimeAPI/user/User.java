@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Encrypted;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -27,7 +27,7 @@ public class User {
     @Encrypted
     private String passWord;
 
-    private LocalDate dob;
+    private LocalDateTime dob;
     private String country;
     private Long nbWatchedMovies;
     private Long nbWatchedTvShows;
@@ -42,43 +42,13 @@ public class User {
                 String lastName,
                 String email,
                 String passWord,
-                LocalDate dob,
-                String country,
-                Long nbWatchedMovies,
-                Long nbWatchedTvShows,
-                Float totalMovieWatchedTime,
-                Float totalTvShowsWatchedTime,
-                List<String> watchedMovies,
-                List<String> watchedTvShows,
-                List<String> favoriteMovies,
-                List<String> favoriteTvShows) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.passWord = passWord;
-        this.dob = dob;
-        this.country = country;
-        this.nbWatchedMovies = nbWatchedMovies;
-        this.nbWatchedTvShows = nbWatchedTvShows;
-        this.totalMovieWatchedTime = totalMovieWatchedTime;
-        this.totalTvShowsWatchedTime = totalTvShowsWatchedTime;
-        this.watchedMovies = watchedMovies;
-        this.watchedTvShows = watchedTvShows;
-        this.favoriteMovies = favoriteMovies;
-        this.favoriteTvShows = favoriteTvShows;
-    }
-
-    public User(String firstName,
-                String lastName,
-                String email,
-                String passWord,
-                LocalDate dob,
+                LocalDateTime dob,
                 String country) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.passWord = passWord;
-        this.dob = dob;
+        this.dob = LocalDateTime.now();
         this.country = country;
     }
 }
