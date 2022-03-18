@@ -9,7 +9,4 @@ public class ShowtimeApiApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ShowtimeApiApplication.class, args);
 	}
-
-
-
 }
