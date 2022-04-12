@@ -1,32 +1,21 @@
 package com.itech.showtimeAPI.admin;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
+import com.itech.showtimeAPI.user.User;
+import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Encrypted;
-import org.springframework.data.mongodb.core.mapping.Field;
 
-import lombok.Data;
+import java.time.LocalDateTime;
 
-@Data
-@Document
-public class Admin {
-    
-    @Id
-    private String id;
-    private String name;
+@Document(collection = "user")
+@TypeAlias("admin")
+public class Admin extends User {
 
-    @Indexed(unique = true)
-    private String email;
-
-    @Field
-    @Encrypted
-    private String passWord;
-
-    public Admin(String name, String email, String passWord) {
-        this.name = name;
-        this.email = email;
-        this.passWord = passWord;
+    public Admin(String firstName,
+                 String lastName,
+                 String email,
+                 String passWord,
+                 LocalDateTime dob,
+                 String country) {
+        super(firstName, lastName, email, passWord, dob, country, "admin");
     }
-
 }

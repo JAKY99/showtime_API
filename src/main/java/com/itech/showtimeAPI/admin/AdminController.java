@@ -25,25 +25,28 @@ public class AdminController {
 
     @GetMapping()
     public List<Admin> fetchAllAdmins() {
+
         return adminService.getAllAdmins();
     }
 
     @GetMapping(value="/getAdminById/{id}")
     public Optional<Admin> getAdminById(@PathVariable String id) {
+
         return adminService.getAdminById(id);
     }
 
     @GetMapping(value="/getAdminByEmail/{email}")
     public Optional<Admin> getAdminByEmail(@PathVariable String email) {
+
         return adminService.getAdminByEmail(email);
     }
 
     //POSTMAPPING
     
     @PostMapping(value="/insertAdmin")
-    public Admin insertAdmin(@RequestBody Admin admin) {  
-        adminService.insertAdmin(admin);
-        return admin;
+    public Admin insertAdmin(@RequestBody Admin admin) {
+
+        return adminService.insertAdmin(admin);
     }
     
 

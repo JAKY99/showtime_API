@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Document
-public class User {
+public abstract class User {
 
     @Id
     private String id;
@@ -29,26 +28,23 @@ public class User {
 
     private LocalDateTime dob;
     private String country;
-    private Long nbWatchedMovies;
-    private Long nbWatchedTvShows;
-    private Float totalMovieWatchedTime;
-    private Float totalTvShowsWatchedTime;
-    private List<String> watchedMovies;
-    private List<String> watchedTvShows;
-    private List<String> favoriteMovies;
-    private List<String> favoriteTvShows;
+
+    private String role;
 
     public User(String firstName,
                 String lastName,
                 String email,
                 String passWord,
                 LocalDateTime dob,
-                String country) {
+                String country,
+                String role) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.passWord = passWord;
         this.dob = LocalDateTime.now();
         this.country = country;
+        this.role = role;
     }
+
 }

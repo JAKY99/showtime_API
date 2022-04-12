@@ -16,14 +16,17 @@ public class AdminService {
     private final AdminRepository adminRepository;
 
     public List<Admin> getAllAdmins() {
+
         return adminRepository.findAll();
     }
 
     public Optional<Admin> getAdminById(String id) {
+
         return adminRepository.findById(id);
     }
 
     public Optional<Admin> getAdminByEmail(String email) {
+
         return adminRepository.findAdminByEmail(email);
     }
 
