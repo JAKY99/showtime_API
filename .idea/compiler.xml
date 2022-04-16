@@ -10,6 +10,9 @@
         <module name="yak" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="yak" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
