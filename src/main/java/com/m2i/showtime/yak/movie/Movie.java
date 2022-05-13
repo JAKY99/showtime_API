@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table
+@Table(name = "movie")
 @Data
 public class Movie {
 
@@ -27,6 +27,16 @@ public class Movie {
 
     @Column(name = "name")
     private String name;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "users_watched_movies",
+            joinColumns = {
+                    @JoinColumn(name = "movie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<User> users = new HashSet<>();
 
     public Movie() {
     }

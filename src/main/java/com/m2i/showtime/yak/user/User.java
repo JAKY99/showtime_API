@@ -45,13 +45,15 @@ public class User {
     private Float totalMovieWatchedTime;
     private Float totalTvShowsWatchedTime;
 
-    @ManyToMany
-    @JoinTable(
-            name = "users_watched_movie",
-            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "movie_id",referencedColumnName = "id")
-    )
-    private Collection<Movie> watchedMovies;
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "users_watched_movies",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "movie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Movie> watchedMovies = new HashSet<>();
 
     public User() {
     }
@@ -61,8 +63,7 @@ public class User {
                 String lastName,
                 String email,
                 String password,
-                String country,
-                Collection<Movie> watchedMovies) {
+                String country) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -70,7 +71,6 @@ public class User {
         this.email = email;
         this.password = password;
         this.country = country;
-        this.watchedMovies = watchedMovies;
         this.dateCreated = LocalDate.now();
     }
 
@@ -78,15 +78,13 @@ public class User {
                 String lastName,
                 String email,
                 String password,
-                String country,
-                Collection<Movie> watchedMovies) {
+                String country) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.fullName = firstName + " " + lastName;
         this.email = email;
         this.password = password;
         this.country = country;
-        this.watchedMovies = watchedMovies;
         this.dateCreated = LocalDate.now();
     }
 
