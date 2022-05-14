@@ -37,18 +37,14 @@ public class ShowTimeApplication {
 
 				userRepo.save(user);
 
-				// create three courses
-				Movie course1 = new Movie("Matrix");
-				Movie course2 = new Movie("Avatar");
-				Movie course3 = new Movie("Inception");
+				Movie course1 = new Movie(1L,"Matrix");
+				Movie course2 = new Movie(2L,"Avatar");
+				Movie course3 = new Movie(3L,"Inception");
 
-				// save courses
 				movieRepo.saveAll(Arrays.asList(course1, course2, course3));
 
-				// add courses to the student
 				user.getWatchedMovies().addAll(Arrays.asList(course1, course2, course3));
 
-				// update the student
 				userRepo.save(user);
 			};
 		}
