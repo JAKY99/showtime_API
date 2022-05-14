@@ -1,12 +1,12 @@
 package com.m2i.showtime.yak.user;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.m2i.showtime.yak.movie.Movie;
 import lombok.Data;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +30,7 @@ public class User {
     private String lastName;
     @Transient
     private String fullName;
+    @Column(unique = true)
     private String email;
     @Column(name = "profile_picture", length = 64)
     private String profilePicture;
@@ -69,7 +70,7 @@ public class User {
         this.lastName = lastName;
         this.fullName = firstName + " " + lastName;
         this.email = email;
-        this.password = password;
+        this.password = encodePassword(password);
         this.country = country;
         this.dateCreated = LocalDate.now();
     }
@@ -83,9 +84,28 @@ public class User {
         this.lastName = lastName;
         this.fullName = firstName + " " + lastName;
         this.email = email;
-        this.password = password;
+        this.password = encodePassword(password);
         this.country = country;
         this.dateCreated = LocalDate.now();
+    }
+
+    @Bean
+    private String encodePassword(String password){
+
+        int saltLength = 16; // salt length in bytes
+        int hashLength = 32; // hash length in bytes
+        int parallelism = 1; // currently not supported by Spring Security
+        int memory = 4096;   // memory costs
+        int iterations = 3;
+
+        Argon2PasswordEncoder argon2PasswordEncoder = new Argon2PasswordEncoder(
+                saltLength,
+                hashLength,
+                parallelism,
+                memory,
+                iterations);
+
+        return argon2PasswordEncoder.encode(password);
     }
 
 }
