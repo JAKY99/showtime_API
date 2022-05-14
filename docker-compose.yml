@@ -13,7 +13,7 @@ services:
     volumes:
       - ./local_pgdata:/var/lib/postgresql/data
   pgadmin:
-    image: dpage/pgadmin4
+    build:  ./docker/pgadmin
     container_name: pgadmin4_container
     restart: always
     ports:
