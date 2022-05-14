@@ -25,7 +25,6 @@ public class Movie {
     )
     private Long id;
 
-    @Column(name = "name")
     private String name;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
@@ -43,10 +42,6 @@ public class Movie {
 
     public Movie(Long id, String name) {
         this.id = id;
-        this.name = name;
-    }
-
-    public Movie(String name) {
         this.name = name;
     }
 }
