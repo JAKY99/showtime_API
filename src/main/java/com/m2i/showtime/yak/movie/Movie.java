@@ -14,7 +14,7 @@ import java.util.Set;
 public class Movie {
 
     @Id
-    @SequenceGenerator(
+   /* @SequenceGenerator(
             name = "user_sequence",
             sequenceName = "user_sequence",
             allocationSize = 1
@@ -22,7 +22,7 @@ public class Movie {
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
             generator = "user_sequence"
-    )
+    )*/
     private Long id;
 
     private String name;

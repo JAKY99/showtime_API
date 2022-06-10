@@ -8,6 +8,7 @@ class YakApplicationTests {
 
 	@Test
 	void contextLoads() {
+
 	}
 
 }

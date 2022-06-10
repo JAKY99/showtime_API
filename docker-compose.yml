@@ -23,6 +23,11 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     volumes:
       - ./pgadmin-data:/var/lib/pgadmin
+  java:
+    container_name: app_front
+    build:  ./docker/java
+    volumes:
+      - /:usr/src/myapp/
 volumes:
     local_pgdata:
     pgadmin-data:
