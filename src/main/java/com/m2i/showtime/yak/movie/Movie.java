@@ -3,8 +3,9 @@ package com.m2i.showtime.yak.movie;
 
 import com.m2i.showtime.yak.category.Category;
 import com.m2i.showtime.yak.user.User;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -12,7 +13,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "movie")
-@Data
+@Getter
+@Setter
 public class Movie {
 
     @Id
