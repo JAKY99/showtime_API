@@ -1,8 +1,8 @@
 package com.m2i.showtime.yak.category;
 
 import com.m2i.showtime.yak.movie.Movie;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -10,7 +10,8 @@ import java.util.Set;
 
 @Entity
 @Table
-@Data
+@Getter
+@Setter
 public class Category {
 
     @Id

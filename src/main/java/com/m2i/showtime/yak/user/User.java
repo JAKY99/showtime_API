@@ -1,7 +1,8 @@
 package com.m2i.showtime.yak.user;
 
 import com.m2i.showtime.yak.movie.Movie;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 
@@ -12,7 +13,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "_user")
-@Data
+@Getter
+@Setter
 public class User {
 
     @Id
