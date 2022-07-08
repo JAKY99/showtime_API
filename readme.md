@@ -13,7 +13,7 @@ terminal linux sous windows =>
 docker exec -it ubuntu-vm-s-time ./mvnw package && docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar
 
 terminal windows =>
-docker exec -it ubuntu-vm-s-time ./mvnw package;docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar 
+docker exec -it ubuntu-vm-s-time ./mvnw package;docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar stop ;docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar
 
 
 #### En cas de problème (container lié a la db)
