@@ -3,5 +3,5 @@ kill $(ps aux | grep "java -jar target/yak-0.0.1-SNAPSHOT.jar" | grep -v 'grep' 
 # cat /root/project/src/main/resources/application.properties
 # java -jar target/yak-0.0.1-SNAPSHOT.jar
 chmod -R 777 /root/project
-chmod +x mvnw && dos2unix && mvn clean install spring-boot:repackage && mvnw  && ./mvnw package && ./mvnw spring-boot:run
+chmod +x mvnw && dos2unix mvnw  && mvn clean install spring-boot:repackage && ./mvnw package && ./mvnw spring-boot:run
 tail -f /dev/null
