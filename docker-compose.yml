@@ -3,8 +3,9 @@ services:
   vm-s-time:
     container_name: ubuntu-vm-s-time
     build: docker/ubuntu
-    volumes:
-      - ./showtime_source_api:/root/project
+    # volumes:
+      # - ./showtime_source_api:/root/project
+      # - ./docker/ubuntu/application.properties:/root/project/src/main/resources/application.properties
     working_dir: /root/project
     ports:
       - "89:8080"

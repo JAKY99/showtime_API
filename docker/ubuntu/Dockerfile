@@ -13,4 +13,10 @@ RUN apt install wget -y && apt install unzip -y && apt install vim -y
 COPY ubuntu.sh /root/ubuntu.sh
 RUN chmod +x /root/ubuntu.sh
 # CMD chmod +x mvnw && dos2unix mvnw  && ./mvnw package && java -jar target/yak-0.0.1-SNAPSHOT.jar && tail -f /dev/null
+COPY showtime_API /root/project
+RUN rm /root/project/src/main/resources/application.properties
+COPY application.properties  /root/project/src/main/resources/application.properties
+COPY .mvn /root/project/.mvn
+COPY ../test.txt /root/project/src/test/resources/test.txt
+
 ENTRYPOINT ["/bin/bash", "/root/ubuntu.sh"]
