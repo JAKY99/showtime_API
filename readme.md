@@ -54,9 +54,15 @@
 - copier la config en remplaçant le chemin absolue du fichier composer.yml par le votre : 
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/copy_following_config.png)
 
-- utiliser désormais le nouveau run que vous avez crée qui lui même lance avant le run de base : 
-![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/use_docker_run_that_run_cascade_showtimeapplication.png)
+- puis aller dans la liste de gauche cliquer sur Application puis ShowTimeApplication 
 
+- sur la droite de la fenetre cliquer sur Modify options et tout en bas cliquer sur < Add before launch task >:
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/Modify_option_showtime_application.png)
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/add_before_launch_task.png)
+
+- Ensuite dans la liste des Before launch ajouter Build project et Run Another Configuration > 'docker run' (ou le nom que vous aurez donné) 
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/run_another_config_before_showtime_application_task.png)
+- vous pouvez désormais lancer ShowTimeApplication 
 - patientez environ 30s max le temps que l'application soit disponible sur le localhost:89
 
 
