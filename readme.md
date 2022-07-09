@@ -84,3 +84,6 @@ docker-compose build --no-cache puis docker-compose up -d
 =>etape 3 - hard reset
 
 - docker system prune -a (attention cette commande supprime tout vos containers,volumes,images inactifs ) puis reproduire l'étape 2
+
+
+### en cas de problème dans intellij suite à pull fermé et réouvrir l'IDE
