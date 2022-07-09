@@ -1,3 +1,10 @@
+# recuperation du projet en mode devops2
+- crée un dossier vierge pour contenir le projet
+- ourvrir ce dossier via un terminal (git ou window/powershell ou le terminal linux sous window)
+- cloner le projet : git clone https://github.com/achot-barseghyan/showtime_API.git
+- rentré dans le projet cloné : cd showtime_API 
+- aller sur la bonne branche : git checkout devops2
+
 # lancement de l'application via intellij
 
 - Une fois avoir récupéré le projet en entier rendez-vous dans docker/ubuntu/
