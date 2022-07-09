@@ -48,7 +48,7 @@
 - utiliser désormais le nouveau run que vous avez crée qui lui même lance avant le run de base : 
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/use_docker_run_that_run_cascade_showtimeapplication.png)
 
- 
+- patientez environ 30s max le temps que l'application soit disponible sur le localhost:89
 
 
 ## En cas de problème (container lié a la db)
