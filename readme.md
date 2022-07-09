@@ -31,6 +31,8 @@
 - sur la ligne 19 vous devriez avoir une icone (play) en vert cliquer dessus
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/first_run_intellij.png)
 
+- ensuite choisissez le premier choix de la liste :
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/choice_first_run.png)
 
 - l'application devrais se lancer et telecharger toutes les dépendances
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/spring_launch_terminal_at_first_run.png)
