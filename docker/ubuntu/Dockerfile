@@ -12,6 +12,8 @@ RUN apt install wget -y && apt install unzip -y && apt install vim -y
 #kill $(ps aux | grep 'yak-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
 COPY ubuntu.sh /root/ubuntu.sh
 RUN chmod +x /root/ubuntu.sh
+# COPY m2 /root/.m2
+# RUN chmod -R 777 /root/.m2
 # CMD chmod +x mvnw && dos2unix mvnw  && ./mvnw package && java -jar target/yak-0.0.1-SNAPSHOT.jar && tail -f /dev/null
 COPY showtime_API /root/project 
 RUN rm /root/project/src/main/resources/application.properties
