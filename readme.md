@@ -1,25 +1,15 @@
-# prérequis 
+# lancement de l'application via intellij
+
+- Une fois avoir récupéré le projet en entier rendez-vous dans docker/ubuntu/
+- ouvrir le dossier showtime_API en tant que projet intellij
+- lancer l'application une première fois en automatique via intellij afin qu'il récupère toutes les dépendances 
+- pour ce faire rendez-vous dans src/main/java/com.m2i.showtime.yak/ShowTimeApplication.java 
+- sur la ligne 19 vous devriez avoir une icone (play) en vert cliquer dessus 
+- l'application devrais se lancer et telecharger toutes les dépendances
+- 
 
 
-## lancement de l'application 
-
-- docker-compose up -d 
-### recompiler 
-Attention utiliser le terminal de votre os wsl-2 
-le && sous le terminal windows ne fonctionne pas 
-en revanche on peut enchainée les deux en remplaçant <&&> par <;> .
-
-terminal linux sous windows =>
-docker exec -it ubuntu-vm-s-time ./mvnw package && docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar
-
-terminal windows =>
-docker exec -it ubuntu-vm-s-time ./mvnw package;docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar stop ;
-docker exec -it ubuntu-vm-s-time java -jar target/yak-0.0.1-SNAPSHOT.jar
-
-debug intellij=>
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:89 -Djava.security.egd=file:/dev/./urandom  -jar target/yak-0.0.1-SNAPSHOT.jar
-
-#### En cas de problème (container lié a la db)
+## En cas de problème (container lié a la db)
 
 =>etape 1
 - supprimer les dossier local_pgdata et pgadmin-data
