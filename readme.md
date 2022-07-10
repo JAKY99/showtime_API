@@ -24,6 +24,8 @@
 # premier lancement et config du launcher docker
 
 - lancer l'application une première fois en automatique via intellij afin qu'il récupère toutes les dépendances
+- une demande d'autorisation pour lambok sera demandé la première fois cliquer sur enable une fois et ça suffira 
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/enable-lambok.png)
 
 - pour ce faire rendez-vous dans src/main/java/com.m2i.showtime.yak/ShowTimeApplication.java 
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/file_start_location_intellij.png)
@@ -57,16 +59,16 @@
 - dans la rubrique Modify de la ligne docker-compose up rajouter les option < Attach to: none > et < Recreate containers : all > :
 ![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/add_compose_option.png)
 
-- puis aller dans la liste de gauche cliquer sur Application puis ShowTimeApplication 
+- dans la rubrique Before launch faite un clique sur le boutton + et faite un click sur run maven goal :
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/select_run_maven_goal_docker_run_config.png)
 
-- sur la droite de la fenetre cliquer sur Modify options et tout en bas cliquer sur < Add before launch task >:
-![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/Modify_option_showtime_application.png)
-![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/add_before_launch_task.png)
+- dans le champs command line rajouter la commande < package -DskipTests  > puis ok 
+![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/add_command_line_maven.png)
 
-- Ensuite dans la liste des Before launch ajouter Build project et Run Another Configuration > 'docker run' (ou le nom que vous aurez donné) 
-![](https://github.com/achot-barseghyan/showtime_API/blob/devops2/readme-img/run_another_config_before_showtime_application_task.png)
+- faite ok dans le fenetre configuration pour la valider 
 
-- vous pouvez désormais lancer ShowTimeApplication 
+- vous pouvez désormais lancer docker run 
+ 
 - patientez environ 30s max le temps que l'application soit disponible sur le localhost:89
 
 
