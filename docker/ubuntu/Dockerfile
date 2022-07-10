@@ -7,17 +7,11 @@ RUN apt-get install -y openjdk-17-jdk
 RUN apt install maven -y
 RUN apt-get update && apt-get install dos2unix -y
 RUN apt install wget -y && apt install unzip -y && apt install vim -y
-#ici est la correction du problème rentré lors de l'execution de la commande .mvnw problème CTRL/LFet droit d'exécution
-#le tail -f /dev/null permet de maintenir le container en cours d'exécution 
-#kill $(ps aux | grep 'yak-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
-COPY ubuntu.sh /root/ubuntu.sh
-RUN chmod +x /root/ubuntu.sh
-# COPY m2 /root/.m2
-# RUN chmod -R 777 /root/.m2
-# CMD chmod +x mvnw && dos2unix mvnw  && ./mvnw package && java -jar target/yak-0.0.1-SNAPSHOT.jar && tail -f /dev/null
+WORKDIR /root/project
+COPY ubuntu.sh /root/project/ubuntu.sh
+RUN chmod +x /root/project/ubuntu.sh
 COPY showtime_API /root/project 
 RUN rm /root/project/src/main/resources/application.properties
 COPY application.properties  /root/project/src/main/resources/application.properties
 COPY .mvn /root/project/.mvn
-
-ENTRYPOINT ["/bin/bash", "/root/ubuntu.sh"]
+CMD chmod +x mvnw && dos2unix mvnw  && ./mvnw clean install spring-boot:repackage && ./mvnw spring-boot:run
