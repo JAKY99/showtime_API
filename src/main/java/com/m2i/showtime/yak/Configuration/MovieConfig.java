@@ -1,4 +1,4 @@
-package com.m2i.showtime.yak.movie;
+package com.m2i.showtime.yak.Configuration;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

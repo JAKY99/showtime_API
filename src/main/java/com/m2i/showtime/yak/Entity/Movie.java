@@ -1,8 +1,6 @@
-package com.m2i.showtime.yak.movie;
+package com.m2i.showtime.yak.Entity;
 
 
-import com.m2i.showtime.yak.category.Category;
-import com.m2i.showtime.yak.user.User;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

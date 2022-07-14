@@ -1,21 +1,17 @@
 package com.m2i.showtime.yak;
 
-import com.m2i.showtime.yak.category.Category;
-import com.m2i.showtime.yak.category.CategoryRepository;
-import com.m2i.showtime.yak.movie.Movie;
-import com.m2i.showtime.yak.movie.MovieRepository;
-import com.m2i.showtime.yak.user.User;
-import com.m2i.showtime.yak.user.UserRepository;
+import com.m2i.showtime.yak.Entity.Category;
+import com.m2i.showtime.yak.Repository.CategoryRepository;
+import com.m2i.showtime.yak.Entity.Movie;
+import com.m2i.showtime.yak.Repository.MovieRepository;
+import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 @SpringBootApplication
 public class ShowTimeApplication {
