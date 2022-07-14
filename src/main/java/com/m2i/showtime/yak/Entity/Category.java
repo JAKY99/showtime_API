@@ -1,6 +1,5 @@
-package com.m2i.showtime.yak.category;
+package com.m2i.showtime.yak.Entity;
 
-import com.m2i.showtime.yak.movie.Movie;
 import lombok.Getter;
 import lombok.Setter;
 

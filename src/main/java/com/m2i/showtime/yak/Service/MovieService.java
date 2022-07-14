@@ -1,10 +1,15 @@
-package com.m2i.showtime.yak.movie;
+package com.m2i.showtime.yak.Service;
 
-import com.m2i.showtime.yak.user.User;
-import com.m2i.showtime.yak.user.UserRepository;
+import com.m2i.showtime.yak.Entity.Movie;
+import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Repository.MovieRepository;
+import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
 @Service
@@ -15,7 +20,7 @@ public class MovieService {
 
     @Autowired
     private final MovieRepository movieRepository;
-
+    
     public MovieService(UserRepository userRepository, MovieRepository movieRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
