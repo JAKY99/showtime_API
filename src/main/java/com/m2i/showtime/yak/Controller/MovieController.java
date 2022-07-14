@@ -1,6 +1,7 @@
-package com.m2i.showtime.yak.movie;
+package com.m2i.showtime.yak.Controller;
 
-import com.m2i.showtime.yak.user.User;
+import com.m2i.showtime.yak.Entity.Movie;
+import com.m2i.showtime.yak.Service.MovieService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
