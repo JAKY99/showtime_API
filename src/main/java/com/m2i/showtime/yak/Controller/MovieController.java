@@ -1,9 +1,14 @@
 package com.m2i.showtime.yak.Controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Service.MovieService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import java.util.List;
 
 @RestController
