@@ -1,20 +1,21 @@
 package com.m2i.showtime.yak.Entity;
 
-import com.m2i.showtime.yak.Entity.Movie;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
-
 import javax.persistence.*;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import static com.m2i.showtime.yak.Security.Password.PasswordEncoder.encodePassword;
 
 @Entity
 @Table(name = "_user")
 @Getter
 @Setter
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -36,17 +37,26 @@ public class User {
     private String email;
     @Column(name = "profile_picture", length = 64)
     private String profilePicture;
-
+    private String backgroundPicture;
     @Column(name = "_password")
     private String password;
-
     private String country;
-    private LocalDate dateCreated;
-    private Boolean deleted = false;
-    private Long nbWatchedMovies;
-    private Long nbWatchedTvShows;
-    private Float totalMovieWatchedTime;
-    private Float totalTvShowsWatchedTime;
+    private LocalDateTime dateCreated = LocalDateTime.now();
+    private LocalDate dateLastConnection;
+    //-------------------------------------------------
+    private Boolean isDeleted = false;
+    private Boolean isActive = false;
+    private Boolean isNotificationsActive = false;
+    private Boolean isNotificationsTrophiesActive = false;
+    private Boolean isNotificationsCommentsActive = false;
+    private Boolean isAccountPrivate = false;
+    //-------------------------------------------------
+    private Duration totalMovieWatchedTime = Duration.ZERO;
+    private Long totalMovieWatchedNumber = 0L;
+    private Duration totalSeriesWatchedTime = Duration.ZERO;
+    private Long totalSeriesWatchedNumber = 0L;
+    private Long totalEpisodesWatchedNumber = 0L;
+    //-------------------------------------------------
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinTable(name = "users_watched_movies",
@@ -58,24 +68,8 @@ public class User {
                             nullable = false, updatable = false)})
     private Set<Movie> watchedMovies = new HashSet<>();
 
-    public User() {
-    }
-
-    public User(Long id,
-                String firstName,
-                String lastName,
-                String email,
-                String password,
-                String country) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.fullName = firstName + " " + lastName;
-        this.email = email;
-        this.password = encodePassword(password);
-        this.country = country;
-        this.dateCreated = LocalDate.now();
-    }
+    @OneToMany
+    private Set<Role> roles = new HashSet<>();
 
     public User(String firstName,
                 String lastName,
@@ -84,30 +78,9 @@ public class User {
                 String country) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fullName = firstName + " " + lastName;
         this.email = email;
         this.password = encodePassword(password);
         this.country = country;
-        this.dateCreated = LocalDate.now();
-    }
-
-    @Bean
-    private String encodePassword(String password){
-
-        int saltLength = 16; // salt length in bytes
-        int hashLength = 32; // hash length in bytes
-        int parallelism = 1; // currently not supported by Spring Security
-        int memory = 4096;   // memory costs
-        int iterations = 3;
-
-        Argon2PasswordEncoder argon2PasswordEncoder = new Argon2PasswordEncoder(
-                saltLength,
-                hashLength,
-                parallelism,
-                memory,
-                iterations);
-
-        return argon2PasswordEncoder.encode(password);
     }
 
 }
