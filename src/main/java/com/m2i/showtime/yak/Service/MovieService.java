@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,11 +16,12 @@ import java.util.List;
 @Service
 public class MovieService {
 
-    @Autowired
     private final UserRepository userRepository;
 
-    @Autowired
     private final MovieRepository movieRepository;
+
+    @Value("${IMDB_API_KEY}")
+    private String imdb_apikey;
     
     public MovieService(UserRepository userRepository, MovieRepository movieRepository) {
         this.userRepository = userRepository;

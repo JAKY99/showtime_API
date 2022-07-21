@@ -20,9 +20,6 @@ public class Movie {
 
     private String name;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private Set<User> users = new HashSet<>();
-
     public Movie() {
     }
 
