@@ -19,9 +19,6 @@ public class MovieService {
     private final UserRepository userRepository;
 
     private final MovieRepository movieRepository;
-
-    @Value("${IMDB_API_KEY}")
-    private String imdb_apikey;
     
     public MovieService(UserRepository userRepository, MovieRepository movieRepository) {
         this.userRepository = userRepository;
