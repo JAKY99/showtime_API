@@ -1,4 +1,4 @@
-package com.m2i.showtime.yak.Controller.Dto;
+package com.m2i.showtime.yak.Dto;
 
 import com.m2i.showtime.yak.Entity.Movie;
 

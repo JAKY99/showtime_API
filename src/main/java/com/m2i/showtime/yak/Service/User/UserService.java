@@ -1,6 +1,6 @@
 package com.m2i.showtime.yak.Service.User;
 
-import com.m2i.showtime.yak.Controller.Dto.UserSimpleDto;
+import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,6 @@
 package com.m2i.showtime.yak.Controller.User;
 
-import com.m2i.showtime.yak.Controller.Dto.UserSimpleDto;
+import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;

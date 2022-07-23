@@ -1,6 +1,6 @@
 package com.m2i.showtime.yak.Repository;
 
-import com.m2i.showtime.yak.Controller.Dto.UserSimpleDto;
+import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
