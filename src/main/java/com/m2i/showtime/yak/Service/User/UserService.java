@@ -1,12 +1,12 @@
-package com.m2i.showtime.yak.Service;
+package com.m2i.showtime.yak.Service.User;
 
+import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -20,13 +20,14 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> getUsers(){
-        return userRepository.findAll();
+    public Optional<UserSimpleDto> getUser(Long userId) {
+        Optional<UserSimpleDto> user = userRepository.FindSimpleUserById(userId);
+        return user;
     }
 
-    public void addNewUser(User user) {
+    public void addUser(User user) {
 
-        Optional<User> userOptional = userRepository.findUserByEmail(user.getEmail());
+        Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
 
         if (userOptional.isPresent()){
             throw new IllegalStateException("email taken");
@@ -68,13 +69,13 @@ public class UserService {
             user.setCountry(modifiedUser.getCountry());
         }
 
-        if (modifiedUser.getEmail() != null &&
-                modifiedUser.getEmail().length() > 0 &&
-                !Objects.equals(user.getEmail(), modifiedUser.getEmail())) {
-            if (userRepository.findUserByEmail(modifiedUser.getEmail()).isPresent()){
+        if (modifiedUser.getUsername() != null &&
+                modifiedUser.getUsername().length() > 0 &&
+                !Objects.equals(user.getUsername(), modifiedUser.getUsername())) {
+            if (userRepository.findUserByEmail(modifiedUser.getUsername()).isPresent()){
                 throw new IllegalStateException("email taken");
             }
-            user.setEmail(modifiedUser.getEmail());
+            user.setUsername(modifiedUser.getUsername());
         }
     }
 }
