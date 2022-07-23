@@ -36,7 +36,6 @@ public class UserAuthService implements UserDetailsService {
         userRepository.save(user);
     }
 
-
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository

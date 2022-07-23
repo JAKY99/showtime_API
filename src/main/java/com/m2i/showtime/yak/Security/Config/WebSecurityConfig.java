@@ -14,8 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
-import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.crypto.SecretKey;
 import javax.sql.DataSource;
@@ -42,13 +40,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         this.userAuthService = userAuthService;
         this.secretKey = secretKey;
         this.jwtConfig = jwtConfig;
-    }
-
-    @Bean
-    public PersistentTokenRepository persistentTokenRepository() {
-        JdbcTokenRepositoryImpl db = new JdbcTokenRepositoryImpl();
-        db.setDataSource(dateSource);
-        return db;
     }
 
     @Override
