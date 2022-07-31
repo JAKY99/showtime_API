@@ -28,6 +28,12 @@ public class UserController {
         return userService.getUser(userId);
     }
 
+    @PreAuthorize("hasAnyAuthority('user:read', 'user:manage_users')")
+    @PostMapping("/loggedin")
+    public Optional<UserSimpleDto> getUser(@RequestBody String email){
+        return userService.getUserByEmail(email);
+    }
+
     @PostMapping
     public void register(@RequestBody User user){
         userAuthService.register(user);

@@ -21,7 +21,12 @@ public class UserService {
     }
 
     public Optional<UserSimpleDto> getUser(Long userId) {
-        Optional<UserSimpleDto> user = userRepository.FindSimpleUserById(userId);
+        Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
+        return user;
+    }
+
+    public Optional<UserSimpleDto> getUserByEmail(String email) {
+        Optional<UserSimpleDto> user = userRepository.findSimpleUserByEmail(email);
         return user;
     }
 
