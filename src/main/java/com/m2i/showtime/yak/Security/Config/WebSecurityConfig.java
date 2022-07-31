@@ -14,9 +14,22 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 
 @Configuration
@@ -29,6 +42,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserAuthService userAuthService;
     private final SecretKey secretKey;
     private final JwtConfig jwtConfig;
+
+    private static final RequestMatcher PROTECTED_URLS = new OrRequestMatcher(
+            new AntPathRequestMatcher("/v1/**"),new AntPathRequestMatcher("management/**")
+    );
 
     public WebSecurityConfig(PasswordEncoder passwordEncoder,
                              DataSource dateSource,
@@ -46,6 +63,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception{
         http
                 .csrf().disable() //TODO: Enable csrf for production to prevent assholes breaking our API
+                .cors().configurationSource(corsConfigurationSource())
+                .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
@@ -64,8 +83,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setHideUserNotFoundExceptions(false);
         provider.setPasswordEncoder(passwordEncoder);
         provider.setUserDetailsService(userAuthService);
         return provider;
+    }
+
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        //List<String> allowOrigins = Arrays.asList("*");
+        configuration.addAllowedOriginPattern("*");
+        configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
+        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
+        //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
