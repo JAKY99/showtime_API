@@ -35,8 +35,16 @@ public class Permission {
     }
 
     public Permission(String permission,
+                      String display_name
+                     ) {
+        this.permission = permission;
+        this.display_name = display_name;
+    }
+
+    public Permission(String permission,
                       String display_name,
-                      String description) {
+                      String description
+                     ) {
         this.permission = permission;
         this.display_name = display_name;
         this.description = description;
