@@ -19,4 +19,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.id = ?1")
     Optional<UserSimpleDto> findSimpleUserById(Long userId);
+
+    @Query("select u from User u JOIN u.watchedMovies w WHERE u.username=?1 AND   w.id = ?2  AND w.id = u.id")
+    Optional<UserSimpleDto> findByUsersMovieId(String userMail, Long movieId);
+   
+    
 }

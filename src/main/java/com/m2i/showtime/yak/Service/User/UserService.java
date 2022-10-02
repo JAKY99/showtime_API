@@ -1,12 +1,20 @@
 package com.m2i.showtime.yak.Service.User;
 
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
+import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
+import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
+import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import org.apache.catalina.Store;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -14,10 +22,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-
+    private final MovieRepository movieRepository;
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository,MovieRepository movieRepository) {
         this.userRepository = userRepository;
+        this.movieRepository = movieRepository;
     }
 
     public Optional<UserSimpleDto> getUser(Long userId) {
@@ -82,5 +91,48 @@ public class UserService {
             }
             user.setUsername(modifiedUser.getUsername());
         }
+    }
+
+    public org.hibernate.collection.internal.PersistentSet isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
+        Optional<User> user = userRepository.findUserByEmail(userWatchedMovieDto.getUserMail());
+        Optional<Movie> movieToFind = movieRepository.findById(userWatchedMovieDto.getMovieId());
+
+        return (org.hibernate.collection.internal.PersistentSet) user.get().getWatchedMovies();
+    }
+    public boolean addMovieInWatchlist(UserWatchedMovieAddDto UserWatchedMovieAddDto) {
+        boolean movie = movieRepository.findById(UserWatchedMovieAddDto.getMovieId()).isPresent();
+
+        if(!movie){
+
+            Movie movie1 = new Movie(UserWatchedMovieAddDto.getMovieId(),UserWatchedMovieAddDto.getMovieName());
+            movieRepository.saveAll(Arrays.asList(movie1));
+
+        }
+        Optional<Movie>  movie1 = movieRepository.findById(UserWatchedMovieAddDto.getMovieId());
+        Optional<User> user = userRepository.findUserByEmail(UserWatchedMovieAddDto.getUserMail());
+        user.get().getWatchedMovies().add(movie1.get());
+
+        userRepository.saveAndFlush(user.get());
+
+        return true;
+
+    }
+    public boolean removeMovieInWatchlist(UserWatchedMovieAddDto UserWatchedMovieAddDto) {
+        boolean movie = movieRepository.findById(UserWatchedMovieAddDto.getMovieId()).isPresent();
+
+        if(!movie){
+
+            Movie movie1 = new Movie(UserWatchedMovieAddDto.getMovieId(),UserWatchedMovieAddDto.getMovieName());
+            movieRepository.saveAll(Arrays.asList(movie1));
+
+        }
+        Optional<Movie>  movie1 = movieRepository.findById(UserWatchedMovieAddDto.getMovieId());
+        Optional<User> user = userRepository.findUserByEmail(UserWatchedMovieAddDto.getUserMail());
+        user.get().getWatchedMovies().remove(movie1.get());
+
+        userRepository.saveAndFlush(user.get());
+
+        return true;
+
     }
 }
