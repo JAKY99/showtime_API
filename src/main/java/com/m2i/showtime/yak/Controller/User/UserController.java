@@ -1,12 +1,15 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
+import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
+import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -52,5 +55,23 @@ public class UserController {
     @DeleteMapping("{userId}")
     public void deleteUser(@PathVariable("userId") Long userId){
         userService.deleteUser(userId);
+    }
+
+
+    @PostMapping("/isMovieInWatchlist/")
+    public org.hibernate.collection.internal.PersistentSet isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto ){
+        return userService.isMovieInWatchlist(userWatchedMovieDto);
+
+    }
+
+    @PostMapping("/addMovieInWatchlist/")
+    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto ){
+        return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
+
+    }
+    @PostMapping("/removeMovieInWatchlist/")
+    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto ){
+        return userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
+
     }
 }
