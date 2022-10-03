@@ -59,7 +59,7 @@ public class UserController {
 
 
     @PostMapping("/isMovieInWatchlist/")
-    public org.hibernate.collection.internal.PersistentSet isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto ){
+    public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto ){
         return userService.isMovieInWatchlist(userWatchedMovieDto);
 
     }

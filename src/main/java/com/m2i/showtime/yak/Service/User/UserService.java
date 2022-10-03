@@ -93,11 +93,16 @@ public class UserService {
         }
     }
 
-    public org.hibernate.collection.internal.PersistentSet isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
+    public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<User> user = userRepository.findUserByEmail(userWatchedMovieDto.getUserMail());
-        Optional<Movie> movieToFind = movieRepository.findById(userWatchedMovieDto.getMovieId());
 
-        return (org.hibernate.collection.internal.PersistentSet) user.get().getWatchedMovies();
+        Long check;
+        check = user.get().getWatchedMovies().stream().filter(x->x.getId()==userWatchedMovieDto.getMovieId()).count();
+        if(check==1){
+            return true;
+        }
+        return false;
+
     }
     public boolean addMovieInWatchlist(UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         boolean movie = movieRepository.findById(UserWatchedMovieAddDto.getMovieId()).isPresent();
