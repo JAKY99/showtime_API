@@ -15,7 +15,7 @@ services:
   pgadmin:
     build:  ./docker/pgadmin
     container_name: pgadmin4_container
-    restart: always
+    #restart: always
     ports:
       - "5050:80"
     environment:

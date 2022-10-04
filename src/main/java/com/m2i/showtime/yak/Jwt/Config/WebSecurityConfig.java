@@ -1,4 +1,4 @@
-package com.m2i.showtime.yak.Security.Config;
+package com.m2i.showtime.yak.Jwt.Config;
 
 import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Jwt.JwtTokenVerifier;
