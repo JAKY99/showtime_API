@@ -27,51 +27,52 @@ public class UserController {
 
     @PreAuthorize("hasAnyAuthority('user:read', 'user:manage_users')")
     @GetMapping("{userId}")
-    public Optional<UserSimpleDto> getUser(@PathVariable("userId") Long userId){
+    public Optional<UserSimpleDto> getUser(@PathVariable("userId") Long userId) {
         return userService.getUser(userId);
     }
 
     @PreAuthorize("hasAnyAuthority('user:read', 'user:manage_users')")
     @PostMapping("/loggedin")
-    public Optional<UserSimpleDto> getUser(@RequestBody String email){
+    public Optional<UserSimpleDto> getUser(@RequestBody String email) {
         return userService.getUserByEmail(email);
     }
 
     @PostMapping
-    public void register(@RequestBody User user){
+    public void register(@RequestBody User user) {
         userAuthService.register(user);
     }
 
     @PreAuthorize("hasAnyAuthority('user:edit', 'user:manage_users')")
     @PutMapping("{userId}")
     public void updateUser(
-            @PathVariable("userId") Long userId,
-            @RequestBody User modifiedUser
-        ) {
+            @PathVariable("userId") Long userId, @RequestBody User modifiedUser) {
         userService.updateUser(userId, modifiedUser);
     }
 
     @PreAuthorize("hasAnyAuthority('user:delete', 'user:manage_users')")
     @DeleteMapping("{userId}")
-    public void deleteUser(@PathVariable("userId") Long userId){
+    public void deleteUser(@PathVariable("userId") Long userId) {
         userService.deleteUser(userId);
     }
 
 
-    @PostMapping("/isMovieInWatchlist/")
-    public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto ){
+    @PostMapping("/isMovieInWatchlist")
+    public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto) {
         return userService.isMovieInWatchlist(userWatchedMovieDto);
-
     }
 
-    @PostMapping("/addMovieInWatchlist/")
-    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto ){
+    @PostMapping("/addMovieInWatchlist")
+    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
-
     }
-    @PostMapping("/removeMovieInWatchlist/")
-    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto ){
-        return userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
 
+    @PostMapping("/removeMovieInWatchlist")
+    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
+        return userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
+    }
+
+    @PostMapping("/increaseWatchedNumber")
+    public boolean increaseWatchedNumber(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
+        return userService.increaseWatchedNumber(UserWatchedMovieAddDto);
     }
 }
