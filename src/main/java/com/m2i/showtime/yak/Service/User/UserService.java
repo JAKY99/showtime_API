@@ -7,14 +7,12 @@ import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
-import org.apache.catalina.Store;
+import com.m2i.showtime.yak.Service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -23,10 +21,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
+    private final MovieService movieService;
+
     @Autowired
-    public UserService(UserRepository userRepository,MovieRepository movieRepository) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
+        this.movieService = movieService;
     }
 
     public Optional<UserSimpleDto> getUser(Long userId) {
@@ -43,7 +44,7 @@ public class UserService {
 
         Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
 
-        if (userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             throw new IllegalStateException("email taken");
         }
 
@@ -52,41 +53,42 @@ public class UserService {
 
     public void deleteUser(Long userId) {
 
-        if (!userRepository.existsById(userId)){
+        if (!userRepository.existsById(userId)) {
             throw new IllegalStateException("User does not exists");
         }
         userRepository.deleteById(userId);
     }
 
     @Transactional
-    public void updateUser(Long userId,
-                           User modifiedUser) {
+    public void updateUser(Long userId, User modifiedUser) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
+                                  .orElseThrow(() -> new IllegalStateException(
+                                          ("user with id " + userId + "does not exists")));
 
-        if (modifiedUser.getFirstName() != null &&
-                modifiedUser.getFirstName().length() > 0 &&
-                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
+        if (modifiedUser.getFirstName() != null && modifiedUser.getFirstName()
+                                                               .length() > 0 && !Objects.equals(
+                user.getFirstName(), modifiedUser.getFirstName())) {
             user.setFirstName(modifiedUser.getFirstName());
         }
 
-        if (modifiedUser.getLastName() != null &&
-                modifiedUser.getLastName().length() > 0 &&
-                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
+        if (modifiedUser.getLastName() != null && modifiedUser.getLastName()
+                                                              .length() > 0 && !Objects.equals(
+                user.getLastName(), modifiedUser.getLastName())) {
             user.setLastName(modifiedUser.getLastName());
         }
 
-        if (modifiedUser.getCountry() != null &&
-                modifiedUser.getCountry().length() > 0 &&
-                !Objects.equals(user.getCountry(), modifiedUser.getCountry())) {
+        if (modifiedUser.getCountry() != null && modifiedUser.getCountry()
+                                                             .length() > 0 && !Objects.equals(
+                user.getCountry(), modifiedUser.getCountry())) {
             user.setCountry(modifiedUser.getCountry());
         }
 
-        if (modifiedUser.getUsername() != null &&
-                modifiedUser.getUsername().length() > 0 &&
-                !Objects.equals(user.getUsername(), modifiedUser.getUsername())) {
-            if (userRepository.findUserByEmail(modifiedUser.getUsername()).isPresent()){
+        if (modifiedUser.getUsername() != null && modifiedUser.getUsername()
+                                                              .length() > 0 && !Objects.equals(
+                user.getUsername(), modifiedUser.getUsername())) {
+            if (userRepository.findUserByEmail(modifiedUser.getUsername())
+                              .isPresent()) {
                 throw new IllegalStateException("email taken");
             }
             user.setUsername(modifiedUser.getUsername());
@@ -94,50 +96,58 @@ public class UserService {
     }
 
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
-        Optional<User> user = userRepository.findUserByEmail(userWatchedMovieDto.getUserMail());
+        Optional<UserSimpleDto> user = userRepository.isMovieWatched(
+                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getMovieId());
 
-        Long check;
-        check = user.get().getWatchedMovies().stream().filter(x->x.getId()==userWatchedMovieDto.getMovieId()).count();
-        if(check==1){
+        if (user.isEmpty()) {
+            return false;
+        } else {
             return true;
         }
-        return false;
 
     }
-    public boolean addMovieInWatchlist(UserWatchedMovieAddDto UserWatchedMovieAddDto) {
-        boolean movie = movieRepository.findById(UserWatchedMovieAddDto.getMovieId()).isPresent();
 
-        if(!movie){
 
-            Movie movie1 = new Movie(UserWatchedMovieAddDto.getMovieId(),UserWatchedMovieAddDto.getMovieName());
-            movieRepository.saveAll(Arrays.asList(movie1));
+    public boolean addMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getMovieId(),
+                                                              userWatchedMovieAddDto.getMovieName());
 
-        }
-        Optional<Movie>  movie1 = movieRepository.findById(UserWatchedMovieAddDto.getMovieId());
-        Optional<User> user = userRepository.findUserByEmail(UserWatchedMovieAddDto.getUserMail());
-        user.get().getWatchedMovies().add(movie1.get());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
 
-        userRepository.saveAndFlush(user.get());
+        optionalUser.get()
+                    .getWatchedMovies()
+                    .add(movie);
+
+        userRepository.saveAndFlush(user);
 
         return true;
-
     }
-    public boolean removeMovieInWatchlist(UserWatchedMovieAddDto UserWatchedMovieAddDto) {
-        boolean movie = movieRepository.findById(UserWatchedMovieAddDto.getMovieId()).isPresent();
 
-        if(!movie){
 
-            Movie movie1 = new Movie(UserWatchedMovieAddDto.getMovieId(),UserWatchedMovieAddDto.getMovieName());
-            movieRepository.saveAll(Arrays.asList(movie1));
+    public boolean removeMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getMovieId(),
+                                                              userWatchedMovieAddDto.getMovieName());
 
-        }
-        Optional<Movie>  movie1 = movieRepository.findById(UserWatchedMovieAddDto.getMovieId());
-        Optional<User> user = userRepository.findUserByEmail(UserWatchedMovieAddDto.getUserMail());
-        user.get().getWatchedMovies().remove(movie1.get());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
 
-        userRepository.saveAndFlush(user.get());
+        optionalUser.get()
+                    .getWatchedMovies()
+                    .remove(movie);
+
+        userRepository.saveAndFlush(user);
 
         return true;
+    }
 
+    public boolean increaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+
+
+        return true;
     }
 }
