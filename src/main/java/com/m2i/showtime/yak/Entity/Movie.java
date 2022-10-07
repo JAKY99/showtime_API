@@ -17,7 +17,6 @@ public class Movie {
 
     @Id
     private Long id;
-
     private String name;
 
     public Movie() {
