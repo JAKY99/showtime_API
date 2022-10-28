@@ -2,6 +2,7 @@ package com.m2i.showtime.yak.Controller;
 
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
+import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,5 +27,11 @@ public class PermissionController {
     @PostMapping
     public PageListResultDto getPermissions(@RequestBody SearchParamsDto searchParamsDto) {
         return permissionService.getPermissions(searchParamsDto);
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_permission')")
+    @PostMapping("/add")
+    public long addPermission(@RequestBody Permission permission) {
+        return permissionService.addPermission(permission);
     }
 }
