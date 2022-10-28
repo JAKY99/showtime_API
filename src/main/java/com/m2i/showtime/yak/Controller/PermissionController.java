@@ -6,10 +6,7 @@ import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
@@ -30,8 +27,20 @@ public class PermissionController {
     }
 
     @PreAuthorize("hasAnyAuthority('user:manage_permission')")
+    @GetMapping("/{id}")
+    public Permission getPermission(@PathVariable("id") Long id) {
+        return permissionService.getPermission(id);
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_permission')")
     @PostMapping("/add")
     public long addPermission(@RequestBody Permission permission) {
         return permissionService.addPermission(permission);
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_permission')")
+    @PutMapping
+    public boolean editPermission(@RequestBody Permission permission) {
+        return permissionService.editPermission(permission);
     }
 }
