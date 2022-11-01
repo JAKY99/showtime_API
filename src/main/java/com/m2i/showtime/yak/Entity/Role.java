@@ -32,8 +32,8 @@ public class Role {
     @Column(unique = true)
     private String role;
     private String display_name;
-    private String description;
 
+    private String description;
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "role_permissions",
