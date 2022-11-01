@@ -40,7 +40,7 @@ out
 test-output
 atlassian-ide-plugin.xml
 .gradletasknamecache
-
+.jpb
 # VS Code
 .vscode/
 
