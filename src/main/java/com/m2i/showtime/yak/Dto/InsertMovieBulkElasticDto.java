@@ -1,2 +1,9 @@
-package com.m2i.showtime.yak.Dto;public class InsertMovieBulkElasticDto {
+package com.m2i.showtime.yak.Dto;
+
+import lombok.Getter;
+
+@Getter
+public class InsertMovieBulkElasticDto {
+    int userId;
+    int [] movieIds;
 }
