@@ -33,12 +33,12 @@ public class ShowTimeApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ShowTimeApplication.class, args);
 	}
-		@Bean
-		public CommandLineRunner mappingDemo(UserRepository userRepo,
-											 MovieRepository movieRepo,
-											 RoleRepository roleRepo,
-											 UserAuthService userAuthService) {
-			return args -> {
+//		@Bean
+//		public CommandLineRunner mappingDemo(UserRepository userRepo,
+//											 MovieRepository movieRepo,
+//											 RoleRepository roleRepo,
+//											 UserAuthService userAuthService) {
+//			return args -> {
 
 //				Permission permission1 = new Permission("user:read");
 //				Permission permission2 = new Permission("user:delete");
@@ -197,7 +197,7 @@ public class ShowTimeApplication {
 //				user_user.getWatchedMovies().addAll(Arrays.asList(movie1, movie2, movie3));
 //
 //				userRepo.save(user_user);
-			};
-		}
+//			};
+//		}
 
 }
