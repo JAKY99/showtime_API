@@ -1,5 +1,11 @@
 package com.m2i.showtime.yak.Service.User;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
@@ -9,10 +15,16 @@ import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,6 +34,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
     private final MovieService movieService;
+    @Value("${application.bucketName}")
+    private String bucketName;
+    @Value("${application.awsAccessKey}")
+    private String awsAccessKey;
+    @Value("${application.awsSecretKey}")
+    private String awsSecretKey;
 
     @Autowired
     public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService) {
@@ -149,5 +167,35 @@ public class UserService {
 
 
         return true;
+    }
+
+    public String uploadProfilePic(Long userId, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findById(userId)
+                                  .orElseThrow(() -> new IllegalStateException(
+                                          ("user with id " + userId + "does not exists")));
+        String fileName = userId + "_profile_pic." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/"+fileName));
+        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        fileToUpload.delete();
+        return "done";
     }
 }
