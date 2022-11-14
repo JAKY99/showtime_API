@@ -8,7 +8,9 @@ import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,5 +76,14 @@ public class UserController {
     @PostMapping("/increaseWatchedNumber")
     public boolean increaseWatchedNumber(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.increaseWatchedNumber(UserWatchedMovieAddDto);
+    }
+    @PostMapping("/uploadProfilePicture")
+    public String uploadProfilePic(
+            @RequestParam Long userId,
+            @RequestParam("file") MultipartFile profilePic
+    ) throws IOException {
+
+        return userService.uploadProfilePic(userId,profilePic);
+
     }
 }
