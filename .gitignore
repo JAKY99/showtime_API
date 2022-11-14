@@ -30,7 +30,7 @@ target
 .classpath
 .project
 spring-*/src/main/java/META-INF/MANIFEST.MF
-
+.env
 # IDEA artifacts and output dirs
 *.iml
 *.ipr
