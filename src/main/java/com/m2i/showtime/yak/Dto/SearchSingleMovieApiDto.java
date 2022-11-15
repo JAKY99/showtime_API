@@ -9,7 +9,7 @@ public class SearchSingleMovieApiDto {
     private String poster_path;
     private String backdrop_path;
     private String release_date;
-    private String runtime;
+    private Integer  runtime;
     private String vote_average;
     private String vote_count;
     private String id;

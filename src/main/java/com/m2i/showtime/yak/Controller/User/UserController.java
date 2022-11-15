@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,18 +65,20 @@ public class UserController {
     }
 
     @PostMapping("/addMovieInWatchlist")
-    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
+    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
 
     @PostMapping("/removeMovieInWatchlist")
-    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
-        return userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
+    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+         userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
+        return true;
     }
 
     @PostMapping("/increaseWatchedNumber")
     public boolean increaseWatchedNumber(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
-        return userService.increaseWatchedNumber(UserWatchedMovieAddDto);
+        userService.increaseWatchedNumber(UserWatchedMovieAddDto);
+        return true;
     }
     @PostMapping("/uploadProfilePicture")
     public String uploadProfilePic(
