@@ -115,6 +115,11 @@ public class User implements UserDetails {
         this.country = country;
     }
 
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
     public String getFullName() {
         return String.format("%s %s", getFirstName(), getLastName());
     }

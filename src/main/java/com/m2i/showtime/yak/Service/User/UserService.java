@@ -6,6 +6,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
@@ -18,10 +20,17 @@ import com.m2i.showtime.yak.Service.MovieService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +44,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 
 @Service
 public class UserService {
@@ -49,9 +59,18 @@ public class UserService {
     private String awsAccessKey;
     @Value("${application.awsSecretKey}")
     private String awsSecretKey;
+    @Value("${application.awsSesAccessKey}")
+    private String awsSesAccessKey;
+    @Value("${application.awsSesSecretKey}")
+    private String awsSesSecretKey;
     @Value("${application.imdb.apiKey}")
     private String apiKey;
-
+    @Value("${spring.mail.resetPasswordUrl}")
+    private String resetPasswordUrl;
+    @Value("${spring.mail.mailOrigin}")
+    private String mailOrigin;
+    @Value("${spring.jwt.secretKey}")
+    private String JWT_SECRET;
     @Autowired
     public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository) {
         this.userRepository = userRepository;
@@ -277,4 +296,43 @@ public class UserService {
         fileToUpload.delete();
         return "done";
     }
+
+    public JavaMailSender getJavaMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost("email-smtp.us-east-2.amazonaws.com");
+        mailSender.setPort(587);
+
+        mailSender.setUsername(awsSesAccessKey);
+        mailSender.setPassword(awsSesSecretKey);
+
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "true");
+
+        return mailSender;
+    }
+    public int sendEmailReset(ResetPasswordMailingDto ResetPasswordMailingDto) throws MessagingException {
+        Optional<User> optionalUser = userRepository.findUserByEmail(ResetPasswordMailingDto.getUsername());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        Algorithm algorithm = Algorithm.HMAC256(JWT_SECRET);
+        String token = JWT.create()
+                .withIssuer("auth0")
+                .sign(algorithm);
+        JavaMailSender MailerService = this.getJavaMailSender();
+        MimeMessage mimeMessage = MailerService.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+        String htmlMsg = "<h3>Hello " + ResetPasswordMailingDto.getUsername() + " . </h3> \n You have asked to reset your password. Please click on the link below to reset your password: \n <a href=\""+resetPasswordUrl + token + "\">Reset password</a>";
+//mimeMessage.setContent(htmlMsg, "text/html"); /** Use this or below line **/
+        helper.setText(htmlMsg, true); // Use this or above line.
+        helper.setTo(ResetPasswordMailingDto.getUsername());
+        helper.setSubject("Reset password");
+        helper.setFrom(mailOrigin);
+        MailerService.send(helper.getMimeMessage());
+        return 200;
+    }
+
 }

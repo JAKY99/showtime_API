@@ -20,4 +20,15 @@
             ALTER TABLE IF EXISTS public.users_watched_movies ALTER COLUMN watched_number SET DEFAULT 1;
         </sql>
     </changeSet>
+    <changeSet id="1668527413706-4" author="kevin (generated)">
+        <sql>
+            SELECT setval('user_sequence', COALESCE((SELECT MAX(id)+1 FROM _user), 1), false);
+        </sql>
+    </changeSet>
+    <changeSet id="1668527413706-5" author="kevin (generated)">
+        <sql>
+            SELECT setval('role_sequence', COALESCE((SELECT MAX(id)+1 FROM role), 1), false);
+            SELECT setval('permission_sequence', COALESCE((SELECT MAX(id)+1 FROM permission), 1), false);
+        </sql>
+    </changeSet>
 </databaseChangeLog>
