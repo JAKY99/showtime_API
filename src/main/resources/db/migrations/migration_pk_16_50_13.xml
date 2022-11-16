@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1668527413706-1" author="kevin (generated)">
+        <addColumn tableName="users_watched_movies">
+            <column name="watched_number" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="1668527413706-2" author="kevin (generated)">
+        <sql>
+            ALTER TABLE IF EXISTS public.users_watched_movies ALTER COLUMN watched_number SET DEFAULT 0;
+        </sql>
+    </changeSet>
+    <changeSet id="1668527413706-3" author="kevin (generated)">
+        <sql>
+            ALTER TABLE IF EXISTS public.users_watched_movies ALTER COLUMN watched_number SET DEFAULT 1;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
