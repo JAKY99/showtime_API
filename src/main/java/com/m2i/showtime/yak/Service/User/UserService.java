@@ -7,7 +7,10 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
@@ -25,6 +28,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +47,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -318,6 +326,12 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
+        boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(30).isBefore(LocalDateTime.now());
+        if(user.getDateLastMailingResetPassword()!=null){
+            if(!delayCheck){
+                return 403;
+            }
+        }
         Algorithm algorithm = Algorithm.HMAC256(JWT_SECRET);
         String token = JWT.create()
                 .withIssuer("auth0")
@@ -332,7 +346,40 @@ public class UserService {
         helper.setSubject("Reset password");
         helper.setFrom(mailOrigin);
         MailerService.send(helper.getMimeMessage());
+        user.setDateLastMailingResetPassword(LocalDateTime.now());
+        user.setTokenResetPassword(token);
+        userRepository.saveAndFlush(user);
         return 200;
     }
 
+    public boolean checkToken(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(JWT_SECRET);
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .withIssuer("auth0")
+                    .build(); //Reusable verifier instance
+            DecodedJWT jwt = verifier.verify(token);
+            return true;
+        } catch (JWTVerificationException exception){
+            return false;
+        }
+    }
+    public PasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
+    }
+    public int changeUserPassword(ResetPasswordUseDto resetPasswordUseDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(resetPasswordUseDto.getEmail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        boolean checkToken = this.checkToken(resetPasswordUseDto.getToken());
+        PasswordEncoder passwordEncoder = this.encoder();
+        if(checkToken && user.getTokenResetPassword().equals(resetPasswordUseDto.getToken())){
+            user.setPassword(passwordEncoder.encode(resetPasswordUseDto.getPassword()));
+            user.setTokenResetPassword(null);
+            userRepository.saveAndFlush(user);
+            return 200;
+        }
+        return 401;
+    }
 }
