@@ -45,7 +45,12 @@ public class User implements UserDetails {
     @Column(name = "_password")
     private String password;
     private String country;
+
     private LocalDateTime dateCreated = LocalDateTime.now();
+
+    private LocalDateTime dateLastMailingResetPassword;
+
+    private String tokenResetPassword;
     //-------------------------------------------------
     private Boolean isDeleted = false;
     private Boolean isNotificationsActive = false;
