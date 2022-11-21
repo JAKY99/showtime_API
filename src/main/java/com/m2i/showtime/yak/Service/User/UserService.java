@@ -326,8 +326,9 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-        boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(30).isBefore(LocalDateTime.now());
+
         if(user.getDateLastMailingResetPassword()!=null){
+            boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(30).isBefore(LocalDateTime.now());
             if(!delayCheck){
                 return 403;
             }
