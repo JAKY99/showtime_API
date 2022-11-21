@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Controller.User;
 
+import com.m2i.showtime.yak.Dto.RegisterDto;
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
@@ -40,9 +41,9 @@ public class UserController {
         return userService.getUserByEmail(email);
     }
 
-    @PostMapping
-    public void register(@RequestBody User user) {
-        userAuthService.register(user);
+    @PostMapping("/register")
+    public void register(@RequestBody RegisterDto RegisterDto) {
+        userAuthService.register(RegisterDto);
     }
 
     @PreAuthorize("hasAnyAuthority('user:edit', 'user:manage_users')")

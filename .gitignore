@@ -43,7 +43,7 @@ atlassian-ide-plugin.xml
 .jpb
 # VS Code
 .vscode/
-
+src/main/resources/application.properties
 # database
 /local_pgdata
 /pgadmin-data
