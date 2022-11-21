@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Service.User;
 
+import com.m2i.showtime.yak.Dto.RegisterDto;
 import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.RoleRepository;
@@ -7,6 +8,8 @@ import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -24,16 +27,23 @@ public class UserAuthService implements UserDetailsService {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
     }
-
-    public void register(User user) {
-        Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
+    public PasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
+    }
+    public int register(RegisterDto RegisterDto) {
+        Optional<User> userOptional = userRepository.findUserByEmail(RegisterDto.getUsername());
         if(userOptional.isPresent()){
             throw new IllegalStateException("Email is already taken");
         }
+        User userToCreate = new User();
+        PasswordEncoder passwordEncoder = this.encoder();
+        userToCreate.setUsername(RegisterDto.getUsername());
+        userToCreate.setPassword(passwordEncoder.encode(RegisterDto.getPassword()));
+        userToCreate = setAuthoritiesForNewUser(userToCreate);
 
-        user = setAuthoritiesForNewUser(user);
 
-        userRepository.save(user);
+        userRepository.save(userToCreate);
+        return 200;
     }
 
     @Override
