@@ -70,7 +70,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
                 .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .antMatchers("/api/v*/registration/**", "/api/v*/login/**").permitAll()
+                .antMatchers("/api/v*/registration/**", "/api/v*/login/**","/api/v*/kafka/**","/websocket/**").permitAll()
                 .anyRequest()
                 .authenticated();
     }
