@@ -23,8 +23,6 @@ import com.m2i.showtime.yak.Service.MovieService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -48,8 +46,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -97,7 +93,7 @@ public class UserService {
         return user;
     }
 
-    public void addUser(User user) {
+    public User addUser(User user) {
 
         Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
 
@@ -106,6 +102,7 @@ public class UserService {
         }
 
         userRepository.save(user);
+        return user;
     }
 
     public void deleteUser(Long userId) {
