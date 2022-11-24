@@ -60,15 +60,17 @@ public class PermissionService {
     }
 
     public long addPermission(Permission permission) {
-        try {
-            return permissionRepository.save(permission)
-                                       .getId();
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("Permission already exists.");
+        Optional<Permission> permissionOptional = permissionRepository.findByPermission(permission.getPermission());
+
+        if (permissionOptional.isPresent()) {
+            throw new IllegalStateException("Permission already exists");
         }
+
+        return permissionRepository.save(permission)
+                                   .getId();
     }
 
-    public Permission getPermission(Long id){
+    public Permission getPermission(Long id) {
         Optional<Permission> permission = permissionRepository.findById(id);
 
         return permission.orElseThrow(() -> {
@@ -81,19 +83,19 @@ public class PermissionService {
     public boolean editPermission(Permission modifiedPermission) {
         boolean isModified = false;
         Permission permission = permissionRepository.findById(modifiedPermission.getId())
-                .orElseThrow(() -> new IllegalStateException(
-                        ("user with id " + modifiedPermission.getId() + "does not exists")));
+                                                    .orElseThrow(() -> new IllegalStateException(
+                                                            ("user with id " + modifiedPermission.getId() + "does not exists")));
 
-        if (modifiedPermission.getPermission() != null &&
-                modifiedPermission.getPermission().length() > 0 &&
-                !Objects.equals(permission.getPermission(), modifiedPermission.getPermission())) {
+        if (modifiedPermission.getPermission() != null && modifiedPermission.getPermission()
+                                                                            .length() > 0 && !Objects.equals(
+                permission.getPermission(), modifiedPermission.getPermission())) {
             permission.setPermission(modifiedPermission.getPermission());
             isModified = true;
         }
 
-        if (modifiedPermission.getDisplayName() != null &&
-                modifiedPermission.getDisplayName().length() > 0 &&
-                !Objects.equals(permission.getDisplayName(), modifiedPermission.getDisplayName())) {
+        if (modifiedPermission.getDisplayName() != null && modifiedPermission.getDisplayName()
+                                                                             .length() > 0 && !Objects.equals(
+                permission.getDisplayName(), modifiedPermission.getDisplayName())) {
             permission.setDisplayName(modifiedPermission.getDisplayName());
             isModified = true;
         }
