@@ -52,12 +52,12 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch
-#  logstash:
-#    image: kevinpsirius/centos_logstash:v1
-#    container_name: logstash
-#    privileged: true
-#    volumes:
-#      - ./usersync.conf:/etc/logstash/conf.d/usersync.conf
+  logstash:
+    image: kevinpsirius/centos_logstash:v1
+    container_name: logstash
+    privileged: true
+    volumes:
+      - ./usersync.conf:/etc/logstash/conf.d/usersync.conf
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper

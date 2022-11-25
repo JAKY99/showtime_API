@@ -54,7 +54,6 @@ public class KafkaController {
             public void onSuccess(SendResult<String, String> result) {
                 System.out.println("Sent message=[" + kafkaMessageDto.getMessage() +
                         "] with offset=[" + result.getRecordMetadata().offset() + "]");
-
             }
             @Override
             public void onFailure(Throwable ex) {
