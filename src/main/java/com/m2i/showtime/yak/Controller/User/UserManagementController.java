@@ -1,5 +1,7 @@
 package com.m2i.showtime.yak.Controller.User;
 
+import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
+import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserManagementService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,9 +20,9 @@ public class UserManagementController {
     }
 
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
-    @GetMapping
-    public List<User> getAllUsers(){
-        return userManagementService.getAllUsers();
+    @PostMapping("all")
+    public PageListResultDto getAllUsers(@RequestBody SearchParamsDto searchParamsDto) {
+        return userManagementService.getAllUsers(searchParamsDto);
     }
 
     @PreAuthorize("hasAnyAuthority('user:manage_users')")

@@ -43,6 +43,7 @@ public class UserAuthService implements UserDetailsService {
 
 
         userRepository.save(userToCreate);
+
         return 200;
     }
 

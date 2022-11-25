@@ -1,8 +1,14 @@
 package com.m2i.showtime.yak.Service.User;
 
+import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
+import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
+import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +27,34 @@ public class UserManagementService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
+    public PageListResultDto getAllUsers(SearchParamsDto searchParamsDto){
+        Page<User> page;
+        Sort.Direction sortDirection;
+
+        if (searchParamsDto.getSort()
+                .getSortField() == null) {
+
+            page = userRepository.findAll(
+                    PageRequest.of(searchParamsDto.getPageNumber(), searchParamsDto.getLimitRow(),
+                            Sort.by(Sort.Direction.ASC, "username")));
+        } else {
+            if (searchParamsDto.getSort()
+                    .getSortOrder() == 1) {
+                sortDirection = Sort.Direction.ASC;
+            } else {
+                sortDirection = Sort.Direction.DESC;
+            }
+            page = userRepository.findAll(
+                    PageRequest.of(searchParamsDto.getPageNumber(), searchParamsDto.getLimitRow(),
+                            Sort.by(sortDirection, searchParamsDto.getSort()
+                                    .getSortField())));
+        }
+
+        if (page.isEmpty()) {
+            throw new IllegalStateException("page was not found");
+        }
+
+        return new PageListResultDto(page.toList(), page.getTotalElements());
     }
 
     public void registerNewUser(User user) {
