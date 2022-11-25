@@ -43,4 +43,10 @@ public class PermissionController {
     public boolean editPermission(@RequestBody Permission permission) {
         return permissionService.editPermission(permission);
     }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_permission')")
+    @DeleteMapping("/{id}")
+    public void deletePermission(@PathVariable("id") Long id) {
+        permissionService.deletePermission(id);
+    }
 }

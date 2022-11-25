@@ -14,7 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -106,5 +105,15 @@ public class PermissionService {
         }
 
         return isModified;
+    }
+
+    public void deletePermission(Long id) {
+        Optional<Permission> permissionOptional = permissionRepository.findById(id);
+
+        if (!permissionOptional.isPresent()) {
+            throw new IllegalStateException("Permission doesn't exists");
+        }
+
+        permissionRepository.delete(permissionOptional.get());
     }
 }
