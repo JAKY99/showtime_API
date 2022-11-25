@@ -25,8 +25,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -44,14 +42,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final JwtConfig jwtConfig;
 
     private static final RequestMatcher PROTECTED_URLS = new OrRequestMatcher(
-            new AntPathRequestMatcher("/v1/**"),new AntPathRequestMatcher("management/**")
+            new AntPathRequestMatcher("/v1/**"), new AntPathRequestMatcher("management/**")
     );
 
     public WebSecurityConfig(PasswordEncoder passwordEncoder,
                              DataSource dateSource,
                              UserAuthService userAuthService,
                              SecretKey secretKey,
-                             JwtConfig jwtConfig) {
+                             JwtConfig jwtConfig
+                            ) {
         this.passwordEncoder = passwordEncoder;
         this.dateSource = dateSource;
         this.userAuthService = userAuthService;
@@ -60,17 +59,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception{
+    protected void configure(HttpSecurity http) throws Exception {
         http
-                .csrf().disable() //TODO: Enable csrf for production to prevent assholes breaking our API
-                .cors().configurationSource(corsConfigurationSource())
+                .csrf()
+                .disable() //TODO: Enable csrf for production to prevent assholes breaking our API
+                .cors()
+                .configurationSource(corsConfigurationSource())
                 .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
-                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
+                .addFilter(
+                        new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
+                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig),
+                                JwtUsernameAndPasswordAuthenticationFilter.class
+                               )
                 .authorizeRequests()
-                .antMatchers("/api/v*/registration/**", "/api/v*/login/**").permitAll()
+                .antMatchers("/api/v*/registration/**", "/api/v*/login/**")
+                .permitAll()
                 .anyRequest()
                 .authenticated();
     }
@@ -81,7 +87,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(){
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setHideUserNotFoundExceptions(false);
         provider.setPasswordEncoder(passwordEncoder);
@@ -95,7 +101,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.addAllowedOriginPattern("*");
         configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
+        configuration.addExposedHeader(
+                "Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
         //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

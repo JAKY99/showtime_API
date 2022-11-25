@@ -43,6 +43,14 @@ services:
     ports:
       - 9200:9200
       - 9300:9300
+    deploy:  
+        resources:    
+            limits:      
+                cpus: '1'      
+                memory: 500M    
+            reservations:      
+                cpus: '1'
+                memory: 500M
   kibana:
     container_name: kibana
     image: docker.elastic.co/kibana/kibana:8.4.3
@@ -58,6 +66,14 @@ services:
 #    privileged: true
 #    volumes:
 #      - ./usersync.conf:/etc/logstash/conf.d/usersync.conf
+    deploy:  
+        resources:    
+            limits:      
+                cpus: '1'      
+                memory: 500M    
+            reservations:      
+                cpus: '1'
+                memory: 500M
 
 volumes:
     local_pgdata:
