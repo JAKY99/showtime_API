@@ -18,7 +18,7 @@ public class UserManagementController {
     }
 
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
-    @GetMapping
+    @GetMapping("all")
     public List<User> getAllUsers(){
         return userManagementService.getAllUsers();
     }
