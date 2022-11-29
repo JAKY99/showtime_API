@@ -1,10 +1,12 @@
 package com.m2i.showtime.yak.Service.User;
 
+import com.m2i.showtime.yak.Dto.AddUserAGgridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
-import com.m2i.showtime.yak.Entity.Permission;
+import com.m2i.showtime.yak.Dto.UpdateUserDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,8 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class UserManagementService {
@@ -60,7 +62,24 @@ public class UserManagementService {
     public void registerNewUser(User user) {
 
     }
-
+    public void registerNewUserAgGrid(AddUserAGgridDto user) {
+        Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
+        if(userOptional.isPresent()){
+            throw new IllegalStateException("Email is already taken");
+        }
+        User newUser = new User();
+        newUser.setUsername(user.getUsername());
+        newUser.setFirstName(user.getFirstName());
+        newUser.setLastName(user.getLastName());
+        newUser.setCountry(user.getCountry());
+        newUser.setRole(user.getRole());
+        newUser.setPassword(user.getPassword());
+        newUser.setGrantedAuthorities(newUser.getGrantedAuthorities());
+        userRepository.save(newUser);
+    }
+    public Object[] getAllUsersAggrid(){
+        return userRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).toArray();
+    }
     public void deleteUser(Long userId){
         if (!userRepository.existsById(userId)){
             throw new IllegalStateException("User does not exists");
@@ -100,5 +119,19 @@ public class UserManagementService {
             }
             user.setUsername(modifiedUser.getUsername());
         }
+    }
+
+    public boolean editUserAggrid(UpdateUserDto userToModify){
+        try{
+            User user = userRepository.findById(userToModify.getId())
+                    .orElseThrow(() -> new IllegalStateException(("user with id "+ userToModify.getId() + "does not exists")));
+            new ModelMapper().map(userToModify,user);
+            userRepository.save(user);
+
+            return true;
+        }catch (Exception e){
+            throw new IllegalStateException("An error occured while updating user");
+        }
+
     }
 }

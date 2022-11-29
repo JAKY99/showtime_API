@@ -124,6 +124,12 @@ public class User implements UserDetails {
         this.username = username;
         this.password = password;
     }
+    public User(int id , String firstName, String lastName,String country ) {
+        this.id = Long.valueOf(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.country = country;
+    }
 
     public String getFullName() {
         return String.format("%s %s", getFirstName(), getLastName());
