@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.m2i.showtime.yak.Dto.AddUserAGgridDto;
+import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
@@ -9,6 +10,7 @@ import com.m2i.showtime.yak.Service.User.UserManagementService;
 import org.json.JSONString;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +39,7 @@ public class UserManagementController {
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
     @PostMapping(value = "aggrid/edit" , consumes = "application/json")
-    public boolean getEditUserAGgrid(@RequestBody UpdateUserDto user)  {
+    public ResponseApiAgGridDto getEditUserAGgrid(@RequestBody UpdateUserDto user)  {
       return  userManagementService.editUserAggrid(user);
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
@@ -52,9 +54,9 @@ public class UserManagementController {
         userManagementService.registerNewUser(user);
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
-    @PostMapping("aggrid/add")
-    public void registerNewUserAgGrid(@RequestBody AddUserAGgridDto user){
-        userManagementService.registerNewUserAgGrid(user);
+    @PostMapping(value = "aggrid/add")
+    public ResponseApiAgGridDto registerNewUserAgGrid(@RequestBody AddUserAGgridDto user){
+       return userManagementService.registerNewUserAgGrid(user);
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
     @DeleteMapping("{userId}")
