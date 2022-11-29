@@ -1,36 +1,16 @@
 package com.m2i.showtime.yak.Controller;
 
-import com.m2i.showtime.yak.Dto.*;
-import com.m2i.showtime.yak.Entity.Movie;
-import com.m2i.showtime.yak.Repository.MovieRepository;
-import com.m2i.showtime.yak.Service.CustomThreadService;
-import com.m2i.showtime.yak.Service.MovieService;
-import org.apache.kafka.clients.admin.NewTopic;
+import com.m2i.showtime.yak.Dto.KafkaMessageDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-import com.google.gson.Gson;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1/kafka")
