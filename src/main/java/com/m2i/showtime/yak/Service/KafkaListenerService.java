@@ -34,7 +34,6 @@ public class KafkaListenerService {
         simpMessagingTemplate.convertAndSend("/topic/user", message);
         System.out.println("Received Message in group user: " + message);
     }
-
     @KafkaListener(topics = "activity")
     public void listenGroupFooActivity(String message) {
         simpMessagingTemplate.convertAndSend("/topic/activity", message);
