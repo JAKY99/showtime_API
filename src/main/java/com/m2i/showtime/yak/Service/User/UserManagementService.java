@@ -1,11 +1,13 @@
 package com.m2i.showtime.yak.Service.User;
 
 import com.m2i.showtime.yak.Dto.AddUserAGgridDto;
+import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -62,10 +64,15 @@ public class UserManagementService {
     public void registerNewUser(User user) {
 
     }
-    public void registerNewUserAgGrid(AddUserAGgridDto user) {
+    public ResponseApiAgGridDto registerNewUserAgGrid(AddUserAGgridDto user) {
+        ResponseApiAgGridDto response = new ResponseApiAgGridDto();
         Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
         if(userOptional.isPresent()){
-            throw new IllegalStateException("Email is already taken");
+            response.setSeverity("error");
+            response.setTitle("Error");
+            response.setDetails("Email is already taken");
+            response.setSticky(false);
+            return response;
         }
         User newUser = new User();
         newUser.setUsername(user.getUsername());
@@ -76,6 +83,12 @@ public class UserManagementService {
         newUser.setPassword(user.getPassword());
         newUser.setGrantedAuthorities(newUser.getGrantedAuthorities());
         userRepository.save(newUser);
+        response.setSeverity("success");
+        response.setTitle("Success");
+        response.setDetails("User added successfully");
+        response.setSticky(false);
+        return response;
+
     }
     public Object[] getAllUsersAggrid(){
         return userRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).toArray();
@@ -121,16 +134,25 @@ public class UserManagementService {
         }
     }
 
-    public boolean editUserAggrid(UpdateUserDto userToModify){
+    public ResponseApiAgGridDto editUserAggrid(UpdateUserDto userToModify){
+        ResponseApiAgGridDto response = new ResponseApiAgGridDto();
         try{
             User user = userRepository.findById(userToModify.getId())
                     .orElseThrow(() -> new IllegalStateException(("user with id "+ userToModify.getId() + "does not exists")));
             new ModelMapper().map(userToModify,user);
             userRepository.save(user);
 
-            return true;
+            response.setSeverity("success");
+            response.setTitle("Success");
+            response.setDetails("User modified successfully");
+            response.setSticky(false);
+            return response;
         }catch (Exception e){
-            throw new IllegalStateException("An error occured while updating user");
+            response.setSeverity("error");
+            response.setTitle("Error");
+            response.setDetails("An error occurred while modifying the user");
+            response.setSticky(false);
+            return response;
         }
 
     }
