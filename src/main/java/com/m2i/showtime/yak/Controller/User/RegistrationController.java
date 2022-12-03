@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Controller.User;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
@@ -22,7 +23,7 @@ public class RegistrationController {
     }
 
     @PostMapping("/user")
-    public int register(@RequestBody RegisterDto RegisterDto) {
+    public int register(@RequestBody RegisterDto RegisterDto) throws JsonProcessingException {
 
         return userAuthService.register(RegisterDto);
     }

@@ -5,17 +5,13 @@ import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
+import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserManagementService;
-import org.json.JSONString;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.Set;
 
 @RestController
 @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
@@ -68,5 +64,15 @@ public class UserManagementController {
     @PutMapping("{userId}")
     public void updateUser(@PathVariable("userId") Long userId, @RequestBody User modifiedUser){
         userManagementService.updateUser(userId, modifiedUser);
+    }
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("notification")
+    public Set<Notification> getNotificationUser(@RequestBody String username){
+        return userManagementService.getUserNotifications(username);
+    }
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("notification/update")
+    public void upNotificationUser(@RequestBody String username){
+         userManagementService.updateUserAlertNotifications(username);
     }
 }
