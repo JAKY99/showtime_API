@@ -5,9 +5,10 @@ import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
+import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Repository.NotificationRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
-import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,18 +18,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserManagementService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private final NotificationRepository notificationRepository;
 
     @Autowired
-    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationRepository = notificationRepository;
     }
 
     public PageListResultDto getAllUsers(SearchParamsDto searchParamsDto){
@@ -155,5 +161,30 @@ public class UserManagementService {
             return response;
         }
 
+    }
+
+    public Set<Notification> getUserNotifications(String username) {
+        User user = userRepository.findUserByEmail(username)
+                .orElseThrow(() -> new IllegalStateException("user with username " + username + " does not exists"));
+        return user.getNotifications();
+    }
+
+    public void updateUserAlertNotifications(String username) {
+        User user = userRepository.findUserByEmail(username)
+                .orElseThrow(() -> new IllegalStateException("user with username " + username + " does not exists"));
+         user.getNotifications()
+                .forEach(notification -> {
+                    String currentType = notification.getType();
+                    String currentStatus = notification.getStatus();
+                    boolean check = currentType.equals("alert") && currentStatus.equals("unread");
+                        if(check)
+                        {
+                            notification.setDateRead(new Date());
+                            notification.setStatus("read");
+                            this.notificationRepository.save(notification);
+                        }
+                    }
+                );
+        userRepository.save(user);
     }
 }
