@@ -93,7 +93,8 @@ public class User implements UserDetails {
     private Set<Serie> watchedSeries = new HashSet<>();
     @ManyToOne
     private Role role;
-
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Notification> notifications = new HashSet<>();
     public User(String firstName,
                 String lastName,
                 String username,
@@ -119,6 +120,7 @@ public class User implements UserDetails {
         this.password = password;
         this.country = country;
     }
+
 
     public User(String username, String password) {
         this.username = username;
