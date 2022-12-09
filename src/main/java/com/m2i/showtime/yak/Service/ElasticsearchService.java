@@ -169,8 +169,7 @@ public class ElasticsearchService {
             LOGGER.print("Delete index " + element + "s_" + dateStrFormatted + " - Fin");
         }
     }
-//    @Scheduled(cron = "0 0 9 * * *")
-    @Scheduled(fixedRate = 3600000)
+    @Scheduled(cron = "0 0 9 * * *")
     @Async
     public void uploadLogsToElasticsearch() throws IOException, URISyntaxException, InterruptedException {
 
