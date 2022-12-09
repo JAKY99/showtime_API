@@ -34,12 +34,18 @@ public class ElasticsearchService {
     private String apiKey;
     @Value("${application.elasticurl}")
     private String elasticbaseUrl;
+    @Value("${application.elasticsearch.username}")
+    private String elasticUsername;
+    @Value("${application.elasticsearch.password}")
+    private String elasticPassword;
+
     private static final long MILLIS_IN_A_DAY = 1000 * 60 * 60 * 24;
     private final LoggerService LOGGER = new LoggerService();
 
 
 
     @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(fixedRate = MILLIS_IN_A_DAY)
     @Async
     public void dailyUpdate() throws IOException, URISyntaxException, InterruptedException {
         SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy");
@@ -88,7 +94,7 @@ public class ElasticsearchService {
             File fileToDelete = new File(basePath + "/src/main/temp/" + dailyUrlsNames[i]);
             fileToDelete.delete();
             int finalI = i;
-            RunInsertFromIdDto RunInsertFromIdDto = new RunInsertFromIdDto( i, dateStrFormatted, elasticbaseUrl, apiKey, Paths.get(basePath + "/src/main/temp/" + dailyUrlsNamesUnzipped[finalI]).toFile());
+            RunInsertFromIdDto RunInsertFromIdDto = new RunInsertFromIdDto( i, dateStrFormatted, elasticbaseUrl, apiKey, Paths.get(basePath + "/src/main/temp/" + dailyUrlsNamesUnzipped[finalI]).toFile(), elasticUsername, elasticPassword);
             CustomThreadService thread = new CustomThreadService(RunInsertFromIdDto,"readJsonFile");
             thread.start();
             i++;
