@@ -1,4 +1,21 @@
 version: '3.8'
+#x-airflow-common:
+#  &airflow-common
+#  image: bitnami/airflow:latest
+#  environment:
+#    - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+#    - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@show_time_db:5432/dev_showtime
+#    - AIRFLOW__CORE__FERNET_KEY=FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
+#    - AIRFLOW__CORE__LOAD_EXAMPLES=False
+#    - AIRFLOW__CORE__LOGGING_LEVEL=INFO
+#  volumes:
+#    - ./plugins:/opt/bitnami/airflow/plugins
+#    - ./dags:/opt/bitnami/airflow/dags
+#    - ./db_backups:/opt/bitnami/airflow/db_backups
+#    - /var/run/docker.sock:/var/run/docker.sock
+#    - /config_airflow_requirement/requirements.txt:/opt/bitnami/airflow/requirements.txt
+#  depends_on:
+#    - db
 services:
   db:
     container_name: show_time_db
@@ -29,6 +46,7 @@ services:
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx2g"
     ulimits:
       memlock:
         soft: -1
@@ -39,18 +57,19 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
+      - ./elasticsearch-data:/usr/share/elasticsearch/data
+      - ./elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
     deploy:
-        resources:
-            limits:
-                cpus: '1'
-                memory: 500M
-            reservations:
-                cpus: '1'
-                memory: 500M
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2000M
+        reservations:
+          cpus: '1'
+          memory: 2000M
   kibana:
     container_name: kibana
     image: docker.elastic.co/kibana/kibana:8.4.3
@@ -61,13 +80,13 @@ services:
     depends_on:
       - elasticsearch
     deploy:
-        resources:
-            limits:
-                cpus: '1'
-                memory: 500M
-            reservations:
-                cpus: '1'
-                memory: 500M
+      resources:
+        limits:
+          cpus: '1'
+          memory: 500M
+        reservations:
+          cpus: '1'
+          memory: 500M
   logstash:
     image: kevinpsirius/centos_logstash:v1
     container_name: logstash
@@ -88,11 +107,39 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
+#  airflow-init:
+#    <<: *airflow-common
+#    container_name: airflow_init
+#    entrypoint: /bin/bash
+#    command:
+#      - -c
+#      - pip install airflow-provider-kafka &&  airflow users list || ( airflow db init &&
+#        airflow users create
+#        --role Admin
+#        --username airflow
+#        --password airflow
+#        --email airflow@airflow.com
+#        --firstname airflow
+#        --lastname airflow ) && tail -f /dev/null
+#    restart: on-failure
+#  airflow-webserver:
+#    <<: *airflow-common
+#    command: airflow webserver
+#    ports:
+#      - "8090:8080"
+#    container_name: airflow_webserver
+#    restart: always
+#
+#  airflow-scheduler:
+#    <<: *airflow-common
+#    command: airflow scheduler
+#    container_name: airflow_scheduler
+#    restart: always
 volumes:
-    local_pgdata:
-    pgadmin-data:
-    elasticsearch-data:
-      driver: local
+  local_pgdata:
+  pgadmin-data:
+  elasticsearch-data:
+    driver: local
 networks:
   default:
-      name: showtime_network
+    name: showtime_network
