@@ -2,6 +2,8 @@ package com.m2i.showtime.yak.Dto;
 
 import lombok.Getter;
 
+import java.io.File;
+
 @Getter
 public class RunInsertBulkDto {
     String elasticbaseUrl;
@@ -15,4 +17,6 @@ public class RunInsertBulkDto {
         this.page = page;
         this.urlMovieUserElastic = urlMovieUserElastic;
     }
+
+
 }

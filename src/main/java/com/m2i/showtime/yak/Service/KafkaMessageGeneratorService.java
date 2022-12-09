@@ -26,6 +26,7 @@ public class KafkaMessageGeneratorService {
     private final UserRepository userRepository;
     @Autowired
     private final NotificationRepository notificationRepository;
+    private final LoggerService LOGGER = new LoggerService();
     public KafkaMessageGeneratorService(UserRepository userRepository, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.notificationRepository = notificationRepository;
@@ -51,12 +52,12 @@ public class KafkaMessageGeneratorService {
 
             @Override
             public void onSuccess(SendResult<String, String> result) {
-                System.out.println("Sent message=[" + kafkaMessageDto.getMessage() +
+                LOGGER.print("Sent message=[" + kafkaMessageDto.getMessage() +
                         "] with offset=[" + result.getRecordMetadata().offset() + "]");
             }
             @Override
             public void onFailure(Throwable ex) {
-                System.out.println("Unable to send message=["
+                LOGGER.print("Unable to send message=["
                         + kafkaMessageDto.getMessage() + "] due to : " + ex.getMessage());
             }
         });
