@@ -16,6 +16,7 @@ spring-test/test-output/
 argfile*
 pom.xml
 activemq-data/
+/src/main/logs
 
 classes/
 /build
@@ -47,3 +48,7 @@ src/main/resources/application.properties
 # database
 /local_pgdata
 /pgadmin-data
+elasticsearch-data
+airflow-data
+db_backups
+dags
