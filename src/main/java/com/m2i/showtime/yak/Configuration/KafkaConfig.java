@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Configuration;
 
+import com.m2i.showtime.yak.Service.LoggerService;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ public class KafkaConfig {
 
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
+    private final LoggerService LOGGER = new LoggerService();
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -28,13 +30,18 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic topic1() {
-        System.out.println("topic1");
+        LOGGER.print("topic1");
         return new NewTopic("admin", 1, (short) 1);
     }
     @Bean
     public NewTopic topic2() {
-        System.out.println("topic2");
+        LOGGER.print("topic2");
         return new NewTopic("user", 1, (short) 1);
+    }
+    @Bean
+    public NewTopic topic3() {
+        LOGGER.print("elasticsearchUpdate");
+        return new NewTopic("elasticsearchUpdate", 1, (short) 1);
     }
 
 }
