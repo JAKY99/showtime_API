@@ -54,10 +54,10 @@ public class KafkaListenerService {
         simpMessagingTemplate.convertAndSend("/topic/activity", message);
         LOGGER.print("Received Message in group user: " + message);
     }
-    @Scheduled(fixedRate = 10000)
-    @Async
-    public void getSchedulersActivity () {
-        LOGGER.print("Activity Scheduler");
-        simpMessagingTemplate.convertAndSend("/topic/activity", "Still active");
-    }
+//    @Scheduled(fixedRate = 10000)
+//    @Async
+//    public void getSchedulersActivity () {
+//        LOGGER.print("Activity Scheduler");
+//        simpMessagingTemplate.convertAndSend("/topic/activity", "Still active");
+//    }
 }

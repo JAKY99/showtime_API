@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
 
@@ -153,6 +154,7 @@ public class ElasticsearchService {
                 HttpRequest elasticInsert = HttpRequest.newBuilder()
                         .uri(new URI(elasticbaseUrl + "/" + elementType[indexUrlToUse] + "s/_bulk"))
                         .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                        .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                         .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
                         .build();
                 HttpResponse elasticResponse = client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
@@ -168,6 +170,7 @@ public class ElasticsearchService {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest deleteIndex = HttpRequest.newBuilder()
                     .uri(new URI(elasticbaseUrl + "/" + element + "s_" + dateStrFormatted))
+                    .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                     .DELETE()
                     .build();
             HttpResponse elasticResponse = client.send(deleteIndex, HttpResponse.BodyHandlers.ofString());
@@ -175,46 +178,82 @@ public class ElasticsearchService {
         }
     }
     @Scheduled(cron = "0 0 9 * * *")
-    @Async
     public void uploadLogsToElasticsearch() throws IOException, URISyntaxException, InterruptedException {
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+        File Oldfolder = new File(basePath + "/src/main/logs/old/");
+        if(Oldfolder.exists()) {
+
+            File[] listOfDirectory = Oldfolder.listFiles();
+            for (File directorys : listOfDirectory) {
+                File[] listOfFiles = directorys.listFiles();
+                if(listOfFiles.length==0){
+                    directorys.delete();
+                    continue;
+                }
+
+                for (File file : listOfFiles) {
+                    LOGGER.print("Start sending historic log to elasticsearch");
+                    StringBuilder builk_build_string = new StringBuilder();
+                    BufferedReader br = new BufferedReader(new FileReader(file));
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        Gson gson = new Gson();
+                        String json = gson.toJson(line);
+                        builk_build_string.append("{ \"index\":{ \"_index\": \"logs_historic\" } }\n");
+                        builk_build_string.append( "{ \"text\" : " + json + "}\n");
+                    }
+                    br.close();
+                    file.delete();
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest elasticInsert = HttpRequest.newBuilder()
+                            .uri(new URI(elasticbaseUrl + "/logs_historic/_bulk"))
+                            .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                            .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
+                            .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
+                            .build();
+                    HttpResponse elasticResponse = client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
+                    LOGGER.print("End sending historic log to elasticsearch");
+
+                }
+                directorys.delete();
+            }
+        }
+    }
+    @Scheduled(initialDelay=15000,fixedDelay=3600000)
+    public void uploadLogsToElasticsearchHourly() throws IOException, URISyntaxException, InterruptedException {
 
         StringBuilder builk_build_string = new StringBuilder();
         Path currentRelativePath = Paths.get("");
         String basePath = currentRelativePath.toAbsolutePath().toString();
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        Date previousDate = new Date(System.currentTimeMillis() - MILLIS_IN_A_DAY);
-        String previousDateStrFormatted = formatter.format(previousDate);
-        File folder = new File(basePath + "/src/main/logs/old/" + previousDateStrFormatted);
-        if(folder.exists()) {
-            LOGGER.print("Start sending log to elasticsearch");
-            File[] listOfFiles = folder.listFiles();
-            for (File file : listOfFiles) {
-                if (file.isFile()) {
-                    BufferedReader br = new BufferedReader(new FileReader(file));
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        JSONObject obj = new JSONObject(line);
-                        Gson gson = new Gson();
-                        String json = gson.toJson(obj);
-                        builk_build_string.append("{ \"index\":{ \"_index\": \"logs_"+ previousDateStrFormatted + "\" } }\n");
-                        builk_build_string.append( "{ \"text\" : " + json + "}\n");
-                    }
-                }
+        File currentLogFile = new File(basePath + "/src/main/logs/spring-boot-logger-log4j2.log");
+        if (currentLogFile.isFile()) {
+            LOGGER.print("Start sending hourly log to elasticsearch");
+            BufferedReader br = new BufferedReader(new FileReader(currentLogFile));
+            String line;
+            while ((line = br.readLine()) != null) {
+                Gson gson = new Gson();
+                String json = gson.toJson(line);
+                builk_build_string.append("{ \"index\":{ \"_index\": \"hourly_log\" } }\n");
+                builk_build_string.append( "{ \"text\" : " + json + "}\n");
             }
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest elasticInsert = HttpRequest.newBuilder()
-                    .uri(new URI(elasticbaseUrl + "/logs/_bulk"))
+                    .uri(new URI(elasticbaseUrl + "/hourly_log/_bulk"))
                     .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                     .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
                     .build();
             HttpResponse elasticResponse = client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
-            LOGGER.print("End sending log to elasticsearch");
-            LOGGER.print("Delete old folder");
-            folder.delete();
+            LOGGER.print("End sending hourly log to elasticsearch");
+            LOGGER.print("Delete hourly log file");
+            br.close();
+            currentLogFile.delete();
         }
-        if(!folder.exists()) {
-            LOGGER.print("No logs to send to elasticsearch");
-        }
-
+    }
+    private static final String getBasicAuthenticationHeader(String username, String password) {
+        String valueToEncode = username + ":" + password;
+        return "Basic " + Base64.getEncoder().encodeToString(valueToEncode.getBytes());
     }
 }
