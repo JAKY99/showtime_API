@@ -45,7 +45,7 @@ services:
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms1g -Xmx2g"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx2g"
       - ELASTIC_PASSWORD=elastictest2
     ulimits:
       memlock:
@@ -69,7 +69,7 @@ services:
           memory: 2000M
         reservations:
           cpus: '1'
-          memory: 2000M
+          memory: 512M
   kibana:
     container_name: kibana
     image: docker.elastic.co/kibana/kibana:7.9.3
