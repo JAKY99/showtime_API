@@ -45,7 +45,6 @@ public class ElasticsearchService {
 
 
     @Scheduled(cron = "0 0 9 * * *")
-    @Scheduled(fixedRate = MILLIS_IN_A_DAY)
     @Async
     public void dailyUpdate() throws IOException, URISyntaxException, InterruptedException {
         SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy");
