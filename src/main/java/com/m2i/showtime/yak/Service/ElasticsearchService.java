@@ -182,9 +182,35 @@ public class ElasticsearchService {
 
         Path currentRelativePath = Paths.get("");
         String basePath = currentRelativePath.toAbsolutePath().toString();
+        HttpClient client = HttpClient.newHttpClient();
         File Oldfolder = new File(basePath + "/src/main/logs/old/");
         Date timestamp = new Date();
+        HttpRequest elasticIndexCreation = HttpRequest.newBuilder()
+                .uri(new URI(elasticbaseUrl + "/logs_historic"))
+                .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
+                .PUT(HttpRequest.BodyPublishers.ofString(""))
+                .build();
+        HttpResponse elasticResponseIndexCreation = client.send(elasticIndexCreation, HttpResponse.BodyHandlers.ofString());
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        String mapping = "{\n" +
+                "    \"properties\": {\n" +
+                "    \"text\": {\n" +
+                "        \"type\":   \"text\"\n" +
+                "      },\n" +
+                "      \"date\": {\n" +
+                "        \"type\":   \"date\",\n" +
+                "        \"format\": \"YYYY-MM-dd HH:mm:ss\"\n" +
+                "      } \n" +
+                "    }\n" +
+                "}";
+        HttpRequest elasticMapping = HttpRequest.newBuilder()
+                .uri(new URI(elasticbaseUrl + "/logs_historic/_mapping"))
+                .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
+                .PUT(HttpRequest.BodyPublishers.ofString(mapping))
+                .build();
+        HttpResponse elasticResponseMapping = client.send(elasticMapping, HttpResponse.BodyHandlers.ofString());
         if(Oldfolder.exists()) {
 
             File[] listOfDirectory = Oldfolder.listFiles();
@@ -208,7 +234,6 @@ public class ElasticsearchService {
                     }
                     br.close();
                     file.delete();
-                    HttpClient client = HttpClient.newHttpClient();
                     HttpRequest elasticInsert = HttpRequest.newBuilder()
                             .uri(new URI(elasticbaseUrl + "/logs_historic/_bulk"))
                             .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
@@ -228,10 +253,36 @@ public class ElasticsearchService {
 
         StringBuilder builk_build_string = new StringBuilder();
         Path currentRelativePath = Paths.get("");
+        HttpClient client = HttpClient.newHttpClient();
         String basePath = currentRelativePath.toAbsolutePath().toString();
         File currentLogFile = new File(basePath + "/src/main/logs/spring-boot-logger-log4j2.log");
         Date timestamp = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        HttpRequest elasticIndexCreation = HttpRequest.newBuilder()
+                .uri(new URI(elasticbaseUrl + "/hourly_log"))
+                .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
+                .PUT(HttpRequest.BodyPublishers.ofString(""))
+                .build();
+        HttpResponse elasticResponseIndexCreation = client.send(elasticIndexCreation, HttpResponse.BodyHandlers.ofString());
+        String mapping = "{\n" +
+                "    \"properties\": {\n" +
+                "    \"text\": {\n" +
+                "        \"type\":   \"text\"\n" +
+                "      },\n" +
+                "      \"date\": {\n" +
+                "        \"type\":   \"date\",\n" +
+                "        \"format\": \"YYYY-MM-dd HH:mm:ss\"\n" +
+                "      } \n" +
+                "    }\n" +
+                "}";
+        HttpRequest elasticMapping = HttpRequest.newBuilder()
+                .uri(new URI(elasticbaseUrl + "/hourly_log/_mapping"))
+                .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
+                .PUT(HttpRequest.BodyPublishers.ofString(mapping))
+                .build();
+        HttpResponse elasticResponseMapping = client.send(elasticMapping, HttpResponse.BodyHandlers.ofString());
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if (currentLogFile.isFile()) {
             LOGGER.print("Start sending hourly log to elasticsearch");
             BufferedReader br = new BufferedReader(new FileReader(currentLogFile));
@@ -242,7 +293,7 @@ public class ElasticsearchService {
                 builk_build_string.append("{ \"index\":{ \"_index\": \"hourly_log\" }  }\n");
                 builk_build_string.append( "{ \"text\" : " + json + ", \"date\" :\"" + formatter.format(timestamp) + "\"}\n");
             }
-            HttpClient client = HttpClient.newHttpClient();
+
             HttpRequest elasticInsert = HttpRequest.newBuilder()
                     .uri(new URI(elasticbaseUrl + "/hourly_log/_bulk"))
                     .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
