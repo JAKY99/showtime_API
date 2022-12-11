@@ -30,7 +30,7 @@ public class KafkaProducerConfig {
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class);
         configProps.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, "209715200");
-        configProps.put(ProducerConfig.BATCH_SIZE_CONFIG, "197152");
+//        configProps.put(ProducerConfig.BATCH_SIZE_CONFIG, "197152");
         configProps.put(ProducerConfig.BUFFER_MEMORY_CONFIG, "209715200");
         configProps.put(ProducerConfig.LINGER_MS_CONFIG, "0");
         configProps.put(ProducerConfig.RETRIES_CONFIG, "3");
