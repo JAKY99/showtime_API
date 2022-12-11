@@ -183,7 +183,7 @@ public class ElasticsearchService {
         Path currentRelativePath = Paths.get("");
         String basePath = currentRelativePath.toAbsolutePath().toString();
         File Oldfolder = new File(basePath + "/src/main/logs/old/");
-        long timestamp = new Date().getTime();
+        Date timestamp = new Date();
         if(Oldfolder.exists()) {
 
             File[] listOfDirectory = Oldfolder.listFiles();
@@ -202,8 +202,8 @@ public class ElasticsearchService {
                     while ((line = br.readLine()) != null) {
                         Gson gson = new Gson();
                         String json = gson.toJson(line);
-                        builk_build_string.append("{ \"index\":{ \"_index\": \"logs_historic\" } }\n");
-                        builk_build_string.append( "{ \"text\" : " + json + ", \"@timestamp\" : " + timestamp + "}\n");
+                        builk_build_string.append("{ \"index\":{ \"_index\": \"logs_historic\" , \"@timestamp\" : " + timestamp + "}\n");
+                        builk_build_string.append( "{ \"text\" : " + json + ", \"date\" : " + timestamp + "}\n");
                     }
                     br.close();
                     file.delete();
@@ -229,7 +229,7 @@ public class ElasticsearchService {
         Path currentRelativePath = Paths.get("");
         String basePath = currentRelativePath.toAbsolutePath().toString();
         File currentLogFile = new File(basePath + "/src/main/logs/spring-boot-logger-log4j2.log");
-        long timestamp = new Date().getTime();
+        Date timestamp = new Date();
         if (currentLogFile.isFile()) {
             LOGGER.print("Start sending hourly log to elasticsearch");
             BufferedReader br = new BufferedReader(new FileReader(currentLogFile));
