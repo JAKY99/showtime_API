@@ -203,7 +203,7 @@ public class ElasticsearchService {
                         Gson gson = new Gson();
                         String json = gson.toJson(line);
                         builk_build_string.append("{ \"index\":{ \"_index\": \"logs_historic\" } }\n");
-                        builk_build_string.append( "{ \"text\" : " + json + ", \"timestamp\" : " + timestamp + "}\n");
+                        builk_build_string.append( "{ \"text\" : " + json + ", \"@timestamp\" : " + timestamp + "}\n");
                     }
                     br.close();
                     file.delete();
@@ -238,7 +238,7 @@ public class ElasticsearchService {
                 Gson gson = new Gson();
                 String json = gson.toJson(line);
                 builk_build_string.append("{ \"index\":{ \"_index\": \"hourly_log\" } }\n");
-                builk_build_string.append( "{ \"text\" : " + json + ", \"timestamp\" : " + timestamp + "}\n");
+                builk_build_string.append( "{ \"text\" : " + json + ", \"@timestamp\" : " + timestamp + "}\n");
             }
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest elasticInsert = HttpRequest.newBuilder()
