@@ -15,6 +15,7 @@ public class Episode {
     private String name;
 
     private Boolean watched;
+
     public Episode() {
     }
     public Episode(Long id, Long imbd_id,String name,Boolean watched) {
