@@ -15,7 +15,7 @@ public class Episode {
     private String name;
 
     private Boolean watched;
-    private Boolean watched2;
+
     public Episode() {
     }
     public Episode(Long id, Long imbd_id,String name,Boolean watched) {
