@@ -2,7 +2,7 @@ name: workflow autoupdate staging
 on:
   push:
     branches:
-      - main
+      - develop
 jobs:
   staging-deploy:
     environment: staging
