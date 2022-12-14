@@ -39,14 +39,16 @@ public class ElasticsearchService {
     private String elasticUsername;
     @Value("${application.elasticsearch.password}")
     private String elasticPassword;
+    @Value("${spring.profiles.active}")
+    private String env;
 
     private static final long MILLIS_IN_A_DAY = 1000 * 60 * 60 * 24;
     private final LoggerService LOGGER = new LoggerService();
 
 
 
-    @Scheduled(cron = "0 0 9 * * *")
-    @Async
+//    @Scheduled(cron = "0 0 9 * * *")
+//    @Async
     public void dailyUpdate() throws IOException, URISyntaxException, InterruptedException {
         SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy");
         Date date = new Date();

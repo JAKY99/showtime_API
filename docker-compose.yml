@@ -31,6 +31,7 @@ services:
       - ./local_pgdata:/var/lib/postgresql/data
   pgadmin:
     build:  ./docker/pgadmin
+    privileged: true
     container_name: pgadmin4_container
     #restart: always
     ports:
@@ -39,10 +40,11 @@ services:
       PGADMIN_DEFAULT_EMAIL: showtime@dev.com
       PGADMIN_DEFAULT_PASSWORD: admin
     volumes:
-      - ./pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin-data:/var/lib/pgadmin:rw
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     container_name: elasticsearch
+    privileged: true
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx2g"
@@ -57,7 +59,7 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./elasticsearch-data:/usr/share/elasticsearch/data
+      - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
       - ./elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200

@@ -25,10 +25,10 @@ public class KafkaController {
     public int sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
 
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
-        LOGGER.print("Sending message to topic: " + kafkaMessageDto.getMessage());
+        LOGGER.print("With message : " + kafkaMessageDto.getMessage());
         ListenableFuture<SendResult<String, String>> future =
                 kafkaTemplate.send(kafkaMessageDto.getTopicName(), kafkaMessageDto.getMessage());
-        LOGGER.print("Message sent successfully");
+
         simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
         future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
 
