@@ -1,0 +1,21 @@
+name: workflow staging
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Deploy staging'
+        required: true
+        default: 'latest'
+jobs:
+  staging-deploy:
+    environment: staging
+    runs-on: self-hosted
+    container:
+      image: kevinpsirius/pipeline_deployment_image:v3
+      env:
+        sshKey: ${{ secrets.SSH_KEY }}
+    steps:
+      - name: Generate SSH connection to server with ansible for staging
+        run: |
+          touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
+          cd /var/www/html/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"

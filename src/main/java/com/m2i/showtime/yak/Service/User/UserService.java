@@ -97,7 +97,7 @@ public class UserService {
 
         Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
 
-        if (userOptional.isPresent()) {
+        if (userOptional.isPresent()){
             throw new IllegalStateException("email taken");
         }
 
@@ -107,42 +107,41 @@ public class UserService {
 
     public void deleteUser(Long userId) {
 
-        if (!userRepository.existsById(userId)) {
+        if (!userRepository.existsById(userId)){
             throw new IllegalStateException("User does not exists");
         }
         userRepository.deleteById(userId);
     }
 
     @Transactional
-    public void updateUser(Long userId, User modifiedUser) {
+    public void updateUser(Long userId,
+                           User modifiedUser) {
 
         User user = userRepository.findById(userId)
-                                  .orElseThrow(() -> new IllegalStateException(
-                                          ("user with id " + userId + "does not exists")));
+                .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
 
-        if (modifiedUser.getFirstName() != null && modifiedUser.getFirstName()
-                                                               .length() > 0 && !Objects.equals(
-                user.getFirstName(), modifiedUser.getFirstName())) {
+        if (modifiedUser.getFirstName() != null &&
+                modifiedUser.getFirstName().length() > 0 &&
+                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
             user.setFirstName(modifiedUser.getFirstName());
         }
 
-        if (modifiedUser.getLastName() != null && modifiedUser.getLastName()
-                                                              .length() > 0 && !Objects.equals(
-                user.getLastName(), modifiedUser.getLastName())) {
+        if (modifiedUser.getLastName() != null &&
+                modifiedUser.getLastName().length() > 0 &&
+                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
             user.setLastName(modifiedUser.getLastName());
         }
 
-        if (modifiedUser.getCountry() != null && modifiedUser.getCountry()
-                                                             .length() > 0 && !Objects.equals(
-                user.getCountry(), modifiedUser.getCountry())) {
+        if (modifiedUser.getCountry() != null &&
+                modifiedUser.getCountry().length() > 0 &&
+                !Objects.equals(user.getCountry(), modifiedUser.getCountry())) {
             user.setCountry(modifiedUser.getCountry());
         }
 
-        if (modifiedUser.getUsername() != null && modifiedUser.getUsername()
-                                                              .length() > 0 && !Objects.equals(
-                user.getUsername(), modifiedUser.getUsername())) {
-            if (userRepository.findUserByEmail(modifiedUser.getUsername())
-                              .isPresent()) {
+        if (modifiedUser.getUsername() != null &&
+                modifiedUser.getUsername().length() > 0 &&
+                !Objects.equals(user.getUsername(), modifiedUser.getUsername())) {
+            if (userRepository.findUserByEmail(modifiedUser.getUsername()).isPresent()){
                 throw new IllegalStateException("email taken");
             }
             user.setUsername(modifiedUser.getUsername());

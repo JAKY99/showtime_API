@@ -93,7 +93,8 @@ public class User implements UserDetails {
     private Set<Serie> watchedSeries = new HashSet<>();
     @ManyToOne
     private Role role;
-
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Notification> notifications = new HashSet<>();
     public User(String firstName,
                 String lastName,
                 String username,
@@ -120,9 +121,16 @@ public class User implements UserDetails {
         this.country = country;
     }
 
+
     public User(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+    public User(int id , String firstName, String lastName,String country ) {
+        this.id = Long.valueOf(id);
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.country = country;
     }
 
     public String getFullName() {

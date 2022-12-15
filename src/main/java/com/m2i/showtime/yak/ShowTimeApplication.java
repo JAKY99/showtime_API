@@ -14,6 +14,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -23,7 +25,7 @@ import static com.m2i.showtime.yak.Security.Role.AppUserRole.*;
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class ShowTimeApplication {
-
+	private static final Logger LOGGER = LogManager.getLogger(ShowTimeApplication.class);
 	private final PasswordEncoder passwordEncoder;
 
 	public ShowTimeApplication(PasswordEncoder passwordEncoder) {
@@ -32,7 +34,12 @@ public class ShowTimeApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ShowTimeApplication.class, args);
+		//exemple de log
+		//LOGGER.info("Info level log message");
+		//LOGGER.debug("Debug level log message");
+		//LOGGER.error("Error level log message");
 	}
+
 //		@Bean
 //		public CommandLineRunner mappingDemo(UserRepository userRepo,
 //											 MovieRepository movieRepo,

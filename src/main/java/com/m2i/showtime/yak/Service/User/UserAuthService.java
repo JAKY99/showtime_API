@@ -1,10 +1,13 @@
 package com.m2i.showtime.yak.Service.User;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.m2i.showtime.yak.Dto.MessageAdminDto;
 import com.m2i.showtime.yak.Dto.RegisterDto;
 import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.RoleRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,25 +15,27 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 import java.util.Optional;
 
-import static com.m2i.showtime.yak.Security.Role.AppUserRole.ADMIN;
 import static com.m2i.showtime.yak.Security.Role.AppUserRole.USER;
 
 @Service
 public class UserAuthService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserRepository userRepository ;
     private final RoleRepository roleRepository;
-
-    public UserAuthService(UserRepository userRepository, RoleRepository roleRepository) {
+    private final KafkaMessageGeneratorService kafkaMessageGeneratorService ;
+    public UserAuthService(UserRepository userRepository, RoleRepository roleRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
     }
+
     public PasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
-    public int register(RegisterDto RegisterDto) {
+    public int register(RegisterDto RegisterDto) throws JsonProcessingException {
         Optional<User> userOptional = userRepository.findUserByEmail(RegisterDto.getUsername());
         if(userOptional.isPresent()){
             throw new IllegalStateException("Email is already taken");
@@ -41,8 +46,9 @@ public class UserAuthService implements UserDetailsService {
         userToCreate.setPassword(passwordEncoder.encode(RegisterDto.getPassword()));
         userToCreate = setAuthoritiesForNewUser(userToCreate);
 
-
+        MessageAdminDto messageAdminDto = new MessageAdminDto("User " + userToCreate.getUsername() + " has been registered","info","basic");
         userRepository.save(userToCreate);
+        this.kafkaMessageGeneratorService.generateMessageToAdmin(messageAdminDto);
         return 200;
     }
 
