@@ -16,6 +16,8 @@ import java.util.Map;
 public class KafkaProducerConfig {
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
+    @Value("${spring.profiles.active}")
+    private String env;
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -23,6 +25,9 @@ public class KafkaProducerConfig {
         configProps.put(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 bootstrapAddress);
+        configProps.put(
+                ProducerConfig.CLIENT_ID_CONFIG,
+                env);
         configProps.put(
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class);

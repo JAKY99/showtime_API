@@ -39,14 +39,16 @@ public class ElasticsearchService {
     private String elasticUsername;
     @Value("${application.elasticsearch.password}")
     private String elasticPassword;
+    @Value("${spring.profiles.active}")
+    private String env;
 
     private static final long MILLIS_IN_A_DAY = 1000 * 60 * 60 * 24;
     private final LoggerService LOGGER = new LoggerService();
 
 
 
-    @Scheduled(cron = "0 0 9 * * *")
-    @Async
+//    @Scheduled(cron = "0 0 9 * * *")
+//    @Async
     public void dailyUpdate() throws IOException, URISyntaxException, InterruptedException {
         SimpleDateFormat formatter = new SimpleDateFormat("MM_dd_yyyy");
         Date date = new Date();
@@ -177,7 +179,7 @@ public class ElasticsearchService {
             LOGGER.print("Delete index " + element + "s_" + dateStrFormatted + " - Fin");
         }
     }
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(initialDelay=15000,fixedDelay=3600000)
     public void uploadLogsToElasticsearch() throws IOException, URISyntaxException, InterruptedException {
 
         Path currentRelativePath = Paths.get("");
@@ -186,7 +188,7 @@ public class ElasticsearchService {
         File Oldfolder = new File(basePath + "/src/main/logs/old/");
         Date timestamp = new Date();
         HttpRequest elasticIndexCreation = HttpRequest.newBuilder()
-                .uri(new URI(elasticbaseUrl + "/logs_historic"))
+                .uri(new URI(elasticbaseUrl + "/" + env + "_logs_historic"))
                 .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                 .PUT(HttpRequest.BodyPublishers.ofString(""))
@@ -205,7 +207,7 @@ public class ElasticsearchService {
                 "    }\n" +
                 "}";
         HttpRequest elasticMapping = HttpRequest.newBuilder()
-                .uri(new URI(elasticbaseUrl + "/logs_historic/_mapping"))
+                .uri(new URI(elasticbaseUrl+ "/" + env + "_logs_historic/_mapping"))
                 .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                 .PUT(HttpRequest.BodyPublishers.ofString(mapping))
@@ -229,13 +231,13 @@ public class ElasticsearchService {
                     while ((line = br.readLine()) != null) {
                         Gson gson = new Gson();
                         String json = gson.toJson(line);
-                        builk_build_string.append("{ \"index\":{ \"_index\": \"logs_historic\" } }\n");
-                        builk_build_string.append( "{ \"text\" : " + json + ", \"date\" : " + formatter.format(timestamp) + "}\n");
+                        builk_build_string.append("{ \"index\":{ \"_index\": \"" + env + "_logs_historic\" } }\n");
+                        builk_build_string.append( "{ \"text\" : " + json + ", \"date\" : \"" + formatter.format(timestamp) + "\"}\n");
                     }
                     br.close();
                     file.delete();
                     HttpRequest elasticInsert = HttpRequest.newBuilder()
-                            .uri(new URI(elasticbaseUrl + "/logs_historic/_bulk"))
+                            .uri(new URI(elasticbaseUrl + "/" + env + "_logs_historic/_bulk"))
                             .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                             .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                             .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
@@ -258,7 +260,7 @@ public class ElasticsearchService {
         File currentLogFile = new File(basePath + "/src/main/logs/spring-boot-logger-log4j2.log");
         Date timestamp = new Date();
         HttpRequest elasticIndexCreation = HttpRequest.newBuilder()
-                .uri(new URI(elasticbaseUrl + "/hourly_log"))
+                .uri(new URI(elasticbaseUrl + "/" + env + "_hourly_log"))
                 .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                 .PUT(HttpRequest.BodyPublishers.ofString(""))
@@ -276,7 +278,7 @@ public class ElasticsearchService {
                 "    }\n" +
                 "}";
         HttpRequest elasticMapping = HttpRequest.newBuilder()
-                .uri(new URI(elasticbaseUrl + "/hourly_log/_mapping"))
+                .uri(new URI(elasticbaseUrl + "/" + env + "_hourly_log/_mapping"))
                 .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                 .PUT(HttpRequest.BodyPublishers.ofString(mapping))
@@ -290,12 +292,12 @@ public class ElasticsearchService {
             while ((line = br.readLine()) != null) {
                 Gson gson = new Gson();
                 String json = gson.toJson(line);
-                builk_build_string.append("{ \"index\":{ \"_index\": \"hourly_log\" }  }\n");
+                builk_build_string.append("{ \"index\":{ \"_index\": \"" + env + "_hourly_log\" }  }\n");
                 builk_build_string.append( "{ \"text\" : " + json + ", \"date\" :\"" + formatter.format(timestamp) + "\"}\n");
             }
 
             HttpRequest elasticInsert = HttpRequest.newBuilder()
-                    .uri(new URI(elasticbaseUrl + "/hourly_log/_bulk"))
+                    .uri(new URI(elasticbaseUrl + "/" + env + "_hourly_log/_bulk"))
                     .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                     .setHeader(HttpHeaders.AUTHORIZATION,getBasicAuthenticationHeader(elasticUsername, elasticPassword))
                     .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))

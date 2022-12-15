@@ -19,6 +19,8 @@ import java.util.Map;
 public class KafkaConsumerConfig {
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
+    @Value("${spring.profiles.active}")
+    private String env;
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -27,7 +29,7 @@ public class KafkaConsumerConfig {
                 bootstrapAddress);
         props.put(
                 ConsumerConfig.GROUP_ID_CONFIG,
-                "foo");
+                env);
         props.put(
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class);
