@@ -91,6 +91,23 @@ services:
         reservations:
           cpus: '1'
           memory: 500M
+  kibana_aws:
+    container_name: kibana_aws
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    environment:
+      - ELASTICSEARCH_HOSTS=https://showtime-app.click/elasticsearch
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=a8gtr5ql
+    ports:
+      - 5602:5601
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 500M
+        reservations:
+          cpus: '1'
+          memory: 500M
 #    volumes:
 #      - ./kibana-config/kibana.yml:/usr/share/kibana/config/kibana.yml
   logstash:
