@@ -45,7 +45,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic topic3() {
         LOGGER.print("elasticsearchUpdate");
-        return new NewTopic(env+"/elasticsearchUpdate", 1, (short) 1);
+        return new NewTopic(env+"elasticsearchUpdate", 1, (short) 1);
     }
 
 }
