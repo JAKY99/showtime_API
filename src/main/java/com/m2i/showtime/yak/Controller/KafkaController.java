@@ -22,7 +22,7 @@ public class KafkaController {
     private SimpMessagingTemplate simpMessagingTemplate;
     private final LoggerService LOGGER = new LoggerService();
     @PostMapping("/send")
-    public int sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
+    public String sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
 
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
         LOGGER.print("With message : " + kafkaMessageDto.getMessage());
@@ -36,6 +36,7 @@ public class KafkaController {
             public void onSuccess(SendResult<String, String> result) {
                 LOGGER.print("Sent message=[" + kafkaMessageDto.getMessage() +
                         "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
             }
             @Override
             public void onFailure(Throwable ex) {
@@ -43,8 +44,8 @@ public class KafkaController {
                         + kafkaMessageDto.getMessage() + "] due to : " + ex.getMessage());
             }
         });
+        return "Sending message to topic: " + kafkaMessageDto.getTopicName() + "With message : " + kafkaMessageDto.getMessage();
 
-        return 1;
     }
 
 }
