@@ -29,6 +29,7 @@ public class KafkaConfig {
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         configs.put(AdminClientConfig.CLIENT_ID_CONFIG,env);
 
+
         return new KafkaAdmin(configs);
     }
 
