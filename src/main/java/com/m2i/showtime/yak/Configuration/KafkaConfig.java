@@ -29,6 +29,7 @@ public class KafkaConfig {
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         configs.put(AdminClientConfig.CLIENT_ID_CONFIG,env);
 
+
         return new KafkaAdmin(configs);
     }
 
@@ -45,7 +46,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic topic3() {
         LOGGER.print("elasticsearchUpdate");
-        return new NewTopic(env+"/elasticsearchUpdate", 1, (short) 1);
+        return new NewTopic(env+"elasticsearchUpdate", 1, (short) 1);
     }
 
 }
