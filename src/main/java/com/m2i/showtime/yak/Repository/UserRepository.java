@@ -22,8 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = ?1")
     Optional<UserSimpleDto> findSimpleUserById(Long userId);
 
-    @Query("SELECT u FROM User u JOIN u.watchedMovies w WHERE u.username = ?1 and w.id = ?2")
-    Optional<UserSimpleDto> isMovieWatched(String email, long movieId);
+    @Query("SELECT u FROM User u JOIN u.watchedMovies w WHERE u.username = ?1 and w.tmdbId = ?2")
+    Optional<UserSimpleDto> isMovieWatched(String email, long tmdbId);
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role='ADMIN'")
     Optional<User[]> findAllAdminUsers();
 }

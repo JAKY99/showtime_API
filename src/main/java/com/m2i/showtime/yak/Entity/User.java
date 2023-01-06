@@ -95,6 +95,7 @@ public class User implements UserDetails {
     private Role role;
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Notification> notifications = new HashSet<>();
+
     public User(String firstName,
                 String lastName,
                 String username,
@@ -126,7 +127,8 @@ public class User implements UserDetails {
         this.username = username;
         this.password = password;
     }
-    public User(int id , String firstName, String lastName,String country ) {
+
+    public User(int id, String firstName, String lastName, String country) {
         this.id = Long.valueOf(id);
         this.firstName = firstName;
         this.lastName = lastName;

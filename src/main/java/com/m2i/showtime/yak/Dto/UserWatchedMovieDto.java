@@ -9,5 +9,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserWatchedMovieDto {
     String userMail ;
-    Long movieId;
+    Long tmdbId;
 }

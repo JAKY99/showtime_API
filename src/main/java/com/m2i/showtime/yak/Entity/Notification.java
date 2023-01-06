@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Entity;
 
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,18 +19,22 @@ public class Notification {
     private String message;
     private String severity;
     private String type;
-    private String status="unread";
-    private Date dateCreated= new Date();
+
+    private NotificationStatus status = NotificationStatus.UNREAD;
+    private Date dateCreated = new Date();
     private Date dateRead;
-    public Notification(){
+
+    public Notification() {
     }
-    public Notification(String message , String severity , String type , String status){
+
+    public Notification(String message, String severity, String type, NotificationStatus status) {
         this.message = message;
         this.severity = severity;
         this.type = type;
         this.status = status;
     }
-    public Notification(String message , String severity , String type){
+
+    public Notification(String message, String severity, String type) {
         this.message = message;
         this.severity = severity;
         this.type = type;
