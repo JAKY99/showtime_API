@@ -1,14 +1,19 @@
 package com.m2i.showtime.yak.Entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.*;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "serie")
 public class Serie {
     @Id
     private Long id;
 
-    private Long imdb_id;
+    private Long tmdbId;
 
     private String name;
 

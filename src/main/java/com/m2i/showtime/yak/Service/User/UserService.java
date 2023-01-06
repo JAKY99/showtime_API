@@ -75,6 +75,7 @@ public class UserService {
     private String mailOrigin;
     @Value("${spring.jwt.secretKey}")
     private String JWT_SECRET;
+    private int multiplicatorTime = 1;
     @Autowired
     public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository) {
         this.userRepository = userRepository;
@@ -150,7 +151,7 @@ public class UserService {
 
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
-                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getMovieId());
+                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
 
         if (user.isEmpty()) {
             return false;
@@ -162,24 +163,26 @@ public class UserService {
 
 
     public boolean addMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
-        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getMovieId(),
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                                                               userWatchedMovieAddDto.getMovieName());
 
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-        Optional<UsersWatchedMovie> optionalUserWatchedMovie = usersWatchedMovieRepository.findByMovieAndUserId(userWatchedMovieAddDto.getMovieId(), user.getId());
+        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId();
+        Long userId = optionalUser.get().getId();
+        Optional<UsersWatchedMovie> optionalUserWatchedMovie =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
         if(!optionalUserWatchedMovie.isPresent()){
             optionalUser.get()
                     .getWatchedMovies()
                     .add(movie);
-            userRepository.saveAndFlush(user);
+            userRepository.save(user);
         }
         if(optionalUserWatchedMovie.isPresent()){
             Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
             optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
-            usersWatchedMovieRepository.saveAndFlush(optionalUserWatchedMovie.get());
+            usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
         }
 
         this.increaseWatchedNumber(userWatchedMovieAddDto);
@@ -189,22 +192,28 @@ public class UserService {
 
 
     public void removeMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
-        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getMovieId(),
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                                                               userWatchedMovieAddDto.getMovieName());
 
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-
+        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId();
+        Long userId = optionalUser.get().getId();
+        Optional<UsersWatchedMovie> completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
+//                .orElseThrow(() -> {
+//                    throw new IllegalStateException("User not found");
+//                });
+        multiplicatorTime = completeUserWatched.get().getWatchedNumber().intValue();
+//
+        this.decreaseWatchedNumber(userWatchedMovieAddDto);
+        this.decreaseTotalMovieWatchedTime(userWatchedMovieAddDto);
         optionalUser.get()
                     .getWatchedMovies()
                     .remove(movie);
 
-        userRepository.saveAndFlush(user);
-
-        this.decreaseWatchedNumber(userWatchedMovieAddDto);
-        this.decreaseTotalMovieWatchedTime(userWatchedMovieAddDto);
+        userRepository.save(user);
     }
 
     public void increaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
@@ -213,27 +222,29 @@ public class UserService {
             throw new IllegalStateException("User not found");
         });
 
-        optionalUser.get().setTotalMovieWatchedNumber(optionalUser.get().getTotalMovieWatchedNumber() + 1);
-
-
-        userRepository.saveAndFlush(optionalUser.get());
-
+         user.setTotalMovieWatchedNumber(optionalUser.get().getTotalMovieWatchedNumber() + 1);
+         userRepository.save(optionalUser.get());
     }
     public void decreaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
+        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId();
+        Long userId = optionalUser.get().getId();
+        UsersWatchedMovie completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId )
+                .orElseThrow(() -> {
+                    throw new IllegalStateException("User not found");
+                });
+        optionalUser.get().setTotalMovieWatchedNumber(optionalUser.get().getTotalMovieWatchedNumber() - completeUserWatched.getWatchedNumber());
 
-        optionalUser.get().setTotalMovieWatchedNumber(optionalUser.get().getTotalMovieWatchedNumber() - 1);
 
-
-        userRepository.saveAndFlush(optionalUser.get());
+        userRepository.save(optionalUser.get());
 
     }
     public void increaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getMovieId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -249,11 +260,11 @@ public class UserService {
         Long newWatchedTotalTime = optionalUser.get().getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60).getSeconds();
         optionalUser.get().setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
-        userRepository.saveAndFlush(optionalUser.get());
+        userRepository.save(optionalUser.get());
     }
     public void decreaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getMovieId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -266,10 +277,11 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-        Long newWatchedTotalTime = optionalUser.get().getTotalMovieWatchedTime().getSeconds()-Duration.ofSeconds(result_search.getRuntime()*60).getSeconds();
+        Long newWatchedTotalTime = optionalUser.get().getTotalMovieWatchedTime().getSeconds()-Duration.ofSeconds(result_search.getRuntime()*60).getSeconds()*multiplicatorTime;
+
         optionalUser.get().setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
-        userRepository.saveAndFlush(optionalUser.get());
+        userRepository.save(optionalUser.get());
     }
     public String uploadProfilePic(Long userId, @RequestParam("file") MultipartFile file) throws IOException {
         User user = userRepository.findById(userId)

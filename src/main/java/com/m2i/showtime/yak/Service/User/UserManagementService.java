@@ -9,6 +9,7 @@ import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.NotificationRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -175,12 +176,12 @@ public class UserManagementService {
          user.getNotifications()
                 .forEach(notification -> {
                     String currentType = notification.getType();
-                    String currentStatus = notification.getStatus();
-                    boolean check = currentType.equals("alert") && currentStatus.equals("unread");
+                    NotificationStatus currentStatus = notification.getStatus();
+                    boolean check = currentType.equals("alert") && currentStatus.equals(NotificationStatus.UNREAD);
                         if(check)
                         {
                             notification.setDateRead(new Date());
-                            notification.setStatus("read");
+                            notification.setStatus(NotificationStatus.READ);
                             this.notificationRepository.save(notification);
                         }
                     }

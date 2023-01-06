@@ -39,8 +39,8 @@ public class MovieService {
         return movieRepository.save(movie);
     }
 
-    public Movie addUserToMovie(Long movieId, Long userId) {
-        Movie movie = movieRepository.findById(movieId)
+    public Movie addUserToMovie(Long tmdbId, Long userId) {
+        Movie movie = movieRepository.findById(tmdbId)
                                      .get();
         User user = userRepository.findById(userId)
                                   .get();
@@ -48,12 +48,12 @@ public class MovieService {
         return movieRepository.save(movie);
     }
 
-    public Movie getMovieOrCreateIfNotExist(Long movieId, String movieName) {
-        Optional<Movie> optionalMovie = movieRepository.findById(movieId);
+    public Movie getMovieOrCreateIfNotExist(Long tmdbId, String movieName) {
+        Optional<Movie> optionalMovie = movieRepository.findByTmdbId(tmdbId);
         Movie movie = optionalMovie.orElse(null);
 
         if (movie == null) {
-            Movie newMovie = new Movie(movieId, movieName);
+            Movie newMovie = new Movie(tmdbId, movieName);
             movieRepository.save(newMovie);
             return newMovie;
         }
