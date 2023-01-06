@@ -8,6 +8,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserWatchedMovieAddDto {
     String userMail ;
-    Long movieId;
+    Long tmdbId;
     String movieName;
 }
