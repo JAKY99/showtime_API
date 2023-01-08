@@ -1,9 +1,18 @@
 package com.m2i.showtime.yak.Entity;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users_watched_movies")
+@Getter
+@Setter
+@NoArgsConstructor
 public class UsersWatchedMovie {
     @EmbeddedId
     private UsersWatchedMovieId id;
@@ -20,37 +29,8 @@ public class UsersWatchedMovie {
 
     @Column(name = "watched_number")
     private Long watchedNumber;
+    @Column(name = "watched_date")
+    private LocalDateTime watchedDate = LocalDateTime.now();
 
-    public UsersWatchedMovieId getId() {
-        return id;
-    }
-
-    public void setId(UsersWatchedMovieId id) {
-        this.id = id;
-    }
-
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public void setMovie(Movie movie) {
-        this.movie = movie;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Long getWatchedNumber() {
-        return watchedNumber;
-    }
-
-    public void setWatchedNumber(Long watchedNumber) {
-        this.watchedNumber = watchedNumber;
-    }
 
 }

@@ -39,7 +39,7 @@ public class User implements UserDetails {
     private String fullName;
     @Column(unique = true, name = "email")
     private String username;
-    @Column(name = "profile_picture", length = 64)
+    @Column(name = "profile_picture")
     private String profilePicture;
     private String backgroundPicture;
     @Column(name = "_password")
@@ -71,7 +71,9 @@ public class User implements UserDetails {
     private Long totalSeriesWatchedNumber = 0L;
     private Long totalEpisodesWatchedNumber = 0L;
     //-------------------------------------------------
-
+    private Long followingsCounter = 0L;
+    private Long followersCounter = 0L;
+    private Long commentsCounter = 0L;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_movies",

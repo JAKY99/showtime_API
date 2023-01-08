@@ -1,10 +1,7 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.m2i.showtime.yak.Dto.RegisterDto;
-import com.m2i.showtime.yak.Dto.UserSimpleDto;
-import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
-import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
@@ -82,12 +79,33 @@ public class UserController {
         return true;
     }
     @PostMapping("/uploadProfilePicture")
-    public String uploadProfilePic(
-            @RequestParam Long userId,
-            @RequestParam("file") MultipartFile profilePic
+    public UploadPictureDtoResponse uploadProfilePic(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
     ) throws IOException {
-
-        return userService.uploadProfilePic(userId,profilePic);
-
+        return userService.uploadProfilePic(email,file);
+    }
+    @PostMapping("/uploadBackgroundPicture")
+    public UploadBackgroundDtoResponse uploadBackgroundPic(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return userService.uploadBackgroundPic(email,file);
+    }
+    @PostMapping("profile/lazy/header")
+    public ProfileLazyUserDtoHeader getProfileHeader(@RequestBody String email) {
+        return userService.getProfileHeaderData(email);
+    }
+    @PostMapping("profile/lazy/avatar")
+    public ProfileLazyUserDtoAvatar getProfileAvatar(@RequestBody String email) {
+        return userService.getProfileAvatar(email);
+    }
+    @PostMapping("profile/lazy/socialInfos")
+    public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(@RequestBody String email) {
+        return userService.getProfileSocialInfos(email);
+    }
+    @PostMapping("profile/lazy/lastWatchedMovies")
+    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
+        return userService.getProfileLastWatchedMoviesData(email);
     }
 }

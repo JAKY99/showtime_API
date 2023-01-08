@@ -29,6 +29,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,10 +46,11 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
+import java.time.Period;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -178,14 +180,13 @@ public class UserService {
                     .getWatchedMovies()
                     .add(movie);
             userRepository.save(user);
+            this.increaseWatchedNumber(userWatchedMovieAddDto);
         }
         if(optionalUserWatchedMovie.isPresent()){
             Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
             optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
             usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
         }
-
-        this.increaseWatchedNumber(userWatchedMovieAddDto);
         this.increaseTotalMovieWatchedTime(userWatchedMovieAddDto);
         return true;
     }
@@ -283,11 +284,11 @@ public class UserService {
 
         userRepository.save(optionalUser.get());
     }
-    public String uploadProfilePic(Long userId, @RequestParam("file") MultipartFile file) throws IOException {
-        User user = userRepository.findById(userId)
+    public UploadPictureDtoResponse uploadProfilePic(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
                                   .orElseThrow(() -> new IllegalStateException(
-                                          ("user with id " + userId + "does not exists")));
-        String fileName = userId + "_profile_pic." + file.getOriginalFilename().split("\\.")[1];
+                                          ("user with id " + email + "does not exists")));
+        String fileName = user.getId() + "_profile_pic." + file.getOriginalFilename().split("\\.")[1];
         AWSCredentials credentials = new BasicAWSCredentials(
                 this.awsAccessKey,
                 this.awsSecretKey
@@ -309,8 +310,14 @@ public class UserService {
                 fileName,
                 fileToUpload
         );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setProfilePicture(url);
+        userRepository.save(user);
         fileToUpload.delete();
-        return "done";
+        UploadPictureDtoResponse uploadPictureDtoResponse = new UploadPictureDtoResponse();
+        uploadPictureDtoResponse.setNewPictureUrl(url);
+        return uploadPictureDtoResponse;
     }
 
     public JavaMailSender getJavaMailSender() {
@@ -390,5 +397,108 @@ public class UserService {
             return 200;
         }
         return 401;
+    }
+
+    public ProfileLazyUserDtoHeader getProfileHeaderData(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        ProfileLazyUserDtoHeader profileLazyUserDtoHeader = new ProfileLazyUserDtoHeader();
+        profileLazyUserDtoHeader.setNumberOfWatchedSeries(optionalUser.get().getTotalSeriesWatchedNumber());
+        profileLazyUserDtoHeader.setNumberOfWatchedMovies(optionalUser.get().getTotalMovieWatchedNumber());
+        String totalDurationMoviesMonthDayHour = durationConvertor(optionalUser.get().getTotalMovieWatchedTime());
+        profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
+        String totalDurationSeriesMonthDayHour = durationConvertor(optionalUser.get().getTotalSeriesWatchedTime());
+        profileLazyUserDtoHeader.setTotalTimeWatchedSeries(totalDurationSeriesMonthDayHour);
+
+        return profileLazyUserDtoHeader;
+    }
+
+    public String durationConvertor(Duration duration){
+        duration = Duration.ofDays(duration.toDaysPart()).plusHours(duration.toHoursPart());
+
+        Period period = Period.between(LocalDate.ofEpochDay(0), LocalDate.ofEpochDay(duration.toDays()));
+        int months = period.getMonths();
+        int days = period.getDays();
+        int hours = (int) (duration.toHours() - (days + months * 30) * 24);
+        String formattedDuration = months + "/" + days + "/" + hours;
+        return formattedDuration;
+    }
+
+    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMoviesData(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+         Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
+        ProfileLazyUserDtoLastWatchedMovies profileLazyUserDtoLastWatchedMovies = new ProfileLazyUserDtoLastWatchedMovies();
+
+        profileLazyUserDtoLastWatchedMovies.setLastWatchedMovies(lastWatchedMoviesIds.get());
+
+        return profileLazyUserDtoLastWatchedMovies;
+    }
+
+    public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        ProfileLazyUserDtoSocialInfos profileLazyUserDtoSocialInfos = new ProfileLazyUserDtoSocialInfos();
+        profileLazyUserDtoSocialInfos.setFollowersCounter(user.getFollowersCounter());
+        profileLazyUserDtoSocialInfos.setFollowingsCounter(user.getFollowingsCounter());
+        profileLazyUserDtoSocialInfos.setCommentsCounter(user.getCommentsCounter());
+        return profileLazyUserDtoSocialInfos;
+
+
+    }
+
+    public ProfileLazyUserDtoAvatar getProfileAvatar(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
+        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePicture());
+        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPicture());
+        profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        return profileLazyUserDtoAvatar;
+    }
+
+
+    public UploadBackgroundDtoResponse uploadBackgroundPic(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        String fileName = user.getId() + "_background_pic." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/"+fileName));
+        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setBackgroundPicture(url);
+        userRepository.save(user);
+        fileToUpload.delete();
+        UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
+        uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
+        return uploadBackgroundDtoResponse;
     }
 }
