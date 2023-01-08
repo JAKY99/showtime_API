@@ -29,7 +29,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,7 +49,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -433,11 +431,26 @@ public class UserService {
         });
          Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
         ProfileLazyUserDtoLastWatchedMovies profileLazyUserDtoLastWatchedMovies = new ProfileLazyUserDtoLastWatchedMovies();
-
+        long[] favoriteMoviesIds = new long[user.getFavoriteMovies().size()];
+        int i = 0;
+        for(Movie movie : user.getFavoriteMovies()){
+            favoriteMoviesIds[i] = movie.getTmdbId();
+            i++;
+        }
+        long[] watchlistMoviesIds = new long[user.getWatchlistMovies().size()];
+        i = 0;
+        for(Movie movie : user.getWatchlistMovies()){
+            watchlistMoviesIds[i] = movie.getTmdbId();
+            i++;
+        }
         profileLazyUserDtoLastWatchedMovies.setLastWatchedMovies(lastWatchedMoviesIds.get());
+        profileLazyUserDtoLastWatchedMovies.setFavoritesMovies(favoriteMoviesIds);
+        profileLazyUserDtoLastWatchedMovies.setWatchlistMovies(watchlistMoviesIds);
 
         return profileLazyUserDtoLastWatchedMovies;
     }
+
+
 
     public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(String email) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
@@ -500,5 +513,80 @@ public class UserService {
         UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
         uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
         return uploadBackgroundDtoResponse;
+    }
+
+    public boolean toggleMovieInFavoritelist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
+                userWatchedMovieAddDto.getMovieName());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        if(!optionalUser.get().getFavoriteMovies().contains(movie)){
+            optionalUser.get()
+                    .getFavoriteMovies()
+                    .add(movie);
+            userRepository.save(optionalUser.get());
+            return true;
+        }
+        if(optionalUser.get().getFavoriteMovies().contains(movie)){
+            optionalUser.get()
+                    .getFavoriteMovies()
+                    .remove(movie);
+            userRepository.save(optionalUser.get());
+            return false;
+        }
+        return false;
+    }
+    public boolean toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
+                userWatchedMovieAddDto.getMovieName());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        if(!optionalUser.get().getWatchlistMovies().contains(movie)){
+            optionalUser.get()
+                    .getWatchlistMovies()
+                    .add(movie);
+            userRepository.save(optionalUser.get());
+            return true;
+        }
+        if(optionalUser.get().getWatchlistMovies().contains(movie)){
+            optionalUser.get()
+                    .getWatchlistMovies()
+                    .remove(movie);
+            userRepository.save(optionalUser.get());
+            return false;
+        }
+        return false;
+    }
+
+    public boolean isMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieDto.getTmdbId(),
+                userWatchedMovieDto.getMovieName());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        if(optionalUser.get().getWatchlistMovies().contains(movie)){
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isMovieInFavoritelist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
+                userWatchedMovieAddDto.getMovieName());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        if(optionalUser.get().getFavoriteMovies().contains(movie)){
+            return true;
+        }
+        return false;
     }
 }

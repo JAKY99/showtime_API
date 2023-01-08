@@ -1,10 +1,7 @@
 package com.m2i.showtime.yak.Dto;
 
-import com.m2i.showtime.yak.Entity.Movie;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Set;
 
 @Getter
 @Setter

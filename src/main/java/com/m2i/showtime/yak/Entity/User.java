@@ -85,6 +85,24 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> watchedMovies = new HashSet<>();
     @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_favorite_movies",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "movie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Movie> favoriteMovies = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watchlist_movies",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "movie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Movie> watchlistMovies = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_series",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",

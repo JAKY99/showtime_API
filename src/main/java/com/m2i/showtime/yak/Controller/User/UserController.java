@@ -61,12 +61,27 @@ public class UserController {
     public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto) {
         return userService.isMovieInWatchlist(userWatchedMovieDto);
     }
+    @PostMapping("/isMovieInMovieToWatchlist")
+    public boolean isMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        return userService.isMovieInMovieToWatchlist(userWatchedMovieAddDto);
+    }
+    @PostMapping("/isMovieInFavoritelist")
+    public boolean isMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        return userService.isMovieInFavoritelist(userWatchedMovieAddDto);
+    }
 
     @PostMapping("/addMovieInWatchlist")
     public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
-
+    @PostMapping("/toggleMovieInFavoritelist")
+    public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
+    }
+    @PostMapping("/toggleMovieInMovieToWatchlist")
+    public boolean toggleMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto);
+    }
     @PostMapping("/removeMovieInWatchlist")
     public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
          userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
