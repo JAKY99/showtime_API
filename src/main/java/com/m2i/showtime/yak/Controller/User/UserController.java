@@ -87,6 +87,19 @@ public class UserController {
          userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
         return true;
     }
+    @PostMapping("/lastWatchedMoviesRange")
+    public fetchRangeListDto lastWatchedMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.lastWatchedMoviesRange(fetchRangeDto);
+
+    }
+    @PostMapping("/favoritesMoviesRange")
+    public fetchRangeListDto favoritesMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.favoritesMoviesRange(fetchRangeDto);
+    }
+    @PostMapping("/watchlistMoviesRange")
+    public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.watchlistMoviesRange(fetchRangeDto);
+    }
 
     @PostMapping("/increaseWatchedNumber")
     public boolean increaseWatchedNumber(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
@@ -123,4 +136,5 @@ public class UserController {
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
     }
+
 }

@@ -18,6 +18,6 @@ public interface UsersWatchedMovieRepository extends JpaRepository<UsersWatchedM
 
     @Query("DELETE FROM UsersWatchedMovie u WHERE u.movie = ?1 AND u.user = ?2")
     Optional<UsersWatchedMovie> deleteByMovieAndUserId(Long  movieId, Long userId);
-    @Query("SELECT u.movie.tmdbId FROM UsersWatchedMovie u WHERE u.user.id = ?1 order by u.watchedDate desc")
+    @Query("SELECT u.movie.tmdbId FROM UsersWatchedMovie u WHERE u.user.id = ?1  order by u.watchedDate desc ")
     Optional<long[]> findWatchedMoviesByUserId(Long userId);
 }

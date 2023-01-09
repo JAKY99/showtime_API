@@ -49,6 +49,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -430,23 +431,32 @@ public class UserService {
             throw new IllegalStateException("User not found");
         });
          Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
+
         ProfileLazyUserDtoLastWatchedMovies profileLazyUserDtoLastWatchedMovies = new ProfileLazyUserDtoLastWatchedMovies();
-        long[] favoriteMoviesIds = new long[user.getFavoriteMovies().size()];
+        long[] favoriteMoviesIds = new long[user.getFavoriteMovies().size()>=10?10:user.getFavoriteMovies().size()];
         int i = 0;
         for(Movie movie : user.getFavoriteMovies()){
+            if(i==10){
+                break;
+            }
             favoriteMoviesIds[i] = movie.getTmdbId();
             i++;
         }
-        long[] watchlistMoviesIds = new long[user.getWatchlistMovies().size()];
+        long[] watchlistMoviesIds = new long[user.getWatchlistMovies().size()>=10?10:user.getWatchlistMovies().size()];
         i = 0;
         for(Movie movie : user.getWatchlistMovies()){
+            if(i==10){
+                break;
+            }
             watchlistMoviesIds[i] = movie.getTmdbId();
             i++;
         }
-        profileLazyUserDtoLastWatchedMovies.setLastWatchedMovies(lastWatchedMoviesIds.get());
+        profileLazyUserDtoLastWatchedMovies.setLastWatchedMovies(Arrays.stream(lastWatchedMoviesIds.get()).limit(10).toArray());
         profileLazyUserDtoLastWatchedMovies.setFavoritesMovies(favoriteMoviesIds);
         profileLazyUserDtoLastWatchedMovies.setWatchlistMovies(watchlistMoviesIds);
-
+        profileLazyUserDtoLastWatchedMovies.setTotalFavoritesMovies(user.getFavoriteMovies().size());
+        profileLazyUserDtoLastWatchedMovies.setTotalWatchedMovies(lastWatchedMoviesIds.get().length);
+        profileLazyUserDtoLastWatchedMovies.setTotalWatchlistMovies(user.getWatchlistMovies().size());
         return profileLazyUserDtoLastWatchedMovies;
     }
 
@@ -565,28 +575,77 @@ public class UserService {
     }
 
     public boolean isMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieDto) {
-        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieDto.getTmdbId(),
-                userWatchedMovieDto.getMovieName());
-        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieDto.getUserMail());
-        User user = optionalUser.orElseThrow(() -> {
-            throw new IllegalStateException("User not found");
-        });
-        if(optionalUser.get().getWatchlistMovies().contains(movie)){
+        Optional<UserSimpleDto> user = userRepository.isMovieInMovieToWatch(
+                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
+
+        if (user.isEmpty()) {
+            return false;
+        } else {
             return true;
         }
-        return false;
     }
 
     public boolean isMovieInFavoritelist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
-        Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
-                userWatchedMovieAddDto.getMovieName());
-        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
+        Optional<UserSimpleDto> user = userRepository.isMovieInFavorite(
+                userWatchedMovieAddDto.getUserMail(), userWatchedMovieAddDto.getTmdbId());
+
+        if (user.isEmpty()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public fetchRangeListDto lastWatchedMoviesRange(fetchRangeDto fetchRangeDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-        if(optionalUser.get().getFavoriteMovies().contains(movie)){
-            return true;
+        Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
+        long[] listToUse = Arrays.stream(lastWatchedMoviesIds.get())
+                .skip(fetchRangeDto.getCurrentLength())
+                .limit(fetchRangeDto.getCurrentLength()+10)
+        .toArray();
+        fetchRangeListDto fetchRangeListDto = new fetchRangeListDto();
+        fetchRangeListDto.setTmdbIdList(listToUse);
+        return fetchRangeListDto;
+    }
+    public fetchRangeListDto favoritesMoviesRange(fetchRangeDto fetchRangeDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        Movie[] listRange = Arrays.stream(user.getFavoriteMovies().toArray())
+                .skip(fetchRangeDto.getCurrentLength())
+                .limit(fetchRangeDto.getCurrentLength()+10)
+                .toArray(Movie[]::new);
+        long [] listToUse = new long[listRange.length];
+        int i = 0;
+        for (Movie movie : listRange){
+            listToUse[i]=movie.getTmdbId();
+            i++;
         }
-        return false;
+        fetchRangeListDto fetchRangeListDto = new fetchRangeListDto();
+        fetchRangeListDto.setTmdbIdList(listToUse);
+        return fetchRangeListDto;
+    }
+    public fetchRangeListDto watchlistMoviesRange(fetchRangeDto fetchRangeDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+        Movie[] listRange = Arrays.stream(user.getWatchlistMovies().toArray())
+                .skip(fetchRangeDto.getCurrentLength())
+                .limit(fetchRangeDto.getCurrentLength()+10)
+                .toArray(Movie[]::new);
+        long [] listToUse = new long[listRange.length];
+        int i = 0;
+        for (Movie movie : listRange){
+            listToUse[i]=movie.getTmdbId();
+            i++;
+        }
+        fetchRangeListDto fetchRangeListDto = new fetchRangeListDto();
+        fetchRangeListDto.setTmdbIdList(listToUse);
+        return fetchRangeListDto;
     }
 }
