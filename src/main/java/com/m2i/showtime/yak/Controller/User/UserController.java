@@ -1,10 +1,7 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.m2i.showtime.yak.Dto.RegisterDto;
-import com.m2i.showtime.yak.Dto.UserSimpleDto;
-import com.m2i.showtime.yak.Dto.UserWatchedMovieAddDto;
-import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
@@ -64,16 +61,44 @@ public class UserController {
     public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto) {
         return userService.isMovieInWatchlist(userWatchedMovieDto);
     }
+    @PostMapping("/isMovieInMovieToWatchlist")
+    public boolean isMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        return userService.isMovieInMovieToWatchlist(userWatchedMovieAddDto);
+    }
+    @PostMapping("/isMovieInFavoritelist")
+    public boolean isMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
+        return userService.isMovieInFavoritelist(userWatchedMovieAddDto);
+    }
 
     @PostMapping("/addMovieInWatchlist")
     public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
-
+    @PostMapping("/toggleMovieInFavoritelist")
+    public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
+    }
+    @PostMapping("/toggleMovieInMovieToWatchlist")
+    public boolean toggleMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto);
+    }
     @PostMapping("/removeMovieInWatchlist")
     public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
          userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
         return true;
+    }
+    @PostMapping("/lastWatchedMoviesRange")
+    public fetchRangeListDto lastWatchedMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.lastWatchedMoviesRange(fetchRangeDto);
+
+    }
+    @PostMapping("/favoritesMoviesRange")
+    public fetchRangeListDto favoritesMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.favoritesMoviesRange(fetchRangeDto);
+    }
+    @PostMapping("/watchlistMoviesRange")
+    public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.watchlistMoviesRange(fetchRangeDto);
     }
 
     @PostMapping("/increaseWatchedNumber")
@@ -82,12 +107,34 @@ public class UserController {
         return true;
     }
     @PostMapping("/uploadProfilePicture")
-    public String uploadProfilePic(
-            @RequestParam Long userId,
-            @RequestParam("file") MultipartFile profilePic
+    public UploadPictureDtoResponse uploadProfilePic(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
     ) throws IOException {
-
-        return userService.uploadProfilePic(userId,profilePic);
-
+        return userService.uploadProfilePic(email,file);
     }
+    @PostMapping("/uploadBackgroundPicture")
+    public UploadBackgroundDtoResponse uploadBackgroundPic(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return userService.uploadBackgroundPic(email,file);
+    }
+    @PostMapping("profile/lazy/header")
+    public ProfileLazyUserDtoHeader getProfileHeader(@RequestBody String email) {
+        return userService.getProfileHeaderData(email);
+    }
+    @PostMapping("profile/lazy/avatar")
+    public ProfileLazyUserDtoAvatar getProfileAvatar(@RequestBody String email) {
+        return userService.getProfileAvatar(email);
+    }
+    @PostMapping("profile/lazy/socialInfos")
+    public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(@RequestBody String email) {
+        return userService.getProfileSocialInfos(email);
+    }
+    @PostMapping("profile/lazy/lastWatchedMovies")
+    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
+        return userService.getProfileLastWatchedMoviesData(email);
+    }
+
 }

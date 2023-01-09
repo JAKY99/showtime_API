@@ -58,7 +58,7 @@ public class MovieService {
             return newMovie;
         }
 
-        return movie;
+        return movieRepository.findByTmdbId(tmdbId).get();
     }
     public Boolean insertMovieBulkElastic(InsertMovieBulkElasticDto InsertMovieBulkElasticDto,String elasticbaseUrl , String apiKey) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
