@@ -43,5 +43,13 @@
                                  constraintName="fk_usenot_on_user" referencedColumnNames="id"
                                  referencedTableName="_user"/>
     </changeSet>
+    <changeSet id="1670014165360-7" author="kevin (generated)">
+        <dropColumn columnName="status" tableName="notification"/>
+    </changeSet>
+    <changeSet id="1670014165360-8" author="kevin (generated)">
+        <addColumn tableName="notification">
+            <column name="status" type="INT"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>
