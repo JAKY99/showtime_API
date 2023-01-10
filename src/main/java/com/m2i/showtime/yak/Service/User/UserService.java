@@ -315,7 +315,15 @@ public class UserService {
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
+        originalFile.getFreeSpace();
+         long size = originalFile.length();
         float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
         ImageWriter writer = writers.next();
 
@@ -537,7 +545,14 @@ public class UserService {
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
-        float quality = 0.3f;
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
         ImageWriter writer = writers.next();
 
