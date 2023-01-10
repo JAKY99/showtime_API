@@ -32,11 +32,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -293,6 +300,7 @@ public class UserService {
                 this.awsSecretKey
         );
 
+
         Path currentRelativePath = Paths.get("");
         String basePath = currentRelativePath.toAbsolutePath().toString();
 
@@ -302,8 +310,23 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/"+fileName));
+        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/original_"+fileName));
+        File originalFile = new File(basePath + "/src/main/profile_pic_temp/original_"+fileName);
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        float quality = 0.0f;
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
         s3client.putObject(
                 this.bucketName,
                 fileName,
@@ -314,6 +337,7 @@ public class UserService {
         user.setProfilePicture(url);
         userRepository.save(user);
         fileToUpload.delete();
+        originalFile.delete();
         UploadPictureDtoResponse uploadPictureDtoResponse = new UploadPictureDtoResponse();
         uploadPictureDtoResponse.setNewPictureUrl(url);
         return uploadPictureDtoResponse;
@@ -508,8 +532,23 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/"+fileName));
+        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/original_"+fileName));
+        File originalFile = new File(basePath + "/src/main/profile_pic_temp/original_"+fileName);
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        float quality = 0.3f;
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
         s3client.putObject(
                 this.bucketName,
                 fileName,
@@ -520,6 +559,7 @@ public class UserService {
         user.setBackgroundPicture(url);
         userRepository.save(user);
         fileToUpload.delete();
+        originalFile.delete();
         UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
         uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
         return uploadBackgroundDtoResponse;
