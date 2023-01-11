@@ -343,7 +343,7 @@ public class UserService {
         );
         String key = s3client.getObject(this.bucketName,fileName).getKey();
         String url = s3client.getUrl(this.bucketName, key).toString();
-        user.setProfilePicture(url);
+        user.setProfilePicture(url+"?"+System.currentTimeMillis());
         userRepository.save(user);
         fileToUpload.delete();
         originalFile.delete();
@@ -574,7 +574,7 @@ public class UserService {
         );
         String key = s3client.getObject(this.bucketName,fileName).getKey();
         String url = s3client.getUrl(this.bucketName, key).toString();
-        user.setBackgroundPicture(url);
+        user.setBackgroundPicture(url+"?"+System.currentTimeMillis());
         userRepository.save(user);
         fileToUpload.delete();
         originalFile.delete();
