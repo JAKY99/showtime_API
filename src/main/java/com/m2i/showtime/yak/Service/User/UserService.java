@@ -40,6 +40,7 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -315,7 +316,7 @@ public class UserService {
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
-        originalFile.getFreeSpace();
+        originalImage = this.removeAlphaChannel(originalImage);
          long size = originalFile.length();
         float quality = 0.0f;
         if(size<3145728) {
@@ -542,9 +543,11 @@ public class UserService {
         s3client.deleteObject(this.bucketName,fileName);
         file.transferTo( new File(basePath + "/src/main/profile_pic_temp/original_"+fileName));
         File originalFile = new File(basePath + "/src/main/profile_pic_temp/original_"+fileName);
+
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
         long size = originalFile.length();
         float quality = 0.0f;
         if(size<3145728) {
@@ -702,5 +705,22 @@ public class UserService {
         fetchRangeListDto fetchRangeListDto = new fetchRangeListDto();
         fetchRangeListDto.setTmdbIdList(listToUse);
         return fetchRangeListDto;
+    }
+    public BufferedImage removeAlphaChannel(BufferedImage img) {
+        if (!img.getColorModel().hasAlpha()) {
+            return img;
+        }
+
+        BufferedImage target = createImage(img.getWidth(), img.getHeight(), false);
+        Graphics2D g = target.createGraphics();
+        // g.setColor(new Color(color, false));
+        g.fillRect(0, 0, img.getWidth(), img.getHeight());
+        g.drawImage(img, 0, 0, null);
+        g.dispose();
+
+        return target;
+    }
+    public BufferedImage createImage(int width, int height, boolean hasAlpha) {
+        return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
     }
 }
