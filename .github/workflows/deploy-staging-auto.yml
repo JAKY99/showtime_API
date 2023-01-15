@@ -6,7 +6,7 @@ on:
 jobs:
   sonarqube-test:
       environment: production
-      runs-on: ubuntu:22.04
+      runs-on: ubuntu-latest
 #      container:
 #        image: kevinpsirius/javadeployspring:v1
       steps:
