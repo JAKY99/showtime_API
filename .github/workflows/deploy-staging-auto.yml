@@ -7,8 +7,8 @@ jobs:
   sonarqube-test:
       environment: production
       runs-on: self-hosted
-      container:
-        image: kevinpsirius/javadeployspring:v1
+#      container:
+#        image: kevinpsirius/javadeployspring:v1
       steps:
 #        - uses: actions/checkout@v2
 #          with:
