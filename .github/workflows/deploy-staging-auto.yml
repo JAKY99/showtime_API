@@ -7,8 +7,8 @@ jobs:
   sonarqube-test:
       environment: production
       runs-on: self-hosted
-      container:
-        image: kevinpsirius/pipeline_deployment_image:v3
+#      container:
+#        image: kevinpsirius/pipeline_deployment_image:v3
       steps:
         - uses: actions/checkout@v2
           with:
