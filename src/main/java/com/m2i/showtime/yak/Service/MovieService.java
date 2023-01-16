@@ -1,15 +1,19 @@
 package com.m2i.showtime.yak.Service;
 
 import com.google.gson.Gson;
+import com.m2i.showtime.yak.Configuration.RedisConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,10 +29,12 @@ public class MovieService {
     private final UserRepository userRepository;
 
     private final MovieRepository movieRepository;
+    private final RedisConfig redisConfig;
 
-    public MovieService(UserRepository userRepository, MovieRepository movieRepository) {
+    public MovieService(UserRepository userRepository, MovieRepository movieRepository, RedisConfig redisConfig) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
+        this.redisConfig = redisConfig;
     }
 
     public List<Movie> getMovies() {
@@ -130,4 +136,56 @@ public class MovieService {
         }
         return true;
     }
+
+    public SearchMovieAPIDto getRedisMovieCache(RedisCacheDto redisCacheDto) throws URISyntaxException, IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        boolean check = redisConfig.jedis().get(redisCacheDto.getUrlApi())!=null;
+        String resultToShow;
+        if(check){
+            resultToShow = redisConfig.jedis().get(redisCacheDto.getUrlApi());
+            for (int i = 0; i < resultToShow.length()-5; i++) {
+                if(resultToShow.charAt(i) == '}'){
+                    resultToShow = new StringBuilder(resultToShow).insert(i+1, ",").toString();
+                }
+            }
+            JSONObject resultToSend = new JSONObject("{\"page\":1,\"results\":"+resultToShow+"}");
+            Gson gson = new Gson();
+            SearchMovieAPIDto result_search = gson.fromJson(resultToSend.toString(), SearchMovieAPIDto.class);
+            return result_search;
+        }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(redisCacheDto.getUrlApi()))
+                .GET()
+                .build();
+        HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        JSONObject documentObj = new JSONObject(response.body().toString());
+        JSONArray results = documentObj.getJSONArray("results");
+        RunInsertRedisCacheDto runInfo = new RunInsertRedisCacheDto(redisConfig,redisCacheDto.getUrlApi());
+        CustomThreadService thread = new CustomThreadService(runInfo,"runInsertRedisCache");
+        thread.start();
+        Gson gson = new Gson();
+        final String[][] resultToSend = {{new String()}};
+        results.forEach(movie -> {
+            JSONObject currentMovie = new JSONObject(movie.toString());
+            String baseUrl = "https://image.tmdb.org/t/p/";
+            String sizePoster = "w500";
+            String sizeBackdrop = "original";
+            String posterPath = baseUrl + sizePoster + currentMovie.getString("poster_path");
+            String backdropPath = baseUrl + sizeBackdrop + currentMovie.getString("backdrop_path");
+            currentMovie.put("poster_path",posterPath);
+            currentMovie.put("backdrop_path",backdropPath);
+            resultToSend[0][0] += currentMovie;
+            for (int i = 0; i < resultToSend[0][0].length()-5; i++) {
+                if(resultToSend[0][0].charAt(i) == '}'){
+                    resultToSend[0] = new String[]{new StringBuilder(Arrays.toString(resultToSend[0])).insert(i + 1, ",").toString()};
+                }
+            }
+        });
+
+        JSONObject resultToSendObj = new JSONObject("{\"page\":1,\"results\":"+ resultToSend[0][0]+"}");
+        SearchMovieAPIDto result_search = gson.fromJson(resultToSendObj.toString(), SearchMovieAPIDto.class);
+        return result_search;
+
+    }
+
 }
