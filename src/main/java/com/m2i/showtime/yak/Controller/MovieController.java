@@ -63,5 +63,9 @@ public class MovieController {
     public boolean insertMovieBulkElastic(@RequestBody InsertMovieBulkElasticDto InsertMovieBulkElastic) throws Exception {;
       return movieService.insertMovieBulkElastic(InsertMovieBulkElastic,elasticbaseUrl,apiKey);
     }
+    @PostMapping("/redis/getcache")
+    public SearchMovieAPIDto getRedisMovieCache(@RequestBody RedisCacheDto redisCacheDto) throws Exception {;
+        return movieService.getRedisMovieCache(redisCacheDto);
+    }
 
 }
