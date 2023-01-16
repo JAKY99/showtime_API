@@ -61,6 +61,9 @@ public class CustomThreadService extends Thread{
                 case "runInsertRedisCache":
                     runInsertRedisCache(this.RunInsertRedisCacheDto.getRedisConfig(),this.RunInsertRedisCacheDto.getUrlApi());
                     break;
+                case "insertUrlApiInRedis":
+                    insertUrlApiInRedis(this.RunInsertRedisCacheDto.getRedisConfig(),this.RunInsertRedisCacheDto.getUrlApi());
+                    break;
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -201,6 +204,10 @@ public class CustomThreadService extends Thread{
             throw new RuntimeException(e);
         }
     }
-
+    private void insertUrlApiInRedis(RedisConfig redisConfig, String urlApi){
+        String posterToInsert = getByteArrayFromImageURL(urlApi);
+        String imageBase64 = "data:image/jpg;base64," + posterToInsert;
+        redisConfig.jedis().set(urlApi, imageBase64);
+    }
 
 }

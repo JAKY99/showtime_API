@@ -14,7 +14,7 @@ public class RedisController {
         this.redisService = redisService;
     }
 
-    @PostMapping("/get/url")
+    @PostMapping("/get/image")
     public String getImageFromRedis(String urlApi){
         return redisService.getRedisCache(urlApi);
     }
