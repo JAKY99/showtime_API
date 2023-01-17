@@ -166,7 +166,9 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
       - REDIS_AOF_ENABLED=no
       - REDIS_PORT_NUMBER=6379
-    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb
+      - REDIS_IO_THREADS=4
+      - REDIS_IO_THREADS_DO_READS=yes
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb --maxmemory-policy allkeys-lru
     ports:
       - '6379:6379'
     volumes:

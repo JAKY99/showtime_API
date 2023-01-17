@@ -44,8 +44,9 @@ public class CustomThreadService extends Thread{
         this.methodToCall = methodToCall;
     }
 
+    public CustomThreadService() {
 
-
+    }
 
 
     @Override
@@ -204,10 +205,11 @@ public class CustomThreadService extends Thread{
             throw new RuntimeException(e);
         }
     }
-    private void insertUrlApiInRedis(RedisConfig redisConfig, String urlApi){
+    void insertUrlApiInRedis(RedisConfig redisConfig, String urlApi){
         String posterToInsert = getByteArrayFromImageURL(urlApi);
         String imageBase64 = "data:image/jpg;base64," + posterToInsert;
         redisConfig.jedis().set(urlApi, imageBase64);
+        redisConfig.jedis().expire(urlApi, 3600);
     }
 
 }

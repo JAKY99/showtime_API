@@ -1,14 +1,13 @@
 package com.m2i.showtime.yak.Configuration;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import redis.clients.jedis.Jedis;
-
-import java.awt.print.Book;
 
 @Configuration
-public class RedisConfig {
+public class RedisLetuceConfig {
     @Value("${application.redis.host}")
     private String redisHost;
     @Value("${application.redis.port}")
@@ -16,12 +15,16 @@ public class RedisConfig {
     @Value("${application.redis.password}")
     private String redisPassword;
 
-
-    public Jedis jedis() {
-        Jedis jedis = new Jedis(redisHost, redisPort);
-        jedis.auth(redisPassword);
-        jedis.connect();
-        return jedis;
+    @Bean
+    public RedisClient redisClient() {
+        RedisURI redisURI = RedisURI.builder()
+                .withHost(redisHost)
+                .withPort(redisPort)
+                .withPassword(redisPassword)
+                .build();
+        RedisClient redisClient = RedisClient.create(redisURI);
+        return redisClient;
     }
 
 }
+
