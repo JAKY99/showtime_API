@@ -158,6 +158,21 @@ services:
 #    command: airflow scheduler
 #    container_name: airflow_scheduler
 #    restart: always
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis_showtime
+    environment:
+      - REDIS_PASSWORD=123456
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+      - REDIS_AOF_ENABLED=no
+      - REDIS_PORT_NUMBER=6379
+      - REDIS_IO_THREADS=4
+      - REDIS_IO_THREADS_DO_READS=yes
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis/data:/bitnami/redis/data
 volumes:
   local_pgdata:
   pgadmin-data:
