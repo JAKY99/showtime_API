@@ -20,20 +20,24 @@ public class HazelcastConfig {
     public HazelcastInstance hazelcastInstance() {
         Config config = new Config();
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        if(env.equals("local")){
-            NetworkConfig network = config.getNetworkConfig();
-            JoinConfig join = network.getJoin();
-            join.getTcpIpConfig().setEnabled(true);
-        }
-        if(!env.equals("local")){
-            NetworkConfig network = config.getNetworkConfig();
-            JoinConfig join = network.getJoin();
-            join.getTcpIpConfig().setEnabled(true);
-            config.getNetworkConfig().getJoin().getKubernetesConfig()
-                    .setEnabled(true)
-                    .setProperty("namespace", "showtime-application")
-                    .setProperty("service-name", "hazelcast-service");
-        }
+        NetworkConfig network = config.getNetworkConfig();
+        JoinConfig join = network.getJoin();
+        join.getTcpIpConfig().setEnabled(true);
+//        join.getTcpIpConfig().addMember(hazelcastHost);
+//        if(env.equals("local")){
+//            NetworkConfig network = config.getNetworkConfig();
+//            JoinConfig join = network.getJoin();
+//            join.getTcpIpConfig().setEnabled(true);
+//        }
+//        if(!env.equals("local")){
+//            NetworkConfig network = config.getNetworkConfig();
+//            JoinConfig join = network.getJoin();
+//            join.getTcpIpConfig().setEnabled(true);
+//            config.getNetworkConfig().getJoin().getKubernetesConfig()
+//                    .setEnabled(true)
+//                    .setProperty("namespace", "showtime-application")
+//                    .setProperty("service-name", "hazelcast-service");
+//        }
         return Hazelcast.newHazelcastInstance(config);
     }
 }
