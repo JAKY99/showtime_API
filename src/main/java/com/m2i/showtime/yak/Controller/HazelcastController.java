@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Dto.getImageFromHazelcastDto;
 import com.m2i.showtime.yak.Service.HazelcastService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -21,7 +22,7 @@ public class HazelcastController {
         return hazelcastService.getHazelcastCache(urlApi);
     }
     @PostMapping("/get/data")
-    public getDataFromHazelcastDto getDataFromHazelcast(@RequestBody getImageFromHazelcastDto getImageFromHazelcastDto) throws URISyntaxException, IOException, InterruptedException {
-        return hazelcastService.getHazelcastCacheData(getImageFromHazelcastDto.getUrlApi());
+    public getDataFromHazelcastDto getDataFromHazelcast(HttpServletResponse response, @RequestBody getImageFromHazelcastDto getImageFromHazelcastDto) throws URISyntaxException, IOException, InterruptedException {
+        return hazelcastService.getHazelcastCacheData(getImageFromHazelcastDto.getUrlApi(),response);
     }
 }

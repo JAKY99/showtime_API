@@ -9,8 +9,13 @@ import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
 import com.m2i.showtime.yak.Dto.getImageFromHazelcastDto;
 import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
 import org.json.JSONObject;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -54,7 +59,7 @@ public class HazelcastService {
         }
     }
 
-    public getDataFromHazelcastDto getHazelcastCacheData(String urlApi) throws URISyntaxException, IOException, InterruptedException {
+    public getDataFromHazelcastDto getHazelcastCacheData(String urlApi, HttpServletResponse servletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         getDataFromHazelcastDto getDataFromHazelcastDto = new getDataFromHazelcastDto();
         String  check = (String) hazelcastConfig.hazelcastInstance().getMap("getHazelcastCacheData").get(urlApi);
@@ -70,6 +75,7 @@ public class HazelcastService {
             return getDataFromHazelcastDto;
         }
         getDataFromHazelcastDto.setData(check);
+        servletResponse.setHeader("cache-control", "public, max-age=360000");
         return getDataFromHazelcastDto;
     }
     public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {

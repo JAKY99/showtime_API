@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.json.JSONString;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -59,7 +60,7 @@ public class RedisService {
         }
     }
 
-    public getDataFromRedisDto getRedisCacheData(String urlApi) throws URISyntaxException, IOException, InterruptedException {
+    public getDataFromRedisDto getRedisCacheData(String urlApi, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
         String  check = redisLetuceConfig.redisClient().connect().sync().get(urlApi);
@@ -73,8 +74,10 @@ public class RedisService {
             getDataFromRedisDto.setData(documentObj.toString());
             redisLetuceConfig.redisClient().connect().sync().set(urlApi, documentObj.toString());
             redisLetuceConfig.redisClient().connect().sync().expire(urlApi, 3600);
+            HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
             return getDataFromRedisDto;
         }
+        HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
         getDataFromRedisDto.setData(check);
         return getDataFromRedisDto;
     }
