@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 public class HazelcastConfig {
     @Value("${application.hazelcast.host}")
     private String hazelcastHost;
+    @Value("${spring.profiles.active}")
+    private String env;
     @Bean
     public HazelcastInstance hazelcastInstance() {
         Config config = new Config();
@@ -21,7 +23,11 @@ public class HazelcastConfig {
         join.getTcpIpConfig().setEnabled(true);
         join.getTcpIpConfig().addMember(hazelcastHost);
         join.getMulticastConfig().setEnabled(false);
-
+        if(!env.equals("local")){
+            config.getNetworkConfig().getJoin().getKubernetesConfig().setEnabled(true)
+                    .setProperty("namespace", "showtime-application")
+                    .setProperty("service-name", "hazelcast-service");
+        }
         return Hazelcast.newHazelcastInstance(config);
     }
 }
