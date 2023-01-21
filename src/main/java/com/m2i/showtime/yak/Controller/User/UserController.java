@@ -121,7 +121,7 @@ public class UserController {
         return userService.uploadBackgroundPic(email,file);
     }
     @PostMapping("profile/lazy/header")
-    public ProfileLazyUserDtoHeader getProfileHeader(@RequestBody String email) {
+    public ProfileLazyUserDtoHeader getProfileHeader(@RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
         return userService.getProfileHeaderData(email);
     }
     @PostMapping("profile/lazy/avatar")
@@ -133,7 +133,7 @@ public class UserController {
         return userService.getProfileSocialInfos(email);
     }
     @PostMapping("profile/lazy/lastWatchedMovies")
-    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
+    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
         return userService.getProfileLastWatchedMoviesData(email);
     }
 
