@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
 import com.m2i.showtime.yak.Service.RedisService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -18,11 +19,11 @@ public class RedisController {
     }
 
     @GetMapping ("/get/image")
-    public getImageFromRedisDto getImageFromRedis(@RequestParam String urlApi) {
+    public getImageFromRedisDto getImageFromRedis(HttpServletResponse response,@RequestParam String urlApi) {
         return redisService.getRedisCache(urlApi);
     }
-    @PostMapping("/get/data")
-    public getDataFromRedisDto getDataFromRedis(@RequestBody getImageFromRedisDto getImageFromRedisDto) throws URISyntaxException, IOException, InterruptedException {
-        return redisService. getRedisCacheData(getImageFromRedisDto.getUrlApi());
+    @GetMapping("/get/data")
+    public getDataFromRedisDto getDataFromRedis(HttpServletResponse response,@RequestParam String urlApi) throws URISyntaxException, IOException, InterruptedException {
+        return redisService. getRedisCacheData(urlApi,response);
     }
 }
