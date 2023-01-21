@@ -18,11 +18,13 @@ public class HazelcastConfig {
     @Bean
     public HazelcastInstance hazelcastInstance() {
         Config config = new Config();
-        NetworkConfig network = config.getNetworkConfig();
-        JoinConfig join = network.getJoin();
-        join.getTcpIpConfig().setEnabled(true);
-        join.getTcpIpConfig().addMember(hazelcastHost);
-        join.getMulticastConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        if(env.equals("local")){
+            NetworkConfig network = config.getNetworkConfig();
+            JoinConfig join = network.getJoin();
+            join.getTcpIpConfig().setEnabled(true);
+            join.getTcpIpConfig().addMember(hazelcastHost);
+        }
         if(!env.equals("local")){
             config.getNetworkConfig().getJoin().getKubernetesConfig().setEnabled(true)
                     .setProperty("namespace", "showtime-application")
