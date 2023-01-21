@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 @Configuration
 public class HazelcastConfig {
     @Value("${application.hazelcast.host}")
@@ -23,10 +24,13 @@ public class HazelcastConfig {
             NetworkConfig network = config.getNetworkConfig();
             JoinConfig join = network.getJoin();
             join.getTcpIpConfig().setEnabled(true);
-            join.getTcpIpConfig().addMember(hazelcastHost);
         }
         if(!env.equals("local")){
-            config.getNetworkConfig().getJoin().getKubernetesConfig().setEnabled(true)
+            NetworkConfig network = config.getNetworkConfig();
+            JoinConfig join = network.getJoin();
+            join.getTcpIpConfig().setEnabled(true);
+            config.getNetworkConfig().getJoin().getKubernetesConfig()
+                    .setEnabled(true)
                     .setProperty("namespace", "showtime-application")
                     .setProperty("service-name", "hazelcast-service");
         }
