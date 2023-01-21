@@ -11,7 +11,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.m2i.showtime.yak.Configuration.RedisConfig;
+import com.m2i.showtime.yak.Configuration.RedisLetuceConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
@@ -20,6 +23,7 @@ import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
 import com.m2i.showtime.yak.Service.MovieService;
+import com.m2i.showtime.yak.Service.RedisService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,12 +89,16 @@ public class UserService {
     @Value("${spring.jwt.secretKey}")
     private String JWT_SECRET;
     private int multiplicatorTime = 1;
+    private RedisService redisService;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
+        this.redisService = redisService;
+
+
     }
 
     public Optional<UserSimpleDto> getUser(Long userId) {
@@ -431,7 +439,13 @@ public class UserService {
         return 401;
     }
 
-    public ProfileLazyUserDtoHeader getProfileHeaderData(String email) {
+    public ProfileLazyUserDtoHeader getProfileHeaderData(String email) throws URISyntaxException, IOException, InterruptedException {
+        String inCachePrefix = "profileHeaderData";
+        String inCacheKey = inCachePrefix + email;
+        String checkInCache = this.redisService.getRedisCacheDataBDD(inCacheKey);
+        if(checkInCache!=null){
+            return new ObjectMapper().readValue(checkInCache, ProfileLazyUserDtoHeader.class);
+        }
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
@@ -443,7 +457,7 @@ public class UserService {
         profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
         String totalDurationSeriesMonthDayHour = durationConvertor(optionalUser.get().getTotalSeriesWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedSeries(totalDurationSeriesMonthDayHour);
-
+        this.redisService.setRedisCacheDataBDD(inCacheKey, new ObjectMapper().writeValueAsString(profileLazyUserDtoHeader),60);
         return profileLazyUserDtoHeader;
     }
 

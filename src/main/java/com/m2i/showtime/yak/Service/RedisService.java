@@ -19,6 +19,7 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Base64;
 
 @Service
@@ -76,5 +77,18 @@ public class RedisService {
         }
         getDataFromRedisDto.setData(check);
         return getDataFromRedisDto;
+    }
+    public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {
+        getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
+        String  check = redisLetuceConfig.redisClient().connect().sync().get(key);
+        if(check==null) {
+            return null;
+        }
+        return check;
+    }
+    public Boolean setRedisCacheDataBDD(String key, String value, int expire) throws URISyntaxException, IOException, InterruptedException {
+        redisLetuceConfig.redisClient().connect().sync().set(key,value);
+        redisLetuceConfig.redisClient().connect().sync().expire(key, expire);
+        return true;
     }
 }
