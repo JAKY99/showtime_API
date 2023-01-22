@@ -64,6 +64,7 @@ import java.time.Period;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class UserService {
@@ -95,6 +96,7 @@ public class UserService {
     private HazelcastConfig hazelcastConfig;
 
     private final String UserNotFound="User not found";
+    private final String tempPathName="/src/main/profile_pic_temp/original_";
     @Autowired
     public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig) {
         this.userRepository = userRepository;
@@ -274,7 +276,7 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60).getSeconds();
+        Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
         userRepository.save(user);
@@ -295,7 +297,7 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()-Duration.ofSeconds(result_search.getRuntime()*60).getSeconds()*multiplicatorTime;
+        Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()-Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds()*multiplicatorTime;
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
         userRepository.save(user);
@@ -320,8 +322,8 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/original_"+fileName));
-        File originalFile = new File(basePath + "/src/main/profile_pic_temp/original_"+fileName);
+        file.transferTo( new File(basePath + tempPathName + fileName));
+        File originalFile = new File(basePath + tempPathName +fileName);
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
@@ -415,7 +417,7 @@ public class UserService {
             JWTVerifier verifier = JWT.require(algorithm)
                     .withIssuer("auth0")
                     .build(); //Reusable verifier instance
-            DecodedJWT jwt = verifier.verify(token);
+            verifier.verify(token);
             return true;
         } catch (JWTVerificationException exception){
             return false;
@@ -477,8 +479,7 @@ public class UserService {
         int months = period.getMonths();
         int days = period.getDays();
         int hours = (int) (duration.toHours() - (days + months * 30) * 24);
-        String formattedDuration = months + "/" + days + "/" + hours;
-        return formattedDuration;
+        return months + "/" + days + "/" + hours;
     }
 
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMoviesData(String email) {
@@ -552,6 +553,9 @@ public class UserService {
         User user = userRepository.findUserByEmail(email)
                 .orElseThrow(() -> new IllegalStateException(
                         ("user with id " + email + "does not exists")));
+        if(file.isEmpty()){
+            throw new IllegalStateException("File is empty");
+        }
         String fileName = user.getId() + "_background_pic." + file.getOriginalFilename().split("\\.")[1];
         AWSCredentials credentials = new BasicAWSCredentials(
                 this.awsAccessKey,
@@ -567,8 +571,8 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + "/src/main/profile_pic_temp/original_"+fileName));
-        File originalFile = new File(basePath + "/src/main/profile_pic_temp/original_"+fileName);
+        file.transferTo( new File(basePath + tempPathName +fileName));
+        File originalFile = new File(basePath + tempPathName +fileName);
 
         File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
@@ -602,8 +606,12 @@ public class UserService {
         String url = s3client.getUrl(this.bucketName, key).toString();
         user.setBackgroundPicture(url+"?"+System.currentTimeMillis());
         userRepository.save(user);
-        fileToUpload.delete();
-        originalFile.delete();
+        if(fileToUpload.delete()){
+            System.out.println("File deleted successfully");
+        }
+        if(originalFile.delete()){
+            System.out.println("File deleted successfully");
+        }
         UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
         uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
         return uploadBackgroundDtoResponse;
@@ -663,21 +671,13 @@ public class UserService {
     public boolean isMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieInMovieToWatch(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
-
-        if (user.isEmpty()) {
-            return false;
-        }
-        return true;
+        return user.isEmpty() ? false : true;
     }
 
     public boolean isMovieInFavoritelist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieInFavorite(
                 userWatchedMovieAddDto.getUserMail(), userWatchedMovieAddDto.getTmdbId());
-
-        if (user.isEmpty()) {
-            return false;
-        }
-        return true;
+        return user.isEmpty() ? false : true;
     }
 
     public fetchRangeListDto lastWatchedMoviesRange(fetchRangeDto fetchRangeDto) {
@@ -687,9 +687,10 @@ public class UserService {
             throw new IllegalStateException(UserNotFound);
         }
         Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
-        long[] listToUse = Arrays.stream(lastWatchedMoviesIds.get())
+        long[] stream = lastWatchedMoviesIds.isPresent() ? lastWatchedMoviesIds.get() : new long[0];
+        long[] listToUse = Arrays.stream(stream)
                 .skip(fetchRangeDto.getCurrentLength())
-                .limit(fetchRangeDto.getCurrentLength()+10)
+                .limit(fetchRangeDto.getCurrentLength()+10L)
         .toArray();
         fetchRangeListDto fetchRangeListDto = new fetchRangeListDto();
         fetchRangeListDto.setTmdbIdList(listToUse);
@@ -703,7 +704,7 @@ public class UserService {
         }
         Movie[] listRange = Arrays.stream(user.getFavoriteMovies().toArray())
                 .skip(fetchRangeDto.getCurrentLength())
-                .limit(fetchRangeDto.getCurrentLength()+10)
+                .limit(fetchRangeDto.getCurrentLength()+10L)
                 .toArray(Movie[]::new);
         return getFetchRangeListDto(listRange);
     }
@@ -715,7 +716,7 @@ public class UserService {
         }
         Movie[] listRange = Arrays.stream(user.getWatchlistMovies().toArray())
                 .skip(fetchRangeDto.getCurrentLength())
-                .limit(fetchRangeDto.getCurrentLength()+10)
+                .limit(fetchRangeDto.getCurrentLength()+10L)
                 .toArray(Movie[]::new);
         return getFetchRangeListDto(listRange);
     }
