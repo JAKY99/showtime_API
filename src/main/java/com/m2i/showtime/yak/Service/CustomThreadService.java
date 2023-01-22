@@ -192,7 +192,7 @@ public class CustomThreadService extends Thread{
             redisConfig.jedis().set(KeyUrl, Arrays.toString(resultToInsert));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
     }

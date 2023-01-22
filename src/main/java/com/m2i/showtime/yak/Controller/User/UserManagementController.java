@@ -42,7 +42,6 @@ public class UserManagementController {
     @PostMapping("aggrid/delete")
     public boolean getDeleteUsersAGgrid(@RequestBody Object[] user) {
         return true;
-//        return  userManagementService.getAllUsersAggrid();
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
     @PostMapping
