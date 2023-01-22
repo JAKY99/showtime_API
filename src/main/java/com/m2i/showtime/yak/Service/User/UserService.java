@@ -1,5 +1,4 @@
 package com.m2i.showtime.yak.Service.User;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -20,6 +19,7 @@ import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
+import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
 import org.json.JSONObject;
@@ -58,7 +58,6 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
 @Service
 public class UserService {
 
@@ -87,43 +86,36 @@ public class UserService {
     private int multiplicatorTime = 1;
     private RedisService redisService;
     private HazelcastConfig hazelcastConfig;
-
     private final String UserNotFound="User not found";
     private final String tempPathName="/src/main/profile_pic_temp/original_";
+    private final String basicErrorMessage="Something went wrong";
+    private LoggerService LOGGER = new LoggerService();
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
-
-
+        this.LOGGER = LOGGER;
     }
-
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
         return user;
     }
-
     public Optional<UserSimpleDto> getUserByEmail(String email) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserByEmail(email);
         return user;
     }
-
     public User addUser(User user) {
-
         Optional<User> userOptional = userRepository.findUserByEmail(user.getUsername());
-
         if (userOptional.isPresent()){
             throw new IllegalStateException("email taken");
         }
-
         userRepository.save(user);
         return user;
     }
-
     public void deleteUser(Long userId) {
 
         if (!userRepository.existsById(userId)){
@@ -131,32 +123,26 @@ public class UserService {
         }
         userRepository.deleteById(userId);
     }
-
     @Transactional
     public void updateUser(Long userId,
                            User modifiedUser) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
-
         if (modifiedUser.getFirstName() != null &&
                 modifiedUser.getFirstName().length() > 0 &&
                 !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
             user.setFirstName(modifiedUser.getFirstName());
         }
-
         if (modifiedUser.getLastName() != null &&
                 modifiedUser.getLastName().length() > 0 &&
                 !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
             user.setLastName(modifiedUser.getLastName());
         }
-
         if (modifiedUser.getCountry() != null &&
                 modifiedUser.getCountry().length() > 0 &&
                 !Objects.equals(user.getCountry(), modifiedUser.getCountry())) {
             user.setCountry(modifiedUser.getCountry());
         }
-
         if (modifiedUser.getUsername() != null &&
                 modifiedUser.getUsername().length() > 0 &&
                 !Objects.equals(user.getUsername(), modifiedUser.getUsername())) {
@@ -166,30 +152,18 @@ public class UserService {
             user.setUsername(modifiedUser.getUsername());
         }
     }
-
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
-
-        if (user.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-
+        return user.isEmpty() ? false : true;
     }
-
-
     public boolean addMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                                                               userWatchedMovieAddDto.getMovieName());
 
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
-        User user = optionalUser.isPresent()? optionalUser.get() : null;
-        if (user == null) {
-            throw new IllegalStateException("User not found");
-        }
-        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId();
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
         Optional<UsersWatchedMovie> optionalUserWatchedMovie =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
         if(!optionalUserWatchedMovie.isPresent()){
@@ -213,18 +187,12 @@ public class UserService {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                                                               userWatchedMovieAddDto.getMovieName());
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
-        User user = optionalUser.isPresent()? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
-        Optional<Movie> movieToRemove = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId());
-        if(movieToRemove.isEmpty()){
-            throw new IllegalStateException("Movie not found");
-        }
-        Long movieId = movieToRemove.get().getId();
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Movie movieToRemove = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage));
+        Long movieId = movieToRemove.getId();
         Long userId = user.getId();
-        Optional<UsersWatchedMovie> completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
-        multiplicatorTime = completeUserWatched.isPresent()? completeUserWatched.get().getWatchedNumber().intValue(): 1;
+        UsersWatchedMovie completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId ).orElse(null);
+        multiplicatorTime = completeUserWatched!=null ? completeUserWatched.getWatchedNumber().intValue(): 1;
         this.decreaseWatchedNumber(userWatchedMovieAddDto);
         this.decreaseTotalMovieWatchedTime(userWatchedMovieAddDto);
         user
@@ -243,12 +211,8 @@ public class UserService {
          userRepository.save(user);
     }
     public void decreaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
-        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail());
-        User user = optionalUser.isPresent()? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
-        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId();
+        User user = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail()).orElseThrow(()->new IllegalStateException(UserNotFound));
+        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).orElseThrow(()->new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
         UsersWatchedMovie completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId )
                 .orElseThrow(() -> {
@@ -425,10 +389,7 @@ public class UserService {
     }
     public int changeUserPassword(ResetPasswordUseDto resetPasswordUseDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(resetPasswordUseDto.getEmail());
-        User user = optionalUser.isPresent()? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         boolean checkToken = this.checkToken(resetPasswordUseDto.getToken());
         PasswordEncoder passwordEncoder = this.encoder();
         if(checkToken && user.getTokenResetPassword().equals(resetPasswordUseDto.getToken())){
@@ -453,10 +414,7 @@ public class UserService {
             return new ObjectMapper().readValue(checkInCache, ProfileLazyUserDtoHeader.class);
         }
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        User user = optionalUser.isPresent() ? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoHeader profileLazyUserDtoHeader = new ProfileLazyUserDtoHeader();
         profileLazyUserDtoHeader.setNumberOfWatchedSeries(user.getTotalSeriesWatchedNumber());
         profileLazyUserDtoHeader.setNumberOfWatchedMovies(user.getTotalMovieWatchedNumber());
@@ -481,10 +439,7 @@ public class UserService {
 
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMoviesData(String email) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        User user = optionalUser.isPresent() ? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
          Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
 
         ProfileLazyUserDtoLastWatchedMovies profileLazyUserDtoLastWatchedMovies = new ProfileLazyUserDtoLastWatchedMovies();
@@ -519,10 +474,7 @@ public class UserService {
 
     public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(String email) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        User user = optionalUser.isPresent() ? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoSocialInfos profileLazyUserDtoSocialInfos = new ProfileLazyUserDtoSocialInfos();
         profileLazyUserDtoSocialInfos.setFollowersCounter(user.getFollowersCounter());
         profileLazyUserDtoSocialInfos.setFollowingsCounter(user.getFollowingsCounter());
@@ -534,10 +486,7 @@ public class UserService {
 
     public ProfileLazyUserDtoAvatar getProfileAvatar(String email) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        User user = optionalUser.isPresent() ? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
         profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePicture());
         profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPicture());
@@ -604,10 +553,10 @@ public class UserService {
         user.setBackgroundPicture(url+"?"+System.currentTimeMillis());
         userRepository.save(user);
         if(fileToUpload.delete()){
-            System.out.println("File deleted successfully");
+            LOGGER.print("File deleted successfully");
         }
         if(originalFile.delete()){
-            System.out.println("File deleted successfully");
+            LOGGER.print("File deleted successfully");
         }
         UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
         uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
@@ -668,21 +617,18 @@ public class UserService {
     public boolean isMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieInMovieToWatch(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
-        return user.isEmpty() ? false : true;
+        return user.isPresent();
     }
 
     public boolean isMovieInFavoritelist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieInFavorite(
                 userWatchedMovieAddDto.getUserMail(), userWatchedMovieAddDto.getTmdbId());
-        return user.isEmpty() ? false : true;
+        return user.isPresent();
     }
 
     public fetchRangeListDto lastWatchedMoviesRange(fetchRangeDto fetchRangeDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
-        User user = optionalUser.isPresent()? optionalUser.get() : null;
-        if(user == null){
-            throw new IllegalStateException(UserNotFound);
-        }
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         Optional<long[]> lastWatchedMoviesIds = usersWatchedMovieRepository.findWatchedMoviesByUserId(user.getId());
         long[] stream = lastWatchedMoviesIds.isPresent() ? lastWatchedMoviesIds.get() : new long[0];
         long[] listToUse = Arrays.stream(stream)

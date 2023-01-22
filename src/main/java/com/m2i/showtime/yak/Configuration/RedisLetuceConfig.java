@@ -22,8 +22,7 @@ public class RedisLetuceConfig {
                 .withPort(redisPort)
                 .withPassword(redisPassword)
                 .build();
-        RedisClient redisClient = RedisClient.create(redisURI);
-        return redisClient;
+        return RedisClient.create(redisURI);
     }
 
 }

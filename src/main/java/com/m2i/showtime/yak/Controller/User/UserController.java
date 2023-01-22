@@ -75,11 +75,11 @@ public class UserController {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
     @PostMapping("/toggleMovieInFavoritelist")
-    public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
     }
     @PostMapping("/toggleMovieInMovieToWatchlist")
-    public boolean toggleMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public boolean toggleMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto);
     }
     @PostMapping("/removeMovieInWatchlist")
@@ -88,16 +88,16 @@ public class UserController {
         return true;
     }
     @PostMapping("/lastWatchedMoviesRange")
-    public fetchRangeListDto lastWatchedMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+    public fetchRangeListDto lastWatchedMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.lastWatchedMoviesRange(fetchRangeDto);
 
     }
     @PostMapping("/favoritesMoviesRange")
-    public fetchRangeListDto favoritesMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+    public fetchRangeListDto favoritesMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.favoritesMoviesRange(fetchRangeDto);
     }
     @PostMapping("/watchlistMoviesRange")
-    public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) throws URISyntaxException, IOException, InterruptedException {
+    public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.watchlistMoviesRange(fetchRangeDto);
     }
 
@@ -133,7 +133,7 @@ public class UserController {
         return userService.getProfileSocialInfos(email);
     }
     @PostMapping("profile/lazy/lastWatchedMovies")
-    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
+    public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
     }
 

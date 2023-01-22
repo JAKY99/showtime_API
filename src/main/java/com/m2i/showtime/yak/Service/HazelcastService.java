@@ -1,18 +1,8 @@
 package com.m2i.showtime.yak.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
-import com.m2i.showtime.yak.Configuration.RedisConfig;
-import com.m2i.showtime.yak.Configuration.RedisLetuceConfig;
 import com.m2i.showtime.yak.Dto.getDataFromHazelcastDto;
-import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
 import com.m2i.showtime.yak.Dto.getImageFromHazelcastDto;
-import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
 import org.json.JSONObject;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class HazelcastService {
     HazelcastConfig hazelcastConfig;
+    static final String  HAZELCASTMAPNAME ="getHazelcastCacheData";
     public HazelcastService(HazelcastConfig hazelcastConfig) {
         this.hazelcastConfig = hazelcastConfig;
     }
@@ -62,7 +53,7 @@ public class HazelcastService {
     public getDataFromHazelcastDto getHazelcastCacheData(String urlApi, HttpServletResponse servletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         getDataFromHazelcastDto getDataFromHazelcastDto = new getDataFromHazelcastDto();
-        String  check = (String) hazelcastConfig.hazelcastInstance().getMap("getHazelcastCacheData").get(urlApi);
+        String  check = (String) hazelcastConfig.hazelcastInstance().getMap(HAZELCASTMAPNAME).get(urlApi);
         if(check==null) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(urlApi))
@@ -71,23 +62,22 @@ public class HazelcastService {
             HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
             JSONObject documentObj = new JSONObject(response.body().toString());
             getDataFromHazelcastDto.setData(documentObj.toString());
-            hazelcastConfig.hazelcastInstance().getMap("getHazelcastCacheData").set(urlApi,documentObj.toString(), 15, TimeUnit.MINUTES);
+            hazelcastConfig.hazelcastInstance().getMap(HAZELCASTMAPNAME).set(urlApi,documentObj.toString(), 15, TimeUnit.MINUTES);
             return getDataFromHazelcastDto;
         }
         getDataFromHazelcastDto.setData(check);
         servletResponse.setHeader("cache-control", "public, max-age=360000");
         return getDataFromHazelcastDto;
     }
-    public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {
-        getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
-        String  check = (String) hazelcastConfig.hazelcastInstance().getMap("getHazelcastCacheData").get(key);
+    public String getRedisCacheDataBDD(String key) {
+        String  check = (String) hazelcastConfig.hazelcastInstance().getMap(HAZELCASTMAPNAME).get(key);
         if(check==null) {
             return null;
         }
         return check;
     }
-    public Boolean setRedisCacheDataBDD(String key, String value, int expire) throws URISyntaxException, IOException, InterruptedException {
-        hazelcastConfig.hazelcastInstance().getMap("getHazelcastCacheData").set(key,value, expire, TimeUnit.MINUTES);
+    public Boolean setRedisCacheDataBDD(String key, String value, int expire){
+        hazelcastConfig.hazelcastInstance().getMap(HAZELCASTMAPNAME).set(key,value, expire, TimeUnit.MINUTES);
         return true;
     }
 

@@ -34,12 +34,12 @@ public class RegistrationController {
     }
 
     @GetMapping("/checkreset/{token}")
-    public boolean resetPasswordMailing(@PathVariable("token") String token) throws MessagingException {
+    public boolean resetPasswordMailing(@PathVariable("token") String token) {
 
         return userService.checkToken(token);
     }
     @PostMapping("/reset/password")
-    public int resetPassword(@RequestBody ResetPasswordUseDto resetPasswordUseDto) throws MessagingException {
+    public int resetPassword(@RequestBody ResetPasswordUseDto resetPasswordUseDto) {
         return userService.changeUserPassword(resetPasswordUseDto);
     }
 }

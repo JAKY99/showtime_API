@@ -1,35 +1,30 @@
 package com.m2i.showtime.yak.Service;
+import com.google.gson.Gson;
+import com.m2i.showtime.yak.Configuration.RedisConfig;
+import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
+import com.m2i.showtime.yak.Dto.RunInsertRedisCacheDto;
+import com.m2i.showtime.yak.Dto.SearchMovieAPIDto;
+import com.m2i.showtime.yak.Dto.RunInsertBulkDto;
+import org.apache.http.HttpHeaders;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
+import java.util.Base64;
 
-
-        import com.google.gson.Gson;
-        import com.m2i.showtime.yak.Configuration.RedisConfig;
-        import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
-        import com.m2i.showtime.yak.Dto.RunInsertRedisCacheDto;
-        import com.m2i.showtime.yak.Dto.SearchMovieAPIDto;
-        import com.m2i.showtime.yak.Dto.RunInsertBulkDto;
-        import org.apache.http.HttpHeaders;
-        import org.json.JSONArray;
-        import org.json.JSONObject;
-
-        import java.io.*;
-        import java.net.Authenticator;
-        import java.net.URI;
-        import java.net.URISyntaxException;
-        import java.net.URL;
-        import java.net.http.HttpClient;
-        import java.net.http.HttpRequest;
-        import java.net.http.HttpResponse;
-        import java.util.Arrays;
-        import java.util.Base64;
-
-        import static org.apache.kafka.common.utils.Utils.readFileAsString;
 
 public class CustomThreadService extends Thread{
     RunInsertBulkDto currentBulkDto;
     RunInsertFromIdDto RunInsertFromIdDto;
     RunInsertRedisCacheDto RunInsertRedisCacheDto;
     String methodToCall;
-    private String elasticbaseUrl;
+
     private final LoggerService LOGGER = new LoggerService();
     public CustomThreadService(RunInsertBulkDto currentBulkDto, String methodToCall) {
         this.currentBulkDto = currentBulkDto;
@@ -65,6 +60,8 @@ public class CustomThreadService extends Thread{
                 case "insertUrlApiInRedis":
                     insertUrlApiInRedis(this.RunInsertRedisCacheDto.getRedisConfig(),this.RunInsertRedisCacheDto.getUrlApi());
                     break;
+                default:
+                    break;
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -99,7 +96,7 @@ public class CustomThreadService extends Thread{
                         .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                         .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
                         .build();
-                HttpResponse elasticResponse = client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
+                client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
                 builk_build_string = new StringBuilder();
                 if(j==result_search.results.length-1){
                     LOGGER.print("Page : " + page + " - Bulk terminé");
@@ -164,6 +161,7 @@ public class CustomThreadService extends Thread{
 
     }
     public void runInsertRedisCache(RedisConfig redisConfig,String KeyUrl) throws URISyntaxException, IOException, InterruptedException {
+        String base64Prefix = "data:image/jpg;base64,";
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(KeyUrl))
@@ -176,7 +174,6 @@ public class CustomThreadService extends Thread{
             final String[] resultToInsert = {new String()};
             results.forEach(movie -> {
                 JSONObject currentMovie = new JSONObject(movie.toString());
-                Gson gson = new Gson();
                 String baseUrl = "https://image.tmdb.org/t/p/";
                 String sizePoster = "w500";
                 String sizeBackdrop = "original";
@@ -184,8 +181,8 @@ public class CustomThreadService extends Thread{
                 String backdropPath = baseUrl + sizeBackdrop + currentMovie.getString("backdrop_path");
                 String posterToInsert = getByteArrayFromImageURL(posterPath);
                 String backdropToInsert = getByteArrayFromImageURL(backdropPath);
-                currentMovie.put("poster_path", "data:image/jpg;base64," + posterToInsert);
-                currentMovie.put("backdrop_path", "data:image/jpg;base64," + backdropToInsert);
+                currentMovie.put("poster_path", base64Prefix + posterToInsert);
+                currentMovie.put("backdrop_path", base64Prefix + backdropToInsert);
                 resultToInsert[0] += currentMovie;
 
             });
