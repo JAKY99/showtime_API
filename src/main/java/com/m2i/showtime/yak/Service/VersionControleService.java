@@ -9,7 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -29,11 +31,8 @@ public class VersionControleService {
         Page<VersionControle> result = versionControleRepository
                 .findByType(type, PageRequest.of(0, 1));
         if (result.getTotalElements() > 0) {
-            versionControlDto.setVersion(result.getContent().isEmpty() ? now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : result.getContent()
-                    .stream()
-                    .findFirst()
-                    .get()
-                    .getVersion().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            String checkResult = result.getContent().isEmpty() ? now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : result.getContent().get(0).getVersion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            versionControlDto.setVersion(checkResult);
             return versionControlDto;
         }
         if(result.getTotalElements() == 0){

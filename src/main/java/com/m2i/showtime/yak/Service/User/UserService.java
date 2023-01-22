@@ -10,12 +10,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
-import com.m2i.showtime.yak.Configuration.RedisConfig;
-import com.m2i.showtime.yak.Configuration.RedisLetuceConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
@@ -36,7 +33,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -49,7 +45,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -63,8 +58,6 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class UserService {
@@ -224,9 +217,14 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).isPresent()? movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get().getId() : null;
+        Movie movieToRemove = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).isPresent()?
+                movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get() : null;
+        if(movieToRemove == null){
+            throw new IllegalStateException("Movie not found");
+        }
+        Long movieId = movieToRemove.getId();
         Long userId = user.getId();
-        Optional<UsersWatchedMovie> completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId ).isPresent()? usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId ) : null;
+        Optional<UsersWatchedMovie> completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
         multiplicatorTime = completeUserWatched.isPresent()? completeUserWatched.get().getWatchedNumber().intValue(): 1;
         this.decreaseWatchedNumber(userWatchedMovieAddDto);
         this.decreaseTotalMovieWatchedTime(userWatchedMovieAddDto);
