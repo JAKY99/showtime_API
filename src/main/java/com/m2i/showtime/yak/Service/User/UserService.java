@@ -217,12 +217,11 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        Movie movieToRemove = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).isPresent()?
-                movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).get() : null;
-        if(movieToRemove == null){
+        Optional<Movie> movieToRemove = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId());
+        if(movieToRemove.isEmpty()){
             throw new IllegalStateException("Movie not found");
         }
-        Long movieId = movieToRemove.getId();
+        Long movieId = movieToRemove.get().getId();
         Long userId = user.getId();
         Optional<UsersWatchedMovie> completeUserWatched =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
         multiplicatorTime = completeUserWatched.isPresent()? completeUserWatched.get().getWatchedNumber().intValue(): 1;
