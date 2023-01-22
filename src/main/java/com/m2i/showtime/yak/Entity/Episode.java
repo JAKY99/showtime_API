@@ -1,11 +1,16 @@
 package com.m2i.showtime.yak.Entity;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
 @Table(name = "episode")
+@Getter
+@Setter
 public class Episode {
     @Id
     private Long id;

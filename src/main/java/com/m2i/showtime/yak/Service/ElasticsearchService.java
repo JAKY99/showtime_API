@@ -75,6 +75,9 @@ public class ElasticsearchService {
                 case 2:
                     LOGGER.print("Downloading people");
                     break;
+                default:
+                    LOGGER.print("Downloading");
+                    break;
             }
             InputStream in = new URL(dailyUrl).openStream();
             Files.copy(in, Paths.get(basePath + "/src/main/temp/" + dailyUrlsNames[i]), StandardCopyOption.REPLACE_EXISTING);
