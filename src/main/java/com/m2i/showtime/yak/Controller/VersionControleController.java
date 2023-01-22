@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Controller;
 
+import com.m2i.showtime.yak.Dto.VersionControlDto;
 import com.m2i.showtime.yak.Service.VersionControleService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +18,7 @@ public class VersionControleController {
     }
 
     @GetMapping("/get")
-    public String getVersion(@RequestParam String type) {
+    public VersionControlDto getVersion(@RequestParam String type) {
      return versionControleService.getVersion(type);
     }
     @GetMapping("/set")

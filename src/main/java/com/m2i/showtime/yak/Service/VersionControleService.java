@@ -1,11 +1,16 @@
 package com.m2i.showtime.yak.Service;
 
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
+import com.m2i.showtime.yak.Dto.VersionControlDto;
 import com.m2i.showtime.yak.Entity.VersionControle;
 import com.m2i.showtime.yak.Repository.VersionControleRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class VersionControleService {
@@ -18,14 +23,28 @@ public class VersionControleService {
         this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
     }
 
-    public String getVersion(String type) {
-        return   versionControleRepository
-                .findByType(type, PageRequest.of(0, 1))
-                .getContent()
-                .stream()
-                .findFirst()
-                .get()
-                .getVersion().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+    public VersionControlDto getVersion(String type) {
+        VersionControlDto versionControlDto = new VersionControlDto();
+        Page<VersionControle> result = versionControleRepository
+                .findByType(type, PageRequest.of(0, 1));
+        if (result.getTotalElements() > 0) {
+            versionControlDto.setVersion(result.getContent()
+                    .stream()
+                    .findFirst()
+                    .get()
+                    .getVersion().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            return versionControlDto;
+        }
+        if(result.getTotalElements() == 0){
+            LocalDateTime now = java.time.LocalDateTime.now();
+            VersionControle versionControle = new VersionControle();
+            versionControle.setType(type);
+            versionControle.setVersion(now);
+            versionControleRepository.save(versionControle);
+            versionControlDto.setVersion(now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            return versionControlDto;
+        }
+        return null;
     }
     public boolean addVersion(String type) {
         VersionControle versionControle = new VersionControle();
