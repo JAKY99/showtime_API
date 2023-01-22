@@ -25,10 +25,11 @@ public class VersionControleService {
 
     public VersionControlDto getVersion(String type) {
         VersionControlDto versionControlDto = new VersionControlDto();
+        LocalDateTime now = java.time.LocalDateTime.now();
         Page<VersionControle> result = versionControleRepository
                 .findByType(type, PageRequest.of(0, 1));
         if (result.getTotalElements() > 0) {
-            versionControlDto.setVersion(result.getContent()
+            versionControlDto.setVersion(result.getContent().isEmpty() ? now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : result.getContent()
                     .stream()
                     .findFirst()
                     .get()
@@ -36,7 +37,7 @@ public class VersionControleService {
             return versionControlDto;
         }
         if(result.getTotalElements() == 0){
-            LocalDateTime now = java.time.LocalDateTime.now();
+
             VersionControle versionControle = new VersionControle();
             versionControle.setType(type);
             versionControle.setVersion(now);
