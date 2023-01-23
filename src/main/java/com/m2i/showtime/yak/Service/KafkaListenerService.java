@@ -1,6 +1,9 @@
 package com.m2i.showtime.yak.Service;
 
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,6 +21,8 @@ import java.net.URISyntaxException;
 @Component
 @EnableScheduling
 @EnableAsync
+@Getter
+@Setter
 public class KafkaListenerService {
 
     @Autowired

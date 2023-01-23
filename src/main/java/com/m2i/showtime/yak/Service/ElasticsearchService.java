@@ -2,6 +2,8 @@ package com.m2i.showtime.yak.Service;
 
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.http.HttpHeaders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +31,8 @@ import java.util.zip.GZIPInputStream;
 @Service
 @EnableScheduling
 @EnableAsync
+@Getter
+@Setter
 public class ElasticsearchService {
     @Value("${application.imdb.apiKey}")
     private String apiKey;
