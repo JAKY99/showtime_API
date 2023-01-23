@@ -2,6 +2,9 @@ package com.m2i.showtime.yak.Service;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.getDataFromHazelcastDto;
 import com.m2i.showtime.yak.Dto.getImageFromHazelcastDto;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,9 @@ import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Getter
+@Setter
+@NoArgsConstructor
 public class HazelcastService {
     HazelcastConfig hazelcastConfig;
     static final String  HAZELCASTMAPNAME ="getHazelcastCacheData";

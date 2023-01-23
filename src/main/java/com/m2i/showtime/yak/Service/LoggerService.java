@@ -11,4 +11,9 @@ public class LoggerService {
         LOGGER.trace(message);
         System.out.println(message);
     }
+    public boolean printTest(String message) {
+        LOGGER.trace(message);
+        System.out.println(message);
+        return true;
+    }
 }
