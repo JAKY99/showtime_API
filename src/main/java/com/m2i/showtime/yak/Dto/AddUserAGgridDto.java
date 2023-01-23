@@ -2,9 +2,11 @@ package com.m2i.showtime.yak.Dto;
 
 import com.m2i.showtime.yak.Entity.Role;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 @Getter
+@Setter
 public class AddUserAGgridDto {
     private String username;
     private String firstName;
