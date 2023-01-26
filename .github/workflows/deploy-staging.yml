@@ -11,7 +11,7 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     container:
-    image: kevinpsirius/javadeployspring:v3
+      image: kevinpsirius/javadeployspring:v3
     steps:
       - uses: actions/checkout@v2
         with:
