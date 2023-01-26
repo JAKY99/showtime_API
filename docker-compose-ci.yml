@@ -28,7 +28,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - ./__w/showtime_API/showtime_API/local_pgdata:/var/lib/postgresql/data
+      - ./local_pgdata:/var/lib/postgresql/data
   pgadmin:
     build:  ./docker/pgadmin
     privileged: true
@@ -40,7 +40,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: showtime@dev.com
       PGADMIN_DEFAULT_PASSWORD: admin
     volumes:
-      - ./__w/showtime_API/showtime_API/pgadmin-data:/var/lib/pgadmin:rw
+      - ./pgadmin-data:/var/lib/pgadmin:rw
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     container_name: elasticsearch
