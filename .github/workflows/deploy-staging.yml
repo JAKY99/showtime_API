@@ -9,9 +9,10 @@ on:
 jobs:
   sonarqube-test:
     environment: production
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     container:
       image: kevinpsirius/javadeployspring:v4
+      options: --network host
     steps:
 #      - uses: actions/checkout@v2
 #        with:
