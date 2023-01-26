@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -18,19 +19,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes= Application.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 
 public class UserTests {
-    @InjectMocks
+@Autowired
     private UserService userService;
-    @Mock
+
     private UserRepository userRepository;
+    @Autowired
+    public UserTests( UserService userService, UserRepository userRepository) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+    }
 
     @Test
     public void testAdduser() {
         User user = new User("test", "test");
         User savedUser = userService.addUser(user);
-        assertEquals("test", savedUser.getUsername());
+        assertEquals(user, savedUser);
     }
 }

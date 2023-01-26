@@ -10,7 +10,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes= Application.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 class YakApplicationTests {
 

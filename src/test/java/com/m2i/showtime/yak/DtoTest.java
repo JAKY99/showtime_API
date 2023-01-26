@@ -17,7 +17,6 @@ import static org.junit.Assert.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes= Application.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class DtoTest {
     @Mock

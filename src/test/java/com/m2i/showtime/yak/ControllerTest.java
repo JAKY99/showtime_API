@@ -15,7 +15,6 @@ import java.net.URISyntaxException;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes= Application.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ControllerTest {
 
