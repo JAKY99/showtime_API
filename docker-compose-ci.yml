@@ -29,18 +29,6 @@ services:
       - '5432:5432'
     volumes:
       - ./local_pgdata:/var/lib/postgresql/data
-  pgadmin:
-    build:  ./docker/pgadmin
-    privileged: true
-    container_name: pgadmin4_container
-    #restart: always
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: showtime@dev.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    volumes:
-      - ./pgadmin-data:/var/lib/pgadmin:rw
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     container_name: elasticsearch
@@ -60,7 +48,7 @@ services:
       - IPC_LOCK
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
-      - /__w/showtime_API/showtime_API/elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./__w/showtime_API/showtime_API/elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
@@ -72,50 +60,6 @@ services:
         reservations:
           cpus: '1'
           memory: 512M
-  kibana:
-    container_name: kibana
-    image: docker.elastic.co/kibana/kibana:7.9.3
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=elastictest2
-    ports:
-      - 5601:5601
-    depends_on:
-      - elasticsearch
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 500M
-        reservations:
-          cpus: '1'
-          memory: 500M
-  kibana_aws:
-    container_name: kibana_aws
-    image: docker.elastic.co/kibana/kibana:7.9.3
-    environment:
-      - ELASTICSEARCH_HOSTS=https://showtime-app.click/elasticsearch
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=a8gtr5ql
-    ports:
-      - 5602:5601
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 500M
-        reservations:
-          cpus: '1'
-          memory: 500M
-#    volumes:
-#      - ./kibana-config/kibana.yml:/usr/share/kibana/config/kibana.yml
-  logstash:
-    image: kevinpsirius/centos_logstash:v1
-    container_name: logstash
-    privileged: true
-    volumes:
-      - /__w/showtime_API/showtime_API/usersync.conf:/etc/logstash/conf.d/usersync.conf
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
@@ -129,35 +73,6 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
-#  airflow-init:
-#    <<: *airflow-common
-#    container_name: airflow_init
-#    entrypoint: /bin/bash
-#    command:
-#      - -c
-#      - pip install airflow-provider-kafka &&  airflow users list || ( airflow db init &&
-#        airflow users create
-#        --role Admin
-#        --username airflow
-#        --password airflow
-#        --email airflow@airflow.com
-#        --firstname airflow
-#        --lastname airflow ) && tail -f /dev/null
-#    restart: on-failure
-#  airflow-webserver:
-#    <<: *airflow-common
-#    command: airflow webserver
-#    ports:
-#      - "8090:8080"
-#    container_name: airflow_webserver
-#    restart: always
-#
-#  airflow-scheduler:
-#    <<: *airflow-common
-#    command: airflow scheduler
-#    container_name: airflow_scheduler
-#    restart: always
   redis:
     image: bitnami/redis:latest
     container_name: redis_showtime
@@ -177,6 +92,8 @@ volumes:
   local_pgdata:
   pgadmin-data:
   elasticsearch-data:
+  /__w/showtime_API/showtime_API/elasticsearch-config/elasticsearch.yml:
+  /__w/showtime_API/showtime_API/redis/data:
     driver: local
 networks:
   default:
