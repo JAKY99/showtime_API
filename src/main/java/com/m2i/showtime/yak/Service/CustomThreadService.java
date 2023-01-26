@@ -8,6 +8,8 @@ import com.m2i.showtime.yak.Dto.RunInsertBulkDto;
 import org.apache.http.HttpHeaders;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.stereotype.Service;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,7 +20,7 @@ import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.Base64;
 
-
+@Service
 public class CustomThreadService extends Thread{
     RunInsertBulkDto currentBulkDto;
     RunInsertFromIdDto RunInsertFromIdDto;

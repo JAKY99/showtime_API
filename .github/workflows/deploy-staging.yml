@@ -10,8 +10,8 @@ jobs:
   sonarqube-test:
     environment: production
     runs-on: ubuntu-latest
-    #      container:
-    #        image: kevinpsirius/javadeployspring:v1
+    container:
+    image: kevinpsirius/javadeployspring:v3
     steps:
       - uses: actions/checkout@v2
         with:
@@ -37,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
+        run: docker-compose up -d  && sleep 15 docker-compose up -d && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
 
   staging-deploy:
     needs: sonarqube-test

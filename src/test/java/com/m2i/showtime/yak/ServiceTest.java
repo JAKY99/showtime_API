@@ -2,6 +2,8 @@ package com.m2i.showtime.yak;
 import com.amazonaws.services.appstream.model.Application;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
+import com.m2i.showtime.yak.Dto.VersionControlDto;
+import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
 import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
 import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Entity.Role;
@@ -9,57 +11,66 @@ import com.m2i.showtime.yak.Service.*;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@ContextConfiguration(classes= Application.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ServiceTest {
-    @Mock
+    @Autowired
     private KafkaMessageGeneratorService kafkaMessageGeneratorService;
-    @Mock
+    @Autowired
     private RedisService redisService;
-    @Mock
+    @Autowired
     private PermissionService permissionService;
-    @Mock
+    @Autowired
     private RoleService roleService;
-    @Mock
+    @Autowired
     private CustomThreadService customThreadService;
-    @Mock
+    @Autowired
     private ElasticsearchService elasticsearchService;
-    @Mock
+    @Autowired
     private HazelcastService hazelcastService;
-    @Mock
+    @Autowired
     private HazelcastConfig hazelcastConfig;
-    @Mock
+    @Autowired
     private KafkaListenerService kafkaListenerService;
-    @Mock
+    @Autowired
     private VersionControleService versionControleService;
+    @Mock
+    HttpServletResponse HttpServletResponse;
     @Test
-    public void testAllService() {
+    public void testAllService() throws URISyntaxException, IOException, InterruptedException {
         KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
         kafkaMessageDto.setTopicName("test");
         kafkaMessageDto.setMessage("test");
         String response = kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
-        assertEquals(null ,response);
+        assertEquals("Sending message to topic: testWith message : test" ,response);
         //--------------------------------
-        getImageFromRedisDto redisCache = redisService.getRedisCache("test");
-        assertEquals(null ,redisCache);
+        getDataFromRedisDto redisCache = redisService.getRedisCacheData("https://api.themoviedb.org/3/movie/top_rated?api_key=268e205e4732543417f057b681731e09",HttpServletResponse);
+        assertTrue(redisCache.getData() instanceof String && redisCache.getData() != null);
         //--------------------------------
         Permission permission = permissionService.getPermission(1L);
-        assertEquals(null ,permission);
+        assertEquals("movie:manage" ,permission.getPermission());
         //--------------------------------
         List<Role> roles = roleService.getRoles();
-        assertEquals( new ArrayList<>(),roles);
+        assertTrue(roles instanceof List<Role> && roles.toArray().length > 0);
         //--------------------------------
         LoggerService loggerService = new LoggerService();
         Boolean logResult = loggerService.printTest("test");
@@ -70,17 +81,12 @@ public class ServiceTest {
         assertEquals("test" ,threadResponse);
         //--------------------------------
         elasticsearchService.setElasticbaseUrl("test");
-        assertEquals(null ,elasticsearchService.getElasticbaseUrl());
-        //--------------------------------
-        hazelcastService.setHazelcastConfig(hazelcastConfig);
-        assertEquals(null ,hazelcastService.getHazelcastConfig());
+        assertEquals("test" ,elasticsearchService.getElasticbaseUrl());
         //--------------------------------
         kafkaListenerService.setEnv("test");
-        assertEquals(null ,kafkaListenerService.getEnv());
+        assertEquals("test" ,kafkaListenerService.getEnv());
         //--------------------------------
         versionControleService.addVersion("test");
-        assertEquals(null ,versionControleService.getVersion("test"));
-
-
+        assertTrue(versionControleService.getVersion("test") instanceof VersionControlDto && versionControleService.getVersion("test") != null);
     }
 }
