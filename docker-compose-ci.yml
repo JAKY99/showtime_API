@@ -60,7 +60,7 @@ services:
       - IPC_LOCK
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
-      - __w/showtime_API/showtime_API/elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - /__w/showtime_API/showtime_API/elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
@@ -115,7 +115,7 @@ services:
     container_name: logstash
     privileged: true
     volumes:
-      - __w/showtime_API/showtime_API/usersync.conf:/etc/logstash/conf.d/usersync.conf
+      - /__w/showtime_API/showtime_API/usersync.conf:/etc/logstash/conf.d/usersync.conf
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
