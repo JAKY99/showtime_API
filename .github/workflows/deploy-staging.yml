@@ -37,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: pwd && ls && sleep 20 && docker-compose up -d  && sleep 15 docker-compose up -d && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
+        run: pwd && ls && sleep 20 && docker-compose -f /__w/showtime_API/showtime_API/docker-compose-ci.yml up -d  && sleep 15 docker-compose up -d && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
 
   staging-deploy:
     needs: sonarqube-test
