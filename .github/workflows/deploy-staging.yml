@@ -38,7 +38,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           envStaging: ${{ secrets.ENVSTAGING }}
-        run: git clone https://github.com/JAKY99/showtime_API.git && rm $(pwd)/showtime_API/src/test/resources/application.properties && mv $(pwd)/showtime_API/src/test/resources/application.ci.properties $(pwd)/showtime_API/src/test/resources/application.properties && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d && docker ps && sleep 15 && docker logs show_time_db && docker ps && cd $(pwd)/showtime_API/ && && mvn clean install -DskipTests  && (java -jar target/yak-0.0.1-SNAPSHOT.jar &) &&  mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
+        run: git clone https://github.com/JAKY99/showtime_API.git && rm $(pwd)/showtime_API/src/test/resources/application.properties && mv $(pwd)/showtime_API/src/test/resources/application.ci.properties $(pwd)/showtime_API/src/test/resources/application.properties && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d && docker ps && sleep 15 && docker logs show_time_db && docker ps && cd $(pwd)/showtime_API/ && mvn clean install -DskipTests  && (java -jar target/yak-0.0.1-SNAPSHOT.jar &) &&  mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
 
   staging-deploy:
     needs: sonarqube-test
