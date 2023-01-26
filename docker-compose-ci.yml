@@ -48,7 +48,7 @@ services:
       - IPC_LOCK
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
-      - elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - /elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
@@ -87,7 +87,7 @@ services:
     ports:
       - '6379:6379'
     volumes:
-      - ./__w/showtime_API/showtime_API/redis/data:/bitnami/redis/data
+      - ./redis/data:/bitnami/redis/data
 volumes:
   local_pgdata:
   pgadmin-data:
