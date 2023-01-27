@@ -34,7 +34,8 @@ public class UserTests {
 
     @Test
     public void testAdduser() {
-        User user = new User("test", "test");
+        int randomTimeStamp = (int) (System.currentTimeMillis() / 1000);
+        User user = new User("test" + randomTimeStamp, "test");
         User savedUser = userService.addUser(user);
         assertEquals(user, savedUser);
     }
