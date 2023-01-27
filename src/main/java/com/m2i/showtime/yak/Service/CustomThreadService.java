@@ -1,29 +1,32 @@
 package com.m2i.showtime.yak.Service;
+import com.google.gson.Gson;
+import com.m2i.showtime.yak.Configuration.RedisConfig;
+import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
+import com.m2i.showtime.yak.Dto.RunInsertRedisCacheDto;
+import com.m2i.showtime.yak.Dto.SearchMovieAPIDto;
+import com.m2i.showtime.yak.Dto.RunInsertBulkDto;
+import org.apache.http.HttpHeaders;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
+import java.util.Base64;
 
-        import com.google.gson.Gson;
-        import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
-        import com.m2i.showtime.yak.Dto.SearchMovieAPIDto;
-        import com.m2i.showtime.yak.Dto.RunInsertBulkDto;
-        import org.apache.http.HttpHeaders;
-        import org.json.JSONObject;
-
-        import java.io.*;
-        import java.net.Authenticator;
-        import java.net.URI;
-        import java.net.URISyntaxException;
-        import java.net.http.HttpClient;
-        import java.net.http.HttpRequest;
-        import java.net.http.HttpResponse;
-        import java.util.Base64;
-
-        import static org.apache.kafka.common.utils.Utils.readFileAsString;
-
+@Service
 public class CustomThreadService extends Thread{
     RunInsertBulkDto currentBulkDto;
     RunInsertFromIdDto RunInsertFromIdDto;
+    RunInsertRedisCacheDto RunInsertRedisCacheDto;
     String methodToCall;
-    private String elasticbaseUrl;
+
     private final LoggerService LOGGER = new LoggerService();
     public CustomThreadService(RunInsertBulkDto currentBulkDto, String methodToCall) {
         this.currentBulkDto = currentBulkDto;
@@ -33,9 +36,14 @@ public class CustomThreadService extends Thread{
         this.RunInsertFromIdDto = RunInsertFromIdDto;
         this.methodToCall = methodToCall;
     }
+    public CustomThreadService(RunInsertRedisCacheDto RunInsertRedisCacheDto, String methodToCall) {
+        this.RunInsertRedisCacheDto = RunInsertRedisCacheDto;
+        this.methodToCall = methodToCall;
+    }
 
+    public CustomThreadService() {
 
-
+    }
 
 
     @Override
@@ -47,6 +55,14 @@ public class CustomThreadService extends Thread{
                     break;
                 case "readJsonFile":
                     readJsonFile(RunInsertFromIdDto.getToFile(),RunInsertFromIdDto.getIndexUrlToUse(),RunInsertFromIdDto.getDateStrFormatted(),RunInsertFromIdDto.getElasticbaseUrl(),RunInsertFromIdDto.getElasticUsername(),RunInsertFromIdDto.getElasticPassword());
+                    break;
+                case "runInsertRedisCache":
+                    runInsertRedisCache(this.RunInsertRedisCacheDto.getRedisConfig(),this.RunInsertRedisCacheDto.getUrlApi());
+                    break;
+                case "insertUrlApiInRedis":
+                    insertUrlApiInRedis(this.RunInsertRedisCacheDto.getRedisConfig(),this.RunInsertRedisCacheDto.getUrlApi());
+                    break;
+                default:
                     break;
             }
         } catch (Exception e) {
@@ -82,7 +98,7 @@ public class CustomThreadService extends Thread{
                         .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                         .PUT(HttpRequest.BodyPublishers.ofString(builk_build_string.toString()))
                         .build();
-                HttpResponse elasticResponse = client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
+                client.send(elasticInsert, HttpResponse.BodyHandlers.ofString());
                 builk_build_string = new StringBuilder();
                 if(j==result_search.results.length-1){
                     LOGGER.print("Page : " + page + " - Bulk terminé");
@@ -145,6 +161,54 @@ public class CustomThreadService extends Thread{
 
 
 
+    }
+    public void runInsertRedisCache(RedisConfig redisConfig,String KeyUrl) throws URISyntaxException, IOException, InterruptedException {
+        String base64Prefix = "data:image/jpg;base64,";
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(KeyUrl))
+                .GET()
+                .build();
+        HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        JSONObject documentObj = new JSONObject(response.body().toString());
+        JSONArray results = documentObj.getJSONArray("results");
+        try {
+            final String[] resultToInsert = {new String()};
+            results.forEach(movie -> {
+                JSONObject currentMovie = new JSONObject(movie.toString());
+                String baseUrl = "https://image.tmdb.org/t/p/";
+                String sizePoster = "w500";
+                String sizeBackdrop = "original";
+                String posterPath = baseUrl + sizePoster + currentMovie.getString("poster_path");
+                String backdropPath = baseUrl + sizeBackdrop + currentMovie.getString("backdrop_path");
+                String posterToInsert = getByteArrayFromImageURL(posterPath);
+                String backdropToInsert = getByteArrayFromImageURL(backdropPath);
+                currentMovie.put("poster_path", base64Prefix + posterToInsert);
+                currentMovie.put("backdrop_path", base64Prefix + backdropToInsert);
+                resultToInsert[0] += currentMovie;
+
+            });
+            redisConfig.jedis().set(KeyUrl, Arrays.toString(resultToInsert));
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+    private String getByteArrayFromImageURL(String url) {
+        try {
+            URL imageUrl = new URL(url);
+            BufferedInputStream bis = new BufferedInputStream(imageUrl.openConnection().getInputStream());
+            return Base64.getEncoder().encodeToString(bis.readAllBytes());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    void insertUrlApiInRedis(RedisConfig redisConfig, String urlApi){
+        String posterToInsert = getByteArrayFromImageURL(urlApi);
+        String imageBase64 = "data:image/jpg;base64," + posterToInsert;
+        redisConfig.jedis().set(urlApi, imageBase64);
+        redisConfig.jedis().expire(urlApi, 3600);
     }
 
 }

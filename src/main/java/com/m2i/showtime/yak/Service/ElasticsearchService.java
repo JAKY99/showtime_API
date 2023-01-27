@@ -2,10 +2,11 @@ package com.m2i.showtime.yak.Service;
 
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Dto.RunInsertFromIdDto;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.http.HttpHeaders;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,6 +31,8 @@ import java.util.zip.GZIPInputStream;
 @Service
 @EnableScheduling
 @EnableAsync
+@Getter
+@Setter
 public class ElasticsearchService {
     @Value("${application.imdb.apiKey}")
     private String apiKey;
@@ -75,6 +78,9 @@ public class ElasticsearchService {
                     break;
                 case 2:
                     LOGGER.print("Downloading people");
+                    break;
+                default:
+                    LOGGER.print("Downloading");
                     break;
             }
             InputStream in = new URL(dailyUrl).openStream();

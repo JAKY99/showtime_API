@@ -21,13 +21,5 @@
     <changeSet id="1672936268024-6" author="kevin (generated)">
         <dropColumn columnName="imdb_id" tableName="serie"/>
     </changeSet>
-    <changeSet id="1672936268024-1" author="kevin (generated)">
-        <dropColumn columnName="status" tableName="notification"/>
-    </changeSet>
-    <changeSet id="1672936268024-2" author="kevin (generated)">
-        <addColumn tableName="notification">
-            <column name="status" type="INT"/>
-        </addColumn>
-    </changeSet>
 
 </databaseChangeLog>

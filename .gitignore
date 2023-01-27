@@ -54,3 +54,4 @@ elasticsearch-data
 airflow-data
 db_backups
 dags
+/redis
