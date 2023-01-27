@@ -22,9 +22,11 @@ jobs:
 #          java-version: 17
       - uses: actions/checkout@v3
       - uses: isbang/compose-action@v1.4.1
+        env:
+          docker_file: ${{ secrets.COMPOSECI }}
         with:
           context: .
-          compose-file: docker-compose.ci.yml
+          compose-file: $docker_file
           run: up -d
       - name: Cache SonarQube packages
         uses: actions/cache@v2
