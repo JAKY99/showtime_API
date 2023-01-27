@@ -20,10 +20,8 @@ jobs:
 #        uses: actions/setup-java@v1
 #        with:
 #          java-version: 17
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Docker Compose
-        uses: docker/compose-action@v2.0.1
+      - uses: actions/checkout@v3
+      - uses: isbang/compose-action@v1.4.1
         with:
           context: .
           compose-file: docker-compose.ci.yml
