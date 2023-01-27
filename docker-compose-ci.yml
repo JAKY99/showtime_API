@@ -26,8 +26,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=dev_showtime
-    ports:
-      - '5432:5432'
     volumes:
       - ./local_pgdata:/var/lib/postgresql/data
   elasticsearch:
@@ -51,9 +49,6 @@ services:
     volumes:
       - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
 #      - ./elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-    ports:
-      - 9200:9200
-      - 9300:9300
     deploy:
       resources:
         limits:
@@ -66,14 +61,10 @@ services:
     image: wurstmeister/zookeeper
     container_name: zookeeper
     network_mode: host
-    ports:
-      - "2181:2181"
   kafka:
     image: wurstmeister/kafka
     network_mode: host
     container_name: kafka
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -89,8 +80,6 @@ services:
       - REDIS_IO_THREADS=4
       - REDIS_IO_THREADS_DO_READS=yes
     command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb --maxmemory-policy allkeys-lru
-    ports:
-      - '6379:6379'
     volumes:
       - ./redis/data:/bitnami/redis/data
 volumes:
