@@ -10,8 +10,8 @@ jobs:
   sonarqube-test:
     environment: production
     runs-on: self-hosted
-    container:
-      image: kevinpsirius/javadeployspring:v3
+#    container:
+#      image: kevinpsirius/javadeployspring:v3
     steps:
       - name: Cache SonarQube packages
         uses: actions/cache@v2
