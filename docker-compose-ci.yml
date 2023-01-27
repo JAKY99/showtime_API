@@ -93,3 +93,6 @@ volumes:
   pgadmin-data:
   elasticsearch-data:
     driver: local
+networks:
+  default:
+    name: showtime_network
