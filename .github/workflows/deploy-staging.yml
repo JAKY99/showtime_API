@@ -9,9 +9,9 @@ on:
 jobs:
   sonarqube-test:
     environment: production
-    runs-on: self-hosted
-#    container:
-#      image: kevinpsirius/javadeployspring:v4
+    runs-on: ubuntu-latest
+    container:
+      image: kevinpsirius/javadeployspring:v4
     steps:
 #      - uses: actions/checkout@v2
 #        with:
@@ -20,14 +20,6 @@ jobs:
 #        uses: actions/setup-java@v1
 #        with:
 #          java-version: 17
-      - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.4.1
-        env:
-          docker_file: ${{ secrets.COMPOSECI }}
-        with:
-          context: .
-          compose-file: $docker_file
-          run: up -d
       - name: Cache SonarQube packages
         uses: actions/cache@v2
         with:
@@ -46,7 +38,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           envStaging: ${{ secrets.ENVSTAGING }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
+        run: git clone https://github.com/JAKY99/showtime_API.git && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> /var/www/html/showtime_API/.env  && docker-compose -f /var/www/html/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && docker-compose -f /var/www/html/showtime_API/docker-compose-ci.yml up -d && cd /var/www/html/showtime_API/ && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
 
   staging-deploy:
     needs: sonarqube-test
