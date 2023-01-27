@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
 
@@ -60,8 +62,9 @@ public class RedisService {
         }
     }
 
-    public getDataFromRedisDto getRedisCacheData(String urlApi, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
+    public getDataFromRedisDto getRedisCacheData(String encodedUrl, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
+        String urlApi = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8);
         getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
         String  check = redisLetuceConfig.redisClient().connect().sync().get(urlApi);
         if(check==null) {
