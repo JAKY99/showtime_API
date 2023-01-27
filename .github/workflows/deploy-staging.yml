@@ -32,7 +32,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           envStaging: ${{ secrets.ENVSTAGING }}
 #        run: apk add docker && apk add docker-compose && (dockerd &) && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API/ && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
-        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && sudo mvn clean install -DskipTests && mvn liquibase:dropAll && mvn liquibase:update &&  sudo mvn test org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
+        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && mvn liquibase:dropAll liquibase:update install test org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
 
   staging-deploy:
     needs: sonarqube-test
