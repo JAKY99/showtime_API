@@ -1,25 +1,5 @@
 version: '3.8'
-#x-airflow-common:
-#  &airflow-common
-#  image: bitnami/airflow:latest
-#  environment:
-#    - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-#    - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@show_time_db:5432/dev_showtime
-#    - AIRFLOW__CORE__FERNET_KEY=FB0o_zt4e3Ziq3LdUUO7F2Z95cvFFx16hU8jTeR1ASM=
-#    - AIRFLOW__CORE__LOAD_EXAMPLES=False
-#    - AIRFLOW__CORE__LOGGING_LEVEL=INFO
-#  volumes:
-#    - ./plugins:/opt/bitnami/airflow/plugins
-#    - ./dags:/opt/bitnami/airflow/dags
-#    - ./db_backups:/opt/bitnami/airflow/db_backups
-#    - /var/run/docker.sock:/var/run/docker.sock
-#    - /config_airflow_requirement/requirements.txt:/opt/bitnami/airflow/requirements.txt
-#  depends_on:
-#    - db
 services:
-#  app:
-#    build: ./
-#    container_name: showtime_api
   db:
     container_name: show_time_db
     image: postgres:14.2-alpine
