@@ -5,7 +5,7 @@ services:
     image: postgres:14.2-alpine
     privileged: true
     networks:
-      service_network:
+      default:
         ipv4_address: 172.19.0.10
 #    restart: always
     environment:
