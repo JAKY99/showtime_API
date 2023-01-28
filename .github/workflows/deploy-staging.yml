@@ -96,7 +96,6 @@ jobs:
           sed -i "s/hostname-elasticsearch/localhost/g" src/main/resources/application.properties 
           sed -i "s/hostname-kafka/localhost/g" src/main/resources/application.properties 
           sed -i "s/hostname-redis/localhost/g" src/main/resources/application.properties
-          docker exec show_time_db  psql -U postgres  -d dev_showtime  -c ''
           mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
 
   staging-deploy:
