@@ -33,29 +33,29 @@ jobs:
           ports:
             - 9200:9200
             - 9300:9300
-          zookeeper:
-            image: wurstmeister/zookeeper
-            ports:
-              - "2181:2181"
-          kafka:
-            image: wurstmeister/kafka
-            ports:
-              - "9092:9092"
-            env:
-              KAFKA_ADVERTISED_HOST_NAME: localhost
-              KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-          redis:
-            image: bitnami/redis:latest
-            container_name: redis_showtime
-            env:
-              - REDIS_PASSWORD=123456
-              - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
-              - REDIS_AOF_ENABLED=no
-              - REDIS_PORT_NUMBER=6379
-              - REDIS_IO_THREADS=4
-              - REDIS_IO_THREADS_DO_READS=yes
-            ports:
-              - '6379:6379'
+        zookeeper:
+          image: wurstmeister/zookeeper
+          ports:
+            - "2181:2181"
+        kafka:
+          image: wurstmeister/kafka
+          ports:
+            - "9092:9092"
+          env:
+            KAFKA_ADVERTISED_HOST_NAME: localhost
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        redis:
+          image: bitnami/redis:latest
+          container_name: redis_showtime
+          env:
+            - REDIS_PASSWORD=123456
+            - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+            - REDIS_AOF_ENABLED=no
+            - REDIS_PORT_NUMBER=6379
+            - REDIS_IO_THREADS=4
+            - REDIS_IO_THREADS_DO_READS=yes
+          ports:
+            - '6379:6379'
     steps:
       - uses: actions/checkout@v3
         with:
