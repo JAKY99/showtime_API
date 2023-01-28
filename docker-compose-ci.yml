@@ -17,6 +17,11 @@ version: '3.8'
 #  depends_on:
 #    - db
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: showtime_api
   db:
     container_name: show_time_db
     image: postgres:14.2-alpine
