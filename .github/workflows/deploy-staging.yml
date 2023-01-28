@@ -42,7 +42,7 @@ jobs:
           ports:
             - "9092:9092"
           env:
-            KAFKA_ADVERTISED_HOST_NAME: localhost
+            KAFKA_ADVERTISED_HOST_NAME: zookeeper
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
         redis:
           image: bitnami/redis:latest
