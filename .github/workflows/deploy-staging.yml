@@ -96,7 +96,7 @@ jobs:
           sed -i "s/hostname-elasticsearch/elasticsearch/g" src/main/resources/application.properties 
           sed -i "s/hostname-kafka/kafka/g" src/main/resources/application.properties 
           sed -i "s/hostname-redis/redis/g" src/main/resources/application.properties
-          mvn -B  liquibase:update install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
+          mvn -B liquibase:DropAll install  org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
 
   staging-deploy:
     needs: sonarqube-test
