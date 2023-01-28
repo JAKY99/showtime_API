@@ -19,7 +19,6 @@ version: '3.8'
 services:
   db:
     container_name: show_time_db
-    network_mode: host
     image: postgres:14.2-alpine
     privileged: true
 #    restart: always
@@ -33,7 +32,6 @@ services:
       - ./local_pgdata:/var/lib/postgresql/data
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
-    network_mode: host
     container_name: elasticsearch
     privileged: true
     environment:
@@ -65,13 +63,11 @@ services:
           memory: 512M
   zookeeper:
     image: wurstmeister/zookeeper
-    network_mode: host
     container_name: zookeeper
     ports:
       - "2181:2181"
   kafka:
     image: wurstmeister/kafka
-    network_mode: host
     container_name: kafka
     ports:
       - "9092:9092"
@@ -80,7 +76,6 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
   redis:
     image: bitnami/redis:latest
-    network_mode: host
     container_name: redis_showtime
     environment:
       - REDIS_PASSWORD=123456
