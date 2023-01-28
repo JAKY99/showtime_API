@@ -13,6 +13,10 @@ jobs:
     container:
 #      image: kevinpsirius/javadeployspring:v3
       image: kevinpsirius/dind-ci-springboot:v1
+    strategy:
+    services:
+      - name: all ports
+        options: --service-ports
     steps:
       - uses: actions/checkout@v3
         with:
@@ -30,9 +34,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Build and analyze
-        services:
-          - name: all ports
-            options: --service-ports
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
