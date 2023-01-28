@@ -45,10 +45,10 @@ jobs:
             KAFKA_ADVERTISED_HOST_NAME: zookeeper
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           options: >-
-            --health-cmd "/bin/bash -c kafka-topics.sh --list --zookeeper zookeeper:2181"
+            --health-cmd "kafka-topics.sh --list --zookeeper zookeeper:2181"
             --health-interval 10s
-            --health-timeout 15s
-            --health-retries 30
+            --health-timeout 10s
+            --health-retries 2
         redis:
           image: bitnami/redis:latest
           env:
