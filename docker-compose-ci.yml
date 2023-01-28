@@ -87,5 +87,5 @@ networks:
   service_network:
     ipam:
       config:
-        - subnet: 172.20.0.0/24
+        - subnet: 172.19.0.0/24
 
