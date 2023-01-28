@@ -18,7 +18,7 @@ version: '3.8'
 #    - db
 services:
   app:
-    build: ./build_ci
+    build: ./
     container_name: showtime_api
   db:
     container_name: show_time_db
