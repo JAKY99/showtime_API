@@ -32,8 +32,8 @@ jobs:
       - name: Cache Docker packages
         uses: actions/cache@v1
         with:
-          path: ~/var/lib/docker
-          key: ${{ runner.os }}-docker-image-${{ hashFiles('/var/lib/docker') }}
+          path: ~/var/lib/docker/
+          key: ${{ runner.os }}-docker-image-${{ hashFiles('/var/lib/docker/**') }}
           restore-keys: ${{ runner.os }}-docker-image
       - name: Build and analyze
         env:
