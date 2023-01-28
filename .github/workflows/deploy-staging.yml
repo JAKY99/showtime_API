@@ -46,7 +46,6 @@ jobs:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
         redis:
           image: bitnami/redis:latest
-          container_name: redis_showtime
           env:
             - REDIS_PASSWORD=123456
             - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
