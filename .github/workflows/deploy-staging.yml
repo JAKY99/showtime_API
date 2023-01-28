@@ -13,10 +13,16 @@ jobs:
     container:
 #      image: kevinpsirius/javadeployspring:v3
       image: kevinpsirius/dind-ci-springboot:v1
-    strategy:
     services:
-      - name: all ports
-        options: --service-ports
+      - name: postgres
+        image: postgres:14.2-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dev_showtime
+        ports:
+            - 5432:5432
+            - 5438:5432
     steps:
       - uses: actions/checkout@v3
         with:
