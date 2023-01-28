@@ -18,9 +18,7 @@ version: '3.8'
 #    - db
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: ./build_ci
     container_name: showtime_api
   db:
     container_name: show_time_db
