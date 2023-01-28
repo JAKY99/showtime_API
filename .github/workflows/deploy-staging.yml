@@ -14,6 +14,9 @@ jobs:
 #      image: kevinpsirius/javadeployspring:v3
       image: kevinpsirius/dind-ci-springboot:v1
     steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Cache SonarQube packages
         uses: actions/cache@v2
         with:
