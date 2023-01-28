@@ -38,24 +38,25 @@ jobs:
 #        run: apk add docker && apk add docker-compose && (dockerd &) && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API/ && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
 #        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && sudo mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
 #        run: chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
-        run: rm src/main/resources/liquibase.properties \
-          && mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties \ 
-          && rm src/main/resources/application.properties \ 
-          && mv src/main/resources/application.ci.properties src/main/resources/application.properties \ 
-          && echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile \ 
-          && echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile \ 
-          && source /etc/profile \ 
-          &&  touch .env \
-          && echo "$envStaging" >> .env  \
-          &&  docker-compose -f docker-compose-ci.yml up -d  \
-          && sleep 15 \
-          &&  docker-compose -f docker-compose-ci.yml up -d \ 
-          && sed -i "s/hostname-postgres/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' show_time_db)/g" src/main/resources/application.properties \
-          && sed -i "s/hostname-postgres/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' show_time_db)/g" src/main/resources/liquibase.properties \
-          && sed -i "s/hostname-elasticsearch/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' elasticsearch)/g" src/main/resources/application.properties \
-          && sed -i "s/hostname-kafka/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kafka)/g" src/main/resources/application.properties \
-          && sed -i "s/hostname-redis/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis_showtime)/g" src/main/resources/application.properties \
-          && mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
+        script: |
+          rm src/main/resources/liquibase.properties 
+          mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties 
+          rm src/main/resources/application.properties 
+          mv src/main/resources/application.ci.properties src/main/resources/application.properties 
+          echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
+          echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile 
+          source /etc/profile 
+          touch .env 
+          echo "$envStaging" >> .env  
+          docker-compose -f docker-compose-ci.yml up -d  
+          sleep 15 
+          docker-compose -f docker-compose-ci.yml up -d 
+          sed -i "s/hostname-postgres/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' show_time_db)/g" src/main/resources/application.properties 
+          sed -i "s/hostname-postgres/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' show_time_db)/g" src/main/resources/liquibase.properties 
+          sed -i "s/hostname-elasticsearch/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' elasticsearch)/g" src/main/resources/application.properties 
+          sed -i "s/hostname-kafka/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kafka)/g" src/main/resources/application.properties 
+          sed -i "s/hostname-redis/$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis_showtime)/g" src/main/resources/application.properties 
+          mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
 
   staging-deploy:
     needs: sonarqube-test
