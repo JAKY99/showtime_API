@@ -85,6 +85,8 @@ jobs:
           mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties 
           rm src/main/resources/application.properties 
           mv src/main/resources/application.ci.properties src/main/resources/application.properties 
+          rm src/test/resources/application.properties
+          mv src/test/resources/application.ci.properties src/test/resources/application.properties
           echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
           echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile 
           source /etc/profile 
@@ -100,8 +102,7 @@ jobs:
           sed -i "s/hostname-kafka/kafka/g" src/test/resources/application.properties
           sed -i "s/hostname-redis/redis/g" src/main/resources/application.properties
           sed -i "s/hostname-redis/redis/g" src/test/resources/application.properties
-          mvn -B liquibase:dropAll 
-          mvn -B test
+          mvn -B liquibase:dropAll
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
 
   staging-deploy:
