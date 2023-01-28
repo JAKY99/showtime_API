@@ -44,6 +44,8 @@ jobs:
           env:
             KAFKA_ADVERTISED_HOST_NAME: zookeeper
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          depends_on:
+            - zookeeper
         redis:
           image: bitnami/redis:latest
           env:
