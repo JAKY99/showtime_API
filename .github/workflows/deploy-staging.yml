@@ -9,7 +9,7 @@ on:
 jobs:
   sonarqube-test:
     environment: production
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container:
 #      image: kevinpsirius/javadeployspring:v3
       image: kevinpsirius/dind-ci-springboot:v1
