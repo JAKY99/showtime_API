@@ -4,6 +4,9 @@ services:
     container_name: show_time_db
     image: postgres:14.2-alpine
     privileged: true
+    networks:
+      service_network:
+        ipv4_address: 172.19.0.10
 #    restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -80,3 +83,8 @@ volumes:
 networks:
   default:
     name: showtime_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/24
+
