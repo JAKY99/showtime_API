@@ -44,11 +44,11 @@ services:
         reservations:
           cpus: '1'
           memory: 512M
-#  zookeeper:
-#    image: wurstmeister/zookeeper
-#    container_name: zookeeper
-#    ports:
-#      - "2181:2181"
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
   kafka:
     image: wurstmeister/kafka
     container_name: kafka
