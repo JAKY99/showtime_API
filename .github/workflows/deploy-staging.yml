@@ -36,11 +36,16 @@ jobs:
         zookeeper:
           image: wurstmeister/zookeeper
           ports:
-            - "2181:2181"
+            - 2181:2181
+          options: >-
+            --health-cmd "echo ruok | nc localhost 2181"
+            --health-interval 10s
+            --health-timeout 10s
+            --health-retries 4
         kafka:
           image: wurstmeister/kafka
           ports:
-            - "9092:9092"
+            - 9092:9092
           env:
             KAFKA_ADVERTISED_HOST_NAME: zookeeper
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -59,7 +64,7 @@ jobs:
             REDIS_IO_THREADS: 4
             REDIS_IO_THREADS_DO_READS: yes
           ports:
-            - '6379:6379'
+            - 6379:6379
     steps:
       - uses: actions/checkout@v3
         with:
