@@ -47,7 +47,7 @@ jobs:
           ports:
             - 9092:9092
           env:
-            KAFKA_ADVERTISED_HOST_NAME: zookeeper
+            KAFKA_ADVERTISED_HOST_NAME: kafka
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           options: >-
             --health-cmd "( start-kafka.sh & ) && [[ $(kafka-topics.sh --list --zookeeper zookeeper:2181 |  wc -l )   < 15 ]] && echo 'kafka ready' || cat false.txt"
