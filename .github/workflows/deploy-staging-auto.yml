@@ -113,10 +113,10 @@ jobs:
           mvn -B liquibase:dropAll
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
 
-staging-deploy:
+  staging-deploy:
     needs: sonarqube-test
     environment: staging
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container:
       image: kevinpsirius/pipeline_deployment_image:v3
       env:
