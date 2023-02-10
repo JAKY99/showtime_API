@@ -74,6 +74,12 @@ public class UserController {
     public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
+
+    @PostMapping("/addTvEpisodeInWatchlist")
+    public boolean addTvEpisodeInWatchlist(@RequestBody UserWatchedTvEpisodeAddDto UserWatchedTvEpisodeAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto);
+    }
+
     @PostMapping("/toggleMovieInFavoritelist")
     public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
