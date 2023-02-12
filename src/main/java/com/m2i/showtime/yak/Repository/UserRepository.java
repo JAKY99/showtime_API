@@ -34,4 +34,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role='ADMIN'")
     Optional<User[]> findAllAdminUsers();
 
+    @Query("SELECT u FROM User u JOIN u.watchedSeries w WHERE u.username = ?1 and w.tmdbId = ?2")
+    Optional<UserSimpleDto> isEpisodeWatched(String email, long serieTmdbId, long seasonNumber, long episodeNumber);
+//    Unifinished a reprendre plus tard
 }

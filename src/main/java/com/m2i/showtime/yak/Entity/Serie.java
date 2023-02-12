@@ -11,7 +11,6 @@ import javax.persistence.*;
 @Entity
 @Getter
 @Setter
-@AllArgsConstructor
 @Table(name = "serie")
 public class Serie {
     @Id
@@ -21,8 +20,16 @@ public class Serie {
 
     private String name;
 
+    private String status;
+
     public Serie() {
     }
     @OneToMany
     private List<Season> seasons;
+    public Serie(Long tmdbId, String name, List<Season> seasons,String status ) {
+        this.tmdbId = tmdbId;
+        this.name = name;
+        this.seasons = seasons;
+        this.status = status;
+    }
 }

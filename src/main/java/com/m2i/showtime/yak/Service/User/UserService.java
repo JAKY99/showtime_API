@@ -14,14 +14,17 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
+import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
 import com.m2i.showtime.yak.Repository.MovieRepository;
+import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
+import com.m2i.showtime.yak.Service.TvService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,7 +66,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
+    private final TvRepository tvRepository;
     private final MovieService movieService;
+    private final TvService tvService;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
     @Value("${application.bucketName}")
     private String bucketName;
@@ -91,9 +96,11 @@ public class UserService {
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService,TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
+        this.tvService = tvService;
+        this.tvRepository = tvRepository;
         this.movieService = movieService;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
@@ -182,12 +189,48 @@ public class UserService {
         return true;
     }
 
+
+
+
+
+
+
+    public boolean addSerieInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId(),
+                                                           userWatchedSerieAddDto.getSerieName());
+
+//        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+//        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+//        Long movieId = movieRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
+//        Long userId = user.getId();
+//        Optional<UsersWatchedMovie> optionalUserWatchedMovie =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
+//        if(!optionalUserWatchedMovie.isPresent()){
+//            user
+//                    .getWatchedMovies()
+//                    .add(movie);
+//            userRepository.save(user);
+//            this.increaseWatchedNumber(userWatchedSerieAddDto);
+//        }
+//        if(optionalUserWatchedMovie.isPresent()){
+//            Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
+//            optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
+//            usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
+//        }
+//        this.increaseTotalMovieWatchedTime(userWatchedSerieAddDto);
+        return true;
+    }
+
     public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
 
         //Enjoyment
 
         return true;
     }
+
+
+
+
+
 
     public void removeMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
@@ -698,4 +741,44 @@ public class UserService {
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
     }
+
+    public boolean isEpisodeInWatchlist(UserWatchedEpisodeDto userWatchedEpisodeDto) {
+        Optional<UserSimpleDto> user = userRepository.isEpisodeWatched(
+                userWatchedEpisodeDto.getUserMail(),
+                userWatchedEpisodeDto.getSerieTmdbId(),
+                userWatchedEpisodeDto.getSeasonNumber(),
+                userWatchedEpisodeDto.getEpisodeNumber()
+        );
+
+//        témoin = false
+//
+//        if(serieId){
+//            query
+//            create
+//        }else {
+//            return false;
+//        }
+//
+//        if(SeasonID){
+//            query
+//            create
+//        }else {
+//
+//        }
+//
+//        if(episodeID){
+//            query
+//            create
+//        }else{
+//
+//        }
+
+        return user.isEmpty() ? false : true;
+    }
+
+//    public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
+//        Optional<UserSimpleDto> user = userRepository.isMovieWatched(
+//                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
+//        return user.isEmpty() ? false : true;
+//    }
 }

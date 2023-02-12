@@ -9,6 +9,6 @@ import java.util.Optional;
 
 public interface TvRepository extends JpaRepository<Serie, Long> {
     @Query("SELECT m FROM Serie m WHERE m.tmdbId = ?1")
-    Optional<Movie> findByTmdbId(Long tmdbId);
+    Optional<Serie> findByTmdbId(Long tmdbId);
 
 }

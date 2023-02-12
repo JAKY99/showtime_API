@@ -61,6 +61,15 @@ public class UserController {
     public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto) {
         return userService.isMovieInWatchlist(userWatchedMovieDto);
     }
+
+//    ---------------------------------------------------------------------------------------------------------------------------------------------
+    @PostMapping("/isEpisodeInWatchlist")
+    public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
+        return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
+    }
+
+
+
     @PostMapping("/isMovieInMovieToWatchlist")
     public boolean isMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
         return userService.isMovieInMovieToWatchlist(userWatchedMovieAddDto);
@@ -75,10 +84,11 @@ public class UserController {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
 
-    @PostMapping("/addTvEpisodeInWatchlist")
-    public boolean addTvEpisodeInWatchlist(@RequestBody UserWatchedTvEpisodeAddDto UserWatchedTvEpisodeAddDto) throws URISyntaxException, IOException, InterruptedException {
-        return userService.addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto);
-    }
+//    @PostMapping("/addTvEpisodeInWatchlist")
+//    public boolean addTvEpisodeInWatchlist(@RequestBody UserWatchedTvEpisodeAddDto UserWatchedTvEpisodeAddDto) throws URISyntaxException, IOException, InterruptedException {
+//        return userService.addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto);
+//    }
+
 
     @PostMapping("/toggleMovieInFavoritelist")
     public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
@@ -141,6 +151,13 @@ public class UserController {
     @PostMapping("profile/lazy/lastWatchedMovies")
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
+    }
+
+    @PostMapping("/addSerieInWatchlist")
+    public boolean addSerieInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        System.out.println("test");
+
+        return userService.addSerieInWatchlist(userWatchedSerieAddDto);
     }
 
 }
