@@ -196,8 +196,7 @@ public class UserService {
 
 
     public boolean addSerieInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
-        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId(),
-                                                           userWatchedSerieAddDto.getSerieName());
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
 
 //        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
 //        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));

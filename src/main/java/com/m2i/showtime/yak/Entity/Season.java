@@ -1,40 +1,52 @@
 package com.m2i.showtime.yak.Entity;
 
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.Cascade;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "season")
 
 public class Season {
     @Id
+    @SequenceGenerator(
+            name = "season_sequence",
+            sequenceName = "season_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "season_sequence"
+    )
     private Long id;
 
-    private String season_number;
+    private Long season_number;
 
     private Long tmdbSeasonId;
 
     private String name;
-
-    private Boolean watched;
     public Season() {
 
     }
-    @OneToMany
-    private List<Episode> episodes;
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "season_has_episodes",
+            joinColumns = {
+                    @JoinColumn(name = "season_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "episode_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Episode> hasEpisode = new HashSet<>();
 
-    public Season(Long id, String season_number, Long tmdbSeasonId, String name, List<Episode> episodes, Boolean watched) {
-        this.id = id;
+    public Season(Long season_number, Long tmdbSeasonId, String name, Set<Episode> hasEpisode) {
         this.season_number = season_number;
         this.tmdbSeasonId = tmdbSeasonId;
         this.name = name;
-        this.episodes = episodes;
-        this.watched = watched;
+        this.hasEpisode = hasEpisode;
     }
 
 }

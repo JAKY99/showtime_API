@@ -155,8 +155,6 @@ public class UserController {
 
     @PostMapping("/addSerieInWatchlist")
     public boolean addSerieInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
-        System.out.println("test");
-
         return userService.addSerieInWatchlist(userWatchedSerieAddDto);
     }
 
