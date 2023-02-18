@@ -24,9 +24,7 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TvService {
@@ -49,20 +47,6 @@ public class TvService {
         return tvRepository.findAll();
     }
 
-
-//    public Movie getMovieOrCreateIfNotExist(Long tmdbId, String movieName) {
-//        Optional<Movie> optionalMovie = movieRepository.findByTmdbId(tmdbId);
-//        Movie movie = optionalMovie.orElse(null);
-//
-//        if (movie == null) {
-//            Movie newMovie = new Movie(tmdbId, movieName);
-//            movieRepository.save(newMovie);
-//            return newMovie;
-//        }
-//
-//        return movieRepository.findByTmdbId(tmdbId).get();
-//    }
-
     public Serie createSerieWithSeasonsAndEpisodes(Long tmbdId) throws IOException, InterruptedException, URISyntaxException {
         HttpClient client = HttpClient.newHttpClient();
 
@@ -72,6 +56,7 @@ public class TvService {
                 .GET()
                 .build();
         HttpResponse response = client.send(dataFromSerie, HttpResponse.BodyHandlers.ofString());
+        System.out.println(response);
 
         JSONObject documentObj = new JSONObject(response.body().toString());
         Gson gson = new Gson();
@@ -79,38 +64,34 @@ public class TvService {
         AddSerieDto serie = gson.fromJson(String.valueOf(documentObj) , AddSerieDto.class);
         AddSeasonDto[] seasons = serie.seasons;
 
-        ArrayList<Season> seazons = new ArrayList<>();
+        Set<Season> seasonList = new HashSet<>();
         for (int i = 0; i < seasons.length; i++) {
-            System.out.println(seasons[i].id);
-//            /tv/{tv_id}/season/{season_number}/episode/{episode_number}
-            ArrayList<Episode> episodes = new ArrayList<>();
 
-            Long episodeCount = seasons[i].episode_count;
-            for(int j = 1; j < episodeCount; j++) {
-                String urlEpisode = "https://api.themoviedb.org/3/tv/" + tmbdId + "/season/" + seasons[i].season_number + "/episode/" + j + "?api_key=" + TMDB_KEY;
-                HttpRequest dataEpisode = HttpRequest.newBuilder()
-                        .uri(new URI(urlEpisode))
-                        .GET()
-                        .build();
-                HttpResponse resp = client.send(dataEpisode, HttpResponse.BodyHandlers.ofString());
-                System.out.println(resp);
-                JSONObject documentObj2 = new JSONObject(resp.body().toString());
+            String urlEpisode = "https://api.themoviedb.org/3/tv/" + tmbdId + "/season/" + seasons[i].season_number + "?api_key=" + TMDB_KEY;
+            HttpRequest dataEpisode = HttpRequest.newBuilder()
+                    .uri(new URI(urlEpisode))
+                    .GET()
+                    .build();
+            HttpResponse resp = client.send(dataEpisode, HttpResponse.BodyHandlers.ofString());
+            System.out.println(resp);
 
-                AddEpisodeDto episode = gson.fromJson(String.valueOf(documentObj2) , AddEpisodeDto.class);
+            JSONObject documentObj2 = new JSONObject(resp.body().toString());
 
-                Episode newEpisode = new Episode(episode.id, episode.name);
-                episodes.add(newEpisode);
+            AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2) , AddSeasonDto.class);
 
+            Set<Episode> episodeSet = new HashSet<>();
+            for (int j = 0; j < seasonDto.episodes.length; j++) {
+                Episode newEpisode = new Episode(seasonDto.episodes[j].id, seasonDto.episodes[j].name);
+                episodeSet.add(newEpisode);
             }
-//            Season season = new Season(seasons[i].season_number, seasons[i].id, seasons[i].name, episodes);
-//            seazons.add(season);
+
+            Season season = new Season(seasons[i].season_number, seasons[i].id, seasons[i].name ,episodeSet);
+            seasonList.add(season);
         }
 
-//        Serie newSerie = new Serie(tmbdId, serie.name, seazons, Status.SEEN);
-//        tvRepository.save(newSerie);
-//        return newSerie;
-
-        return null;
+        Serie newSerie = new Serie(tmbdId, serie.name, seasonList, Status.SEEN);
+        tvRepository.save(newSerie);
+        return newSerie;
     }
 
     public Serie getSerieOrCreateIfNotExist(Long tmdbId) throws IOException, URISyntaxException, InterruptedException {
@@ -122,7 +103,7 @@ public class TvService {
         if (serie == null) {
 
             Serie newSerie = this.createSerieWithSeasonsAndEpisodes(tmdbId);
-            System.out.println(newSerie);
+            System.out.println("Serie" + newSerie.getName() + " created");
             return newSerie;
         }
 
