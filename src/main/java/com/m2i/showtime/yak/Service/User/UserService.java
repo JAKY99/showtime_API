@@ -13,14 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
-import com.m2i.showtime.yak.Entity.Movie;
-import com.m2i.showtime.yak.Entity.Serie;
-import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
-import com.m2i.showtime.yak.Repository.MovieRepository;
-import com.m2i.showtime.yak.Repository.TvRepository;
-import com.m2i.showtime.yak.Repository.UserRepository;
-import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
+import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
@@ -95,8 +89,11 @@ public class UserService {
     private final String tempPathName="/src/main/profile_pic_temp/original_";
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
+    private final UsersWatchedSeriesRepository usersWatchedSeriesRepository;
+
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService,TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService,TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER,
+                       UsersWatchedSeriesRepository usersWatchedSeriesRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -106,6 +103,7 @@ public class UserService {
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
+        this.usersWatchedSeriesRepository = usersWatchedSeriesRepository;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -189,32 +187,35 @@ public class UserService {
         return true;
     }
 
-
-
-
-
-
-
     public boolean addSerieInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
 
-//        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
-//        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
-//        Long movieId = movieRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
-//        Long userId = user.getId();
-//        Optional<UsersWatchedMovie> optionalUserWatchedMovie =  usersWatchedMovieRepository.findByMovieAndUserId(movieId,userId );
-//        if(!optionalUserWatchedMovie.isPresent()){
-//            user
-//                    .getWatchedMovies()
-//                    .add(movie);
-//            userRepository.save(user);
-//            this.increaseWatchedNumber(userWatchedSerieAddDto);
-//        }
-//        if(optionalUserWatchedMovie.isPresent()){
-//            Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
-//            optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
-//            usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
-//        }
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        Long SerieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
+        Long userId = user.getId();
+        Optional<UsersWatchedSeries> optionalUserWatchedSerie =  usersWatchedSeriesRepository.findBySerieAndUserId(SerieId,userId );
+        if(!optionalUserWatchedSerie.isPresent()){
+            user
+                    .getWatchedSeries()
+                    .add(serie);
+            userRepository.save(user);
+            System.out.println("serie added");
+            this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+        }
+
+//        @TODO la série est correctement ajoutée a l'utilisateur mais sans incrémenter le watched count
+
+        if(optionalUserWatchedSerie.isPresent()){
+            Long currentWatchedNumber = optionalUserWatchedSerie.get().getWatchedNumber();
+            optionalUserWatchedSerie.get().setWatchedNumber(currentWatchedNumber+1L);
+            System.out.println("serie watched " + currentWatchedNumber + " times");
+
+            usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
+        }
+
+//        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
 //        this.increaseTotalMovieWatchedTime(userWatchedSerieAddDto);
         return true;
     }
@@ -257,6 +258,16 @@ public class UserService {
         }
          user.setTotalMovieWatchedNumber(user.getTotalMovieWatchedNumber() + 1);
          userRepository.save(user);
+    }
+
+    public void increaseWatchedNumberSeries(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() + 1);
+        userRepository.save(user);
     }
     public void decreaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         User user = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail()).orElseThrow(()->new IllegalStateException(UserNotFound));

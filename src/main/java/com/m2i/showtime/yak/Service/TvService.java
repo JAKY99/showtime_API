@@ -94,18 +94,24 @@ public class TvService {
         return newSerie;
     }
 
+//    public boolean AddSerieToWatchedSeries(){
+//
+//    };
+
     public Serie getSerieOrCreateIfNotExist(Long tmdbId) throws IOException, URISyntaxException, InterruptedException {
         Optional<Serie> optionalSerie = tvRepository.findByTmdbId(tmdbId);
-                System.out.println(optionalSerie);
+
+        System.out.println(optionalSerie);
 
         Serie serie = optionalSerie.orElse(null);
 
         if (serie == null) {
-
             Serie newSerie = this.createSerieWithSeasonsAndEpisodes(tmdbId);
-            System.out.println("Serie" + newSerie.getName() + " created");
+            System.out.println("Serie " + newSerie.getName() + " created");
             return newSerie;
         }
+
+
 
         return tvRepository.findByTmdbId(tmdbId).get();
     }
