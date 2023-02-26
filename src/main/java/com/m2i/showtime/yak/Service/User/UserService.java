@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
@@ -196,10 +197,11 @@ public class UserService {
         Long SerieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
         Optional<UsersWatchedSeries> optionalUserWatchedSerie =  usersWatchedSeriesRepository.findBySerieAndUserId(SerieId,userId );
+
         if(!optionalUserWatchedSerie.isPresent()){
             user
-                    .getWatchedSeries()
-                    .add(serie);
+                .getWatchedSeries()
+                .add(serie);
             userRepository.save(user);
             System.out.println("serie added");
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
@@ -227,6 +229,12 @@ public class UserService {
         return true;
     }
 
+    public boolean isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<UserSimpleDto> user = userRepository.isSerieWatched(
+                userWatchedSerieAddDto.getUserMail(), userWatchedSerieAddDto.getTmdbId());
+        System.out.println(user);
+        return user.isEmpty() ? false : true;
+    }
 
 
 

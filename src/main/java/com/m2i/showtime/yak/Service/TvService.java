@@ -89,7 +89,7 @@ public class TvService {
             seasonList.add(season);
         }
 
-        Serie newSerie = new Serie(tmbdId, serie.name, seasonList, Status.SEEN);
+        Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
         tvRepository.save(newSerie);
         return newSerie;
     }

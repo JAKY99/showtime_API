@@ -34,8 +34,6 @@ public class Serie {
 
     private String name;
 
-    private Status status;
-
     public Serie() {
     }
 
@@ -50,10 +48,9 @@ public class Serie {
     private Set<Season> hasSeason = new HashSet<>();
 
 
-    public Serie(Long tmdbId, String name, Set<Season> hasSeason,Status status ) {
+    public Serie(Long tmdbId, String name, Set<Season> hasSeason ) {
         this.tmdbId = tmdbId;
         this.name = name;
         this.hasSeason = hasSeason;
-        this.status = status;
     }
 }

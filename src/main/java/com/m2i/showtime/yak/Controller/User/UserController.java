@@ -158,4 +158,10 @@ public class UserController {
         return userService.addSerieInWatchlist(userWatchedSerieAddDto);
     }
 
+    @PostMapping("/isSerieInWatchlist")
+    public boolean isTvInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.isTvInWatchlist(userWatchedSerieAddDto);
+    }
+
+
 }
