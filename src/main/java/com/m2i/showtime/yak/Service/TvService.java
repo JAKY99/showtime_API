@@ -40,7 +40,8 @@ public class TvService {
 //    @Value("${TMDB_BASE_URL}")
 //    private String TMDB_BASE_URL;
 
-    @Value("${TMDB_KEY}")
+    @Value("${application.imdb.apiKey}")
+
     private String TMDB_KEY;
 
     public List<Serie> getSeries() {
@@ -115,4 +116,5 @@ public class TvService {
 
         return tvRepository.findByTmdbId(tmdbId).get();
     }
+    
 }

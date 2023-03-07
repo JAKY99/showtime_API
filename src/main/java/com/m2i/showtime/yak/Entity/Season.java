@@ -1,6 +1,8 @@
 package com.m2i.showtime.yak.Entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
@@ -10,7 +12,9 @@ import java.util.Set;
 
 @Entity
 @Table(name = "season")
-
+@Getter
+@AllArgsConstructor
+@Setter
 public class Season {
     @Id
     @SequenceGenerator(

@@ -14,7 +14,6 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.*;
-import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
@@ -91,10 +90,13 @@ public class UserService {
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     private final UsersWatchedSeriesRepository usersWatchedSeriesRepository;
+    private final UsersWatchedEpisodeRepository usersWatchedEpisodeRepository;
+    private final UsersWatchedSeasonRepository usersWatchedSeasonRepository;
+
 
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService,TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER,
-                       UsersWatchedSeriesRepository usersWatchedSeriesRepository) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService, TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER,
+                       UsersWatchedSeriesRepository usersWatchedSeriesRepository, UsersWatchedEpisodeRepository usersWatchedEpisodeRepository, UsersWatchedSeasonRepository usersWatchedSeasonRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -105,6 +107,8 @@ public class UserService {
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
         this.usersWatchedSeriesRepository = usersWatchedSeriesRepository;
+        this.usersWatchedEpisodeRepository = usersWatchedEpisodeRepository;
+        this.usersWatchedSeasonRepository = usersWatchedSeasonRepository;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -205,6 +209,7 @@ public class UserService {
             userRepository.save(user);
             System.out.println("serie added");
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+
         }
 
 //        @TODO la série est correctement ajoutée a l'utilisateur mais sans incrémenter le watched count
@@ -215,6 +220,8 @@ public class UserService {
             System.out.println("serie watched " + currentWatchedNumber + " times");
 
             usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
+            // méthode pour incrémenter également toutes les colonne watchedNumber associé au niveau de chaque saison et de chaque épisode de chaque saison
+            // utiliser le temps de visionnage de chaque épisode pour incrémenter le temps total de visionnage de la série de l'utilisateur
         }
 
 //        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
@@ -223,12 +230,81 @@ public class UserService {
     }
 
     public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Optional<Season> seasonToAdd = serie
+                .getHasSeason()
+                .stream()
+                .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvEpisodeAddDto.getTvSeasonid()))
+                .findFirst();
+        Optional<Episode> episodeToAdd = seasonToAdd
+                .get()
+                .getHasEpisode()
+                .stream()
+                .filter(episode -> episode.getImbd_id().equals(userWatchedTvEpisodeAddDto.getEpisodeId()))
+                .findFirst();
+        if(!user
+                .getWatchedEpisodes()
+                .contains(episodeToAdd.get())){
+            user
+                    .getWatchedEpisodes()
+                    .add(episodeToAdd.get());
+            userRepository.save(user);
 
-        //Enjoyment
+            // methode pour ajouter le temps de visionnage de l'épisode
+            // méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés
+            // méthode pour rajouter la série si toutes les saisons sont visionnées
+        }
+
+        //gestion du cas du revisionnage d'un episode en entier
+        if(user
+                .getWatchedEpisodes()
+                .contains(episodeToAdd.get())){
+            Optional<UsersWatchedEpisode> usersWachedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episodeToAdd.get().getImbd_id(),user.getId());
+            usersWachedEpisode.get().setWatchedNumber(usersWachedEpisode.get().getWatchedNumber()+1L);
+            usersWatchedEpisodeRepository.save(usersWachedEpisode.get());
+        }
 
         return true;
     }
 
+    public boolean addSeasonInWatchlist(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto ) throws URISyntaxException, IOException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvSeasonAddDto.getTvTmdbId());
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvSeasonAddDto.getUserMail());
+        Optional<Season> seasonToAdd = serie
+                .getHasSeason()
+                .stream()
+                .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
+                .findFirst();
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        if(!user
+                .getWatchedSeasons()
+                .contains(seasonToAdd.get())){
+            user
+                    .getWatchedSeasons()
+                    .add(seasonToAdd.get());
+            userRepository.save(user);
+
+            // methode pour ajouter les épisode de la saison a la liste des épisodes vus de l'utilisateur
+            // elle même faisant également l'opération d'ajouter le temps de visionnage  a la durée totale de visionnage de l'utilisateur
+        }
+
+        //gestion du cas du revisionnage de la saison en entier
+        if(user
+                .getWatchedSeasons()
+                .contains(seasonToAdd.get())){
+            Optional<UsersWatchedSeason> usersWachedSeason = usersWatchedSeasonRepository.findBySeasonIdAndUserId(seasonToAdd.get().getTmdbSeasonId(),user.getId());
+            usersWachedSeason.get().setWatchedNumber(usersWachedSeason.get().getWatchedNumber()+1L);
+            usersWatchedSeasonRepository.save(usersWachedSeason.get());
+            //methode pour incrementer le temps de visionnage de la saison au total de l'utilisateur
+        }
+
+
+
+
+        return true;
+    }
     public boolean isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
         Optional<UserSimpleDto> user = userRepository.isSerieWatched(
                 userWatchedSerieAddDto.getUserMail(), userWatchedSerieAddDto.getTmdbId());
