@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
@@ -201,7 +202,6 @@ public class UserService {
         Long SerieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
         Optional<UsersWatchedSeries> optionalUserWatchedSerie =  usersWatchedSeriesRepository.findBySerieAndUserId(SerieId,userId );
-
         if(!optionalUserWatchedSerie.isPresent()){
             user
                 .getWatchedSeries()
@@ -212,16 +212,12 @@ public class UserService {
 
         }
 
-//        @TODO la série est correctement ajoutée a l'utilisateur mais sans incrémenter le watched count
-
         if(optionalUserWatchedSerie.isPresent()){
             Long currentWatchedNumber = optionalUserWatchedSerie.get().getWatchedNumber();
             optionalUserWatchedSerie.get().setWatchedNumber(currentWatchedNumber+1L);
-            System.out.println("serie watched " + currentWatchedNumber + " times");
+            System.out.println("serie watched " + (currentWatchedNumber+1L) + " times");
 
             usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
-            // méthode pour incrémenter également toutes les colonne watchedNumber associé au niveau de chaque saison et de chaque épisode de chaque saison
-            // utiliser le temps de visionnage de chaque épisode pour incrémenter le temps total de visionnage de la série de l'utilisateur
         }
 
 //        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
@@ -300,21 +296,19 @@ public class UserService {
             //methode pour incrementer le temps de visionnage de la saison au total de l'utilisateur
         }
 
-
-
-
         return true;
     }
-    public boolean isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
-        Optional<UserSimpleDto> user = userRepository.isSerieWatched(
-                userWatchedSerieAddDto.getUserMail(), userWatchedSerieAddDto.getTmdbId());
-        System.out.println(user);
-        return user.isEmpty() ? false : true;
+    public Status isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+
+        Optional<UsersWatchedSeries> serieStatus = usersWatchedSeriesRepository.findByImdbIdAndUserMail(
+                userWatchedSerieAddDto.getTmdbId(),
+                userWatchedSerieAddDto.getUserMail()
+        );
+        System.out.println(serieStatus.get().getStatus());
+        Status status = serieStatus.isPresent() ? serieStatus.get().getStatus() : Status.NOTSEEN;
+
+        return  status;
     }
-
-
-
-
 
     public void removeMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),

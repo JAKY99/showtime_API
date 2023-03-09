@@ -3,6 +3,7 @@ package com.m2i.showtime.yak.Controller.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,13 +64,6 @@ public class UserController {
     }
 
 //    ---------------------------------------------------------------------------------------------------------------------------------------------
-    @PostMapping("/isEpisodeInWatchlist")
-    public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
-        return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
-    }
-
-
-
     @PostMapping("/isMovieInMovieToWatchlist")
     public boolean isMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
         return userService.isMovieInMovieToWatchlist(userWatchedMovieAddDto);
@@ -159,8 +153,13 @@ public class UserController {
     }
 
     @PostMapping("/isSerieInWatchlist")
-    public boolean isTvInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public Status isTvInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.isTvInWatchlist(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("/isEpisodeInWatchlist")
+    public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
+        return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
     }
 
 

@@ -134,6 +134,9 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Episode> watchedEpisodes = new HashSet<>();
 
+
+
+
     @ManyToOne
     private Role role;
     @OneToMany(cascade = CascadeType.ALL)

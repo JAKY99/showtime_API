@@ -57,7 +57,6 @@ public class TvService {
                 .GET()
                 .build();
         HttpResponse response = client.send(dataFromSerie, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response);
 
         JSONObject documentObj = new JSONObject(response.body().toString());
         Gson gson = new Gson();

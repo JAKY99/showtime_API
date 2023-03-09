@@ -1,9 +1,16 @@
 package com.m2i.showtime.yak.Entity;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "season_has_episodes")
+@Getter
+@Setter
+@NoArgsConstructor
 public class SeasonHasEpisode {
     @EmbeddedId
     private SeasonHasEpisodeId id;
@@ -18,31 +25,12 @@ public class SeasonHasEpisode {
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
 
-    public SeasonHasEpisodeId getId() {
-        return id;
-    }
 
-    public void setId(SeasonHasEpisodeId id) {
-        this.id = id;
-    }
+//    @Column(name = "watched_number")
+//    private Long watchedNumber;
 
-    public Episode getEpisode() {
-        return episode;
-    }
-
-    public void setEpisode(Episode episode) {
-        this.episode = episode;
-    }
-
-    public Season getSeason() {
-        return season;
-    }
-
-    public void setSeason(Season season) {
-        this.season = season;
-    }
-
-    @Column(name = "watched_number")
-    private Long watchedNumber;
-
+//    @MapsId("userId")
+//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "user_id", nullable = false)
+//    private User user;
 }

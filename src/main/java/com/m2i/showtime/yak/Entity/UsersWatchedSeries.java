@@ -13,6 +13,11 @@ import javax.persistence.*;
 @Setter
 @NoArgsConstructor
 public class UsersWatchedSeries {
+
+    public UsersWatchedSeries(Long  SerieId, Long userId) {
+        this.watchedNumber = 0L;
+        this.status = Status.WATCHING;
+    }
     @EmbeddedId
     private UsersWatchedSeriesId id;
 
@@ -26,10 +31,11 @@ public class UsersWatchedSeries {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "watched_number")
+    @Column(name = "watched_number" , columnDefinition = "int default 1")
     private Long watchedNumber;
 
-    @Column(name = "status")
+    @Column(name = "status" , columnDefinition = "varchar(255) default 1")
     private Status status;
+
 
 }
