@@ -11,5 +11,4 @@ public class UserWatchedTvSeasonAddDto {
     String userMail ;
     Long tvTmdbId;
     Long tvSeasonid;
-    String serieName;
 }

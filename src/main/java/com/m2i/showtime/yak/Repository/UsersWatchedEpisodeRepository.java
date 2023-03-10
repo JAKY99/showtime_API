@@ -11,4 +11,8 @@ import java.util.Optional;
 public interface UsersWatchedEpisodeRepository extends JpaRepository<UsersWatchedEpisode, UsersWatchedEpisodeId> {
     @Query("SELECT u FROM UsersWatchedEpisode u  WHERE u.episode.id = ?1 AND u.user.id = ?2")
     Optional<UsersWatchedEpisode> findByEpisodeIdAndUserId(Long imbd_id, Long id);
+
+    @Query("SELECT u FROM UsersWatchedEpisode u  WHERE u.episode.imbd_id = ?1 AND u.user.id = ?2")
+    Optional<UsersWatchedEpisode> findByEpisodeImdbIdAndUserId(Long imbd_id, Long id);
+
 }

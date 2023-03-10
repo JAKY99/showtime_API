@@ -26,34 +26,7 @@ public class UsersWatchedEpisode {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "watched_number")
+    @Column(name = "watched_number" , columnDefinition = "int default 1")
     private Long watchedNumber;
-
-    @Column(name = "status")
-    private Status status;
-
-    public UsersWatchedEpisodeId getId() {
-        return id;
-    }
-
-    public void setId(UsersWatchedEpisodeId id) {
-        this.id = id;
-    }
-
-    public Episode getEpisode() {
-        return episode;
-    }
-
-    public void setEpisode(Episode episode) {
-        this.episode = episode;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
 
 }

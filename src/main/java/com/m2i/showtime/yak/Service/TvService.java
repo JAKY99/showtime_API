@@ -101,8 +101,6 @@ public class TvService {
     public Serie getSerieOrCreateIfNotExist(Long tmdbId) throws IOException, URISyntaxException, InterruptedException {
         Optional<Serie> optionalSerie = tvRepository.findByTmdbId(tmdbId);
 
-        System.out.println(optionalSerie);
-
         Serie serie = optionalSerie.orElse(null);
 
         if (serie == null) {
@@ -110,8 +108,6 @@ public class TvService {
             System.out.println("Serie " + newSerie.getName() + " created");
             return newSerie;
         }
-
-
 
         return tvRepository.findByTmdbId(tmdbId).get();
     }

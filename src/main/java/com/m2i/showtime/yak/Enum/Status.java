@@ -5,12 +5,13 @@ public enum Status {
     WATCHING("Watching"),
     SEEN("Seen");
 
-    private final String status;
+    private final String value;
 
-    Status(String status) {
-        this.status = status;
+    private Status(String value) {
+        this.value = value;
     }
-    public String getStatus() {
-        return status;
+
+    public  String getValue() {
+        return this.value;
     }
 }

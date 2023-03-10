@@ -26,33 +26,9 @@ public class UsersWatchedSeason {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "watched_number")
+    @Column(name = "watched_number" , columnDefinition = "int default 1")
     private Long watchedNumber;
 
-    @Column(name = "status")
+    @Column(name = "status" , columnDefinition = "varchar(255) default 1")
     private Status status;
-    public UsersWatchedSeasonId getId() {
-        return id;
-    }
-
-    public void setId(UsersWatchedSeasonId id) {
-        this.id = id;
-    }
-
-    public Season getSeason() {
-        return season;
-    }
-
-    public void setSeason(Season season) {
-        this.season = season;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
 }
