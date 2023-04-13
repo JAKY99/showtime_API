@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Controller;
 
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
+import com.m2i.showtime.yak.Dto.KafkaResponseDto;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +16,7 @@ public class KafkaController {
         this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
     }
     @PostMapping("/send")
-    public String sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
+    public KafkaResponseDto sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
         return kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
     }
 
