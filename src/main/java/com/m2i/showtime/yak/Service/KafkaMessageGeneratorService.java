@@ -2,6 +2,7 @@ package com.m2i.showtime.yak.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
+import com.m2i.showtime.yak.Dto.KafkaResponseDto;
 import com.m2i.showtime.yak.Dto.MessageAdminDto;
 import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
@@ -74,7 +75,7 @@ public class KafkaMessageGeneratorService {
     public String generateAlertToAdmin(String message,String severity) {
         return message + " " + severity;
     }
-    public String sendMessage(KafkaMessageDto kafkaMessageDto) {
+    public KafkaResponseDto sendMessage(KafkaMessageDto kafkaMessageDto) {
 
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
         LOGGER.print("With message : " + kafkaMessageDto.getMessage());
@@ -99,6 +100,6 @@ public class KafkaMessageGeneratorService {
                 kafkaAdmin.initialize();
             }
         });
-        return "Sending message to topic: " + kafkaMessageDto.getTopicName() + "With message : " + kafkaMessageDto.getMessage();
+        return new KafkaResponseDto("Sending message to topic: " + kafkaMessageDto.getTopicName() + "With message : " + kafkaMessageDto.getMessage());
     }
 }
