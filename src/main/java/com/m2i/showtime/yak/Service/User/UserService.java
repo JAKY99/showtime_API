@@ -9,6 +9,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
@@ -90,8 +91,9 @@ public class UserService {
     private final String tempPathName="/src/main/profile_pic_temp/original_";
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
+    private final UserAuthService userAuthService;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER, UserAuthService userAuthService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
@@ -99,6 +101,7 @@ public class UserService {
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
+        this.userAuthService = userAuthService;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -691,5 +694,20 @@ public class UserService {
     }
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+    }
+    public Optional<User> findOneUserByEmailOrCreateIt(String email) throws JsonProcessingException {
+        Optional<User> user = this.userRepository.findUserByEmail(email);
+        if(user.isPresent()){
+            return user;
+        }
+        if(!user.isPresent()){
+            String newPassword = UUID.randomUUID().toString();
+            RegisterDto registerDto = new RegisterDto();
+            registerDto.setUsername(email);
+            registerDto.setPassword(newPassword);
+            this.userAuthService.register(registerDto);
+        }
+
+        return this.userRepository.findUserByEmail(email);
     }
 }
