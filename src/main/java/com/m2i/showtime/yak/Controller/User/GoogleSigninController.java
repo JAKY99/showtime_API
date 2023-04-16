@@ -1,10 +1,8 @@
 package com.m2i.showtime.yak.Controller.User;
-
 import com.google.api.client.json.JsonFactory;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtConfig;
-import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +16,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
