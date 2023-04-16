@@ -7,6 +7,7 @@ import com.m2i.showtime.yak.Service.User.UserService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -32,6 +33,9 @@ public class GoogleSigninController {
 
     @Value(value = "${spring.security.oauth2.client.registration.google.client-id}")
     private String CLIENT_ID;
+
+    @Value(value="${redirection.url}")
+    private String redirectUrl;
     private final JwtConfig jwtConfig;
     private final SecretKey secretKey;
     private final UserService userService;
@@ -44,9 +48,11 @@ public class GoogleSigninController {
     }
 
     @PostMapping("/login/google")
-    public  GoogleSigninReponseDto googleSignin(@RequestBody GoogleSigninDto GoogleSigninDto, HttpServletResponse response) throws GeneralSecurityException, IOException {
+    public void googleSignin(@RequestParam MultiValueMap<String, String> params, HttpServletResponse response) throws GeneralSecurityException, IOException {
         HttpTransport transport = new NetHttpTransport();
-
+       params = params;
+        String credential = params.getFirst("credential");
+        String clientId = params.getFirst("client_id");
         JsonFactory jsonFactory = new GsonFactory();
         GoogleSigninReponseDto googleSigninReponseDto = new GoogleSigninReponseDto();
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
@@ -55,7 +61,7 @@ public class GoogleSigninController {
                 // Or, if multiple clients access the backend:
                 //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
                 .build();
-        GoogleIdToken idToken = verifier.verify(GoogleSigninDto.getToken());
+        GoogleIdToken idToken = verifier.verify(credential);
         if (idToken != null) {
             Payload payload = idToken.getPayload();
 
@@ -80,16 +86,26 @@ public class GoogleSigninController {
                     .compact();
 
             response.addHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getTokenPrefix() + token);
+            googleSigninReponseDto.setEmail(email);
 
-
-
-            return googleSigninReponseDto;
+            String url= redirectUrl+"auth/google?token=" + token;
+            response.sendRedirect(url);
+//            return googleSigninReponseDto;
             // Use or store profile information
             // ...
 
         } else {
             googleSigninReponseDto.setEmail("ERROR");
-            return googleSigninReponseDto;
+            String url =  redirectUrl+"login?authGoogleError=error";
+            response.sendRedirect(url);
+//            return googleSigninReponseDto;
         }
+    }
+
+    @GetMapping("/login/google")
+    public  GoogleSigninReponseDto googleSigninGet(@RequestParam String token, HttpServletResponse response) throws GeneralSecurityException, IOException {
+        GoogleSigninReponseDto googleSigninReponseDto = new GoogleSigninReponseDto();
+        googleSigninReponseDto.setEmail("ERROR");
+        return googleSigninReponseDto;
     }
 }
