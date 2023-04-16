@@ -6,8 +6,7 @@ import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Service.User.UserService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -45,7 +44,7 @@ public class GoogleSigninController {
     }
 
     @PostMapping("/login/google")
-    public  GoogleSigninReponseDto googleSignin(@RequestBody GoogleSigninDto GoogleSigninDto, HttpServletResponse response) throws GeneralSecurityException, IOException, JSONException {
+    public  GoogleSigninReponseDto googleSignin(@RequestBody GoogleSigninDto GoogleSigninDto, HttpServletResponse response) throws GeneralSecurityException, IOException {
         HttpTransport transport = new NetHttpTransport();
 
         JsonFactory jsonFactory = new GsonFactory();
@@ -56,10 +55,6 @@ public class GoogleSigninController {
                 // Or, if multiple clients access the backend:
                 //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
                 .build();
-
-// (Receive idTokenString by HTTPS POST)
-
-        JSONObject jsonObject = new JSONObject();
         GoogleIdToken idToken = verifier.verify(GoogleSigninDto.getToken());
         if (idToken != null) {
             Payload payload = idToken.getPayload();
@@ -67,7 +62,6 @@ public class GoogleSigninController {
             // Print user identifier
             String userId = payload.getSubject();
             System.out.println("User ID: " + userId);
-
             // Get profile information from payload
             String email = payload.getEmail();
             boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
@@ -76,13 +70,6 @@ public class GoogleSigninController {
             String locale = (String) payload.get("locale");
             String familyName = (String) payload.get("family_name");
             String givenName = (String) payload.get("given_name");
-
-            jsonObject.put("email",email);
-            jsonObject.put("name",name);
-            jsonObject.put("pictureUrl",pictureUrl);
-            jsonObject.put("familyName",familyName);
-            jsonObject.put("givenName",givenName);
-            googleSigninReponseDto.setEmail(email);
             Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(email);
             String token = Jwts.builder()
                     .setSubject(email)
@@ -101,7 +88,6 @@ public class GoogleSigninController {
             // ...
 
         } else {
-            jsonObject.put("ERROR","INVALID ID TOKEN");
             googleSigninReponseDto.setEmail("ERROR");
             return googleSigninReponseDto;
         }
