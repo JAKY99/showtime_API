@@ -93,12 +93,13 @@ public class UserService {
     private final UsersWatchedSeriesRepository usersWatchedSeriesRepository;
     private final UsersWatchedEpisodeRepository usersWatchedEpisodeRepository;
     private final UsersWatchedSeasonRepository usersWatchedSeasonRepository;
+    private final SeasonRepository seasonRepository;
     private final SeasonHasEpisodeRepository seasonHasEpisodeRepository;
 
 
     @Autowired
     public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService, TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER,
-                       UsersWatchedSeriesRepository usersWatchedSeriesRepository, UsersWatchedEpisodeRepository usersWatchedEpisodeRepository, UsersWatchedSeasonRepository usersWatchedSeasonRepository , SeasonHasEpisodeRepository seasonHasEpisodeRepository ) {
+                       UsersWatchedSeriesRepository usersWatchedSeriesRepository, UsersWatchedEpisodeRepository usersWatchedEpisodeRepository, UsersWatchedSeasonRepository usersWatchedSeasonRepository , SeasonRepository seasonRepository, SeasonHasEpisodeRepository seasonHasEpisodeRepository ) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -111,6 +112,7 @@ public class UserService {
         this.usersWatchedSeriesRepository = usersWatchedSeriesRepository;
         this.usersWatchedEpisodeRepository = usersWatchedEpisodeRepository;
         this.usersWatchedSeasonRepository = usersWatchedSeasonRepository;
+        this.seasonRepository = seasonRepository;
         this.seasonHasEpisodeRepository = seasonHasEpisodeRepository;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
@@ -196,7 +198,6 @@ public class UserService {
     }
 
     public boolean addSerieInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
-        System.out.println( userWatchedSerieAddDto.getTmdbId() + "-----------------------------------------------");
 
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
 
@@ -207,32 +208,81 @@ public class UserService {
 
         Long SerieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
-        Optional<UsersWatchedSeries> optionalUserWatchedSerie =  usersWatchedSeriesRepository.findBySerieAndUserId(SerieId,userId );
-        if(!optionalUserWatchedSerie.isPresent()){
+        Optional<UsersWatchedSeries> optionalUserWatchedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(SerieId, userId);
+        if (!optionalUserWatchedSerie.isPresent()) {
             user
-                .getWatchedSeries()
-                .add(serie);
+                    .getWatchedSeries()
+                    .add(serie);
             userRepository.save(user);
 
             // change status serie
-            Optional<UsersWatchedSeries> relatedSerie =  usersWatchedSeriesRepository.findBySerieAndUserId(SerieId,userId );
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(SerieId, userId);
             relatedSerie.get().setStatus(Status.SEEN);
 
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
         }
 
-        if(optionalUserWatchedSerie.isPresent()){
+        //@TODO ajouter les saisons et les episodes reliés a la série en watched
+        // get all TMDB season ID
+
+        for(Iterator<Season> it = serie.getHasSeason().iterator(); it.hasNext(); ) {
+            Season season = it.next();
+            // Warning : season 0 exist in TMDB for special editions episodes | exclude them
+            if (season.getSeason_number() != 0) {
+                System.out.println("Saison : " + season.getSeason_number());
+
+                // create relation between user & season
+                Optional<UsersWatchedSeason> relatedSeason = usersWatchedSeasonRepository.findByTmdbIdAndUserId(season.getTmdbSeasonId(), userId);
+                if( !relatedSeason.isPresent()) {
+                    System.out.println("-------------------------------------------------- Uh --------------------------");
+
+                    Optional<Season> seasonToAdd =
+                            serie
+                            .getHasSeason()
+                            .stream().filter(s -> s.getTmdbSeasonId().equals(season.getTmdbSeasonId()))
+                            .findFirst();
+                    System.out.println("relation season added");
+
+                    // add season to user season's count
+                    if(!user.getWatchedSeasons().contains(seasonToAdd.get())){
+                        user.getWatchedSeasons().add(seasonToAdd.get());
+                        userRepository.save(user);
+
+                        // @TODO ajouter le temps de la série au compteur
+                    }
+                    Optional<UsersWatchedSeason> relationUserSeasonWhenCreated =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                            season.getId(),
+                            user.getId()
+                    );
+
+                    if(relationUserSeasonWhenCreated.isPresent()) {
+                        relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
+                        usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+                    }
+                    // create relation user_episode for every ep of the season
+                    //createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
+
+                }else{
+                    Long currentWatchedNumber = relatedSeason.get().getWatchedNumber();
+                    relatedSeason.get().setWatchedNumber(currentWatchedNumber + 1L);
+                    usersWatchedSeasonRepository.save(relatedSeason.get());
+                }
+                // TODO ADD episodes in watched as well ^^
+            }
+        }
+
+        if (optionalUserWatchedSerie.isPresent()) {
             // increase watch nb
             Long currentWatchedNumber = optionalUserWatchedSerie.get().getWatchedNumber();
-            optionalUserWatchedSerie.get().setWatchedNumber(currentWatchedNumber+1L);
+            optionalUserWatchedSerie.get().setWatchedNumber(currentWatchedNumber + 1L);
 
             usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
         }
-        //@TODO ajouter les saisons et les episodes reliés a la série en watched
-
 
 //        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
 //        this.increaseTotalMovieWatchedTime(userWatchedSerieAddDto);
+        System.out.println("Finished");
+
         return true;
     }
 
@@ -285,19 +335,19 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
 
         //seek relation user_season
-        Optional<UsersWatchedSeason> relationUserSerie =  usersWatchedSeasonRepository.findBySeasonIdAndTmdbIdAndUserId(
+        Optional<UsersWatchedSeason> relationUserSeason =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
                 userWatchedTvSeasonAddDto.getTvSeasonid(),
                 user.getId()
         );
 
         // create season if required
-        if(relationUserSerie.isEmpty()) {
+        if(relationUserSeason.isEmpty()) {
             Optional<Season> seasonToAdd = serie
                     .getHasSeason()
                     .stream()
                     .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
                     .findFirst();
-            System.out.println("relation saison added");
+            System.out.println("relation season added");
 
             // add season to user season's count
             if(!user.getWatchedSeasons().contains(seasonToAdd.get())){
@@ -308,24 +358,23 @@ public class UserService {
             }
 
             // seek new relation user_season and update status
-            Optional<UsersWatchedSeason> relationUserSerieWhenCreated =  usersWatchedSeasonRepository.findBySeasonIdAndTmdbIdAndUserId(
+            Optional<UsersWatchedSeason> relationUserSeasonWhenCreated =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
                     userWatchedTvSeasonAddDto.getTvSeasonid(),
                     user.getId()
             );
-            if(relationUserSerieWhenCreated.isPresent()) {
-                relationUserSerieWhenCreated.get().setStatus(Status.SEEN);
-                usersWatchedSeasonRepository.save(relationUserSerieWhenCreated.get());
+
+            if(relationUserSeasonWhenCreated.isPresent()) {
+                relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
+                usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
             }
-
-
             // create relation user_episode for every ep of the season
             createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
         }else{
             // update relation to SEEN + compteur de vues
-            relationUserSerie.get().setStatus(Status.SEEN);
-            relationUserSerie.get().setWatchedNumber(relationUserSerie.get().getWatchedNumber()+1L);
+            relationUserSeason.get().setStatus(Status.SEEN);
+            relationUserSeason.get().setWatchedNumber(relationUserSeason.get().getWatchedNumber()+1L);
             // @TODO ajouter le temps de la série au compteur v2
-            usersWatchedSeasonRepository.save(relationUserSerie.get());
+            usersWatchedSeasonRepository.save(relationUserSeason.get());
 
             createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
 

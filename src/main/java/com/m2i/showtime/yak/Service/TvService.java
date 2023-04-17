@@ -2,29 +2,27 @@ package com.m2i.showtime.yak.Service;
 
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.RedisConfig;
-import com.m2i.showtime.yak.Dto.AddEpisodeDto;
 import com.m2i.showtime.yak.Dto.AddSeasonDto;
 import com.m2i.showtime.yak.Dto.AddSerieDto;
 import com.m2i.showtime.yak.Entity.Episode;
-import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.Season;
 import com.m2i.showtime.yak.Entity.Serie;
-import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.Future;
 
 @Service
 public class TvService {
@@ -48,10 +46,18 @@ public class TvService {
         return tvRepository.findAll();
     }
 
-    public Serie createSerieWithSeasonsAndEpisodes(Long tmbdId) throws IOException, InterruptedException, URISyntaxException {
-        HttpClient client = HttpClient.newHttpClient();
 
-        String urlToCall =  "https://api.themoviedb.org/3/tv/" + tmbdId + "?api_key=" + TMDB_KEY;
+
+    public AddSeasonDto[] getTmdbSeasonsInfos(Long tmdbId) throws URISyntaxException, IOException, InterruptedException {
+        AddSerieDto serie = getSerieDetails(tmdbId);
+
+
+        return serie.seasons;
+    }
+
+    public AddSerieDto getSerieDetails(Long tmdbId) throws URISyntaxException, IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        String urlToCall =  "https://api.themoviedb.org/3/tv/" + tmdbId + "?api_key=" + TMDB_KEY;
         HttpRequest dataFromSerie = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -61,19 +67,24 @@ public class TvService {
         JSONObject documentObj = new JSONObject(response.body().toString());
         Gson gson = new Gson();
 
-        AddSerieDto serie = gson.fromJson(String.valueOf(documentObj) , AddSerieDto.class);
+        return gson.fromJson(String.valueOf(documentObj) , AddSerieDto.class);
+    }
+
+    public Serie createSerieWithSeasonsAndEpisodes(Long tmbdId) throws IOException, InterruptedException, URISyntaxException {
+        HttpClient client = HttpClient.newHttpClient();
+        Gson gson = new Gson();
+
+        AddSerieDto serie = getSerieDetails(tmbdId);
         AddSeasonDto[] seasons = serie.seasons;
 
         Set<Season> seasonList = new HashSet<>();
         for (int i = 0; i < seasons.length; i++) {
-
             String urlEpisode = "https://api.themoviedb.org/3/tv/" + tmbdId + "/season/" + seasons[i].season_number + "?api_key=" + TMDB_KEY;
             HttpRequest dataEpisode = HttpRequest.newBuilder()
                     .uri(new URI(urlEpisode))
                     .GET()
                     .build();
             HttpResponse resp = client.send(dataEpisode, HttpResponse.BodyHandlers.ofString());
-            System.out.println(resp);
 
             JSONObject documentObj2 = new JSONObject(resp.body().toString());
 
@@ -98,6 +109,7 @@ public class TvService {
 //
 //    };
 
+
     public Serie getSerieOrCreateIfNotExist(Long tmdbId) throws IOException, URISyntaxException, InterruptedException {
         Optional<Serie> optionalSerie = tvRepository.findByTmdbId(tmdbId);
 
@@ -106,7 +118,7 @@ public class TvService {
         if (serie == null) {
             Serie newSerie = this.createSerieWithSeasonsAndEpisodes(tmdbId);
             System.out.println("Serie " + newSerie.getName() + " created");
-            return newSerie;
+            return newSerie ;
         }
 
         return tvRepository.findByTmdbId(tmdbId).get();

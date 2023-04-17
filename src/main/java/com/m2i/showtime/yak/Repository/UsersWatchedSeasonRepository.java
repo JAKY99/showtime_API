@@ -12,5 +12,6 @@ public interface UsersWatchedSeasonRepository extends JpaRepository<UsersWatched
     Optional<UsersWatchedSeason> findBySeasonIdAndUserId(Long  SeasonId, Long userId);
 
     @Query("SELECT u FROM UsersWatchedSeason u  WHERE u.season.tmdbSeasonId = ?1 AND u.user.id = ?2")
-    Optional<UsersWatchedSeason> findBySeasonIdAndTmdbIdAndUserId(Long  tmdbSeasonId , Long userId);
+    Optional<UsersWatchedSeason> findByTmdbIdAndUserId(Long  tmdbSeasonId , Long userId);
+
 }

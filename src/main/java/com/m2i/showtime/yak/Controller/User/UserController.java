@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
@@ -148,12 +149,12 @@ public class UserController {
     }
 
     @PostMapping("/addSerieInWatchlist")
-    public boolean addSerieInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public boolean addSerieInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
         return userService.addSerieInWatchlist(userWatchedSerieAddDto);
     }
 
     @PostMapping("/addSeasonInWatchlist")
-    public boolean addSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public boolean addSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
         return userService.addSeasonInWatchlist(userWatchedTvSeasonAddDto);
     }
 
