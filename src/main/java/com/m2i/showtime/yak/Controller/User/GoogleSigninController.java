@@ -3,6 +3,7 @@ import com.google.api.client.json.JsonFactory;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtConfig;
+import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.User.UserService;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,12 +40,15 @@ public class GoogleSigninController {
     private final JwtConfig jwtConfig;
     private final SecretKey secretKey;
     private final UserService userService;
+    private final UserRepository userRepository;
 
 
-    public GoogleSigninController(JwtConfig jwtConfig, SecretKey secretKey , UserService userService) {
+    public GoogleSigninController(JwtConfig jwtConfig, SecretKey secretKey , UserService userService,
+                                  UserRepository userRepository) {
         this.jwtConfig = jwtConfig;
         this.secretKey = secretKey;
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login/google")
@@ -77,6 +81,9 @@ public class GoogleSigninController {
             String familyName = (String) payload.get("family_name");
             String givenName = (String) payload.get("given_name");
             Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(email);
+            optionalUser.get().setLastName(familyName);
+            optionalUser.get().setFirstName(name);
+            this.userService.saveUser(optionalUser.get());
             String token = Jwts.builder()
                     .setSubject(email)
                     .claim("authorities", optionalUser.get().getGrantedAuthorities())
@@ -98,14 +105,6 @@ public class GoogleSigninController {
             googleSigninReponseDto.setEmail("ERROR");
             String url =  redirectUrl+"login?authGoogleError=error";
             response.sendRedirect(url);
-//            return googleSigninReponseDto;
         }
-    }
-
-    @GetMapping("/login/google")
-    public  GoogleSigninReponseDto googleSigninGet(@RequestParam String token, HttpServletResponse response) throws GeneralSecurityException, IOException {
-        GoogleSigninReponseDto googleSigninReponseDto = new GoogleSigninReponseDto();
-        googleSigninReponseDto.setEmail("ERROR");
-        return googleSigninReponseDto;
     }
 }
