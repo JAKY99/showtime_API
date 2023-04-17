@@ -710,4 +710,8 @@ public class UserService {
 
         return this.userRepository.findUserByEmail(email);
     }
+
+    public void saveUser(User user) {
+        this.userRepository.save(user);
+    }
 }
