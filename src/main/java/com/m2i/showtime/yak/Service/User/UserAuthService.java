@@ -3,6 +3,7 @@ package com.m2i.showtime.yak.Service.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.MessageAdminDto;
 import com.m2i.showtime.yak.Dto.RegisterDto;
+import com.m2i.showtime.yak.Dto.RegisterGoogleDto;
 import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.RoleRepository;
@@ -44,6 +45,24 @@ public class UserAuthService implements UserDetailsService {
         PasswordEncoder passwordEncoder = this.encoder();
         userToCreate.setUsername(RegisterDto.getUsername());
         userToCreate.setPassword(passwordEncoder.encode(RegisterDto.getPassword()));
+        userToCreate = setAuthoritiesForNewUser(userToCreate);
+
+        MessageAdminDto messageAdminDto = new MessageAdminDto("User " + userToCreate.getUsername() + " has been registered","info","basic");
+        userRepository.save(userToCreate);
+        this.kafkaMessageGeneratorService.generateMessageToAdmin(messageAdminDto);
+        return 200;
+    }
+    public int registerGoogleSignin(RegisterGoogleDto RegisterGoogleDto) throws JsonProcessingException {
+        Optional<User> userOptional = userRepository.findUserByEmail(RegisterGoogleDto.getUsername());
+        if(userOptional.isPresent()){
+            throw new IllegalStateException("Email is already taken");
+        }
+        User userToCreate = new User();
+        PasswordEncoder passwordEncoder = this.encoder();
+        userToCreate.setUsername(RegisterGoogleDto.getUsername());
+        userToCreate.setPassword(passwordEncoder.encode(RegisterGoogleDto.getPassword()));
+        userToCreate.setFirstName(RegisterGoogleDto.getFirstName());
+        userToCreate.setLastName(RegisterGoogleDto.getLastName());
         userToCreate = setAuthoritiesForNewUser(userToCreate);
 
         MessageAdminDto messageAdminDto = new MessageAdminDto("User " + userToCreate.getUsername() + " has been registered","info","basic");

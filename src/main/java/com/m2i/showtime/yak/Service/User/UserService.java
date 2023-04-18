@@ -9,8 +9,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.Payload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
@@ -695,17 +697,26 @@ public class UserService {
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
     }
-    public Optional<User> findOneUserByEmailOrCreateIt(String email) throws JsonProcessingException {
+    public Optional<User> findOneUserByEmailOrCreateIt(GoogleIdToken.Payload payload) throws JsonProcessingException {
+        String email = payload.getEmail();
+        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+        String locale = (String) payload.get("locale");
+        String familyName = (String) payload.get("family_name");
+        String givenName = (String) payload.get("given_name");
         Optional<User> user = this.userRepository.findUserByEmail(email);
         if(user.isPresent()){
             return user;
         }
         if(!user.isPresent()){
             String newPassword = UUID.randomUUID().toString();
-            RegisterDto registerDto = new RegisterDto();
+            RegisterGoogleDto registerDto = new RegisterGoogleDto();
             registerDto.setUsername(email);
             registerDto.setPassword(newPassword);
-            this.userAuthService.register(registerDto);
+            registerDto.setFirstName(name);
+            registerDto.setLastName(familyName);
+            this.userAuthService.registerGoogleSignin(registerDto);
         }
 
         return this.userRepository.findUserByEmail(email);

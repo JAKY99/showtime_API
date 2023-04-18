@@ -80,10 +80,7 @@ public class GoogleSigninController {
             String locale = (String) payload.get("locale");
             String familyName = (String) payload.get("family_name");
             String givenName = (String) payload.get("given_name");
-            Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(email);
-            optionalUser.get().setLastName(familyName);
-            optionalUser.get().setFirstName(name);
-            this.userService.saveUser(optionalUser.get());
+            Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(payload);
             String token = Jwts.builder()
                     .setSubject(email)
                     .claim("authorities", optionalUser.get().getGrantedAuthorities())
