@@ -94,8 +94,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         //List<String> allowOrigins = Arrays.asList("*");
         configuration.addAllowedOriginPattern("*");
         configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "Refresh"));
+        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Refresh,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
         //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
