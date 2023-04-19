@@ -1,10 +1,7 @@
 package com.m2i.showtime.yak;
 import com.amazonaws.services.appstream.model.Application;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
-import com.m2i.showtime.yak.Dto.KafkaMessageDto;
-import com.m2i.showtime.yak.Dto.VersionControlDto;
-import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
-import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Service.*;
@@ -60,8 +57,8 @@ public class ServiceTest {
         KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
         kafkaMessageDto.setTopicName("test");
         kafkaMessageDto.setMessage("test");
-        String response = kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
-        assertEquals("Sending message to topic: testWith message : test" ,response);
+        KafkaResponseDto response = kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+        assertEquals("Sending message to topic: testWith message : test" ,response.getResponseMessage());
         //--------------------------------
         getDataFromRedisDto redisCache = redisService.getRedisCacheData("https://api.themoviedb.org/3/movie/top_rated?api_key=268e205e4732543417f057b681731e09",HttpServletResponse);
         assertTrue(redisCache.getData() instanceof String && redisCache.getData() != null);

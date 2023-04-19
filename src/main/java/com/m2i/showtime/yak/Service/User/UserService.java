@@ -9,7 +9,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.Payload;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
@@ -90,8 +93,9 @@ public class UserService {
     private final String tempPathName="/src/main/profile_pic_temp/original_";
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
+    private final UserAuthService userAuthService;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER, UserAuthService userAuthService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
@@ -99,6 +103,7 @@ public class UserService {
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
+        this.userAuthService = userAuthService;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -691,5 +696,33 @@ public class UserService {
     }
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+    }
+    public Optional<User> findOneUserByEmailOrCreateIt(GoogleIdToken.Payload payload) throws JsonProcessingException {
+        String email = payload.getEmail();
+        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+        String locale = (String) payload.get("locale");
+        String familyName = (String) payload.get("family_name");
+        String givenName = (String) payload.get("given_name");
+        Optional<User> user = this.userRepository.findUserByEmail(email);
+        if(user.isPresent()){
+            return user;
+        }
+        if(!user.isPresent()){
+            String newPassword = UUID.randomUUID().toString();
+            RegisterGoogleDto registerDto = new RegisterGoogleDto();
+            registerDto.setUsername(email);
+            registerDto.setPassword(newPassword);
+            registerDto.setFirstName(name);
+            registerDto.setLastName(familyName);
+            this.userAuthService.registerGoogleSignin(registerDto);
+        }
+
+        return this.userRepository.findUserByEmail(email);
+    }
+
+    public void saveUser(User user) {
+        this.userRepository.save(user);
     }
 }

@@ -1,14 +1,13 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,16 +17,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
+
+
 
 @RestController
 @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
 @RequestMapping(path = "api/v1/user")
 public class UserController {
-
     private final UserService userService;
     private final UserAuthService userAuthService;
 
@@ -146,8 +144,7 @@ public class UserController {
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
     }
-
-    @GetMapping("/refresh")
+     @GetMapping("/refresh")
     public void refreshToken(HttpServletResponse response, @RequestHeader HashMap refreshToken) throws ServletException, IOException {
         JwtUsernameAndPasswordAuthenticationFilter.refreshToken(response, refreshToken.get("refresh").toString());
 
