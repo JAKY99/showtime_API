@@ -149,5 +149,8 @@ public class UserController {
         JwtUsernameAndPasswordAuthenticationFilter.refreshToken(response, refreshToken.get("refresh").toString());
 
     }
-
+    @PostMapping("social/info")
+    public SocialInfoDto getSocialPageInfo(@RequestBody String email) {
+        return userService.getSocialPageInfo(email);
+    }
 }

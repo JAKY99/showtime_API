@@ -74,7 +74,8 @@ public class User implements UserDetails {
     private Long followingsCounter = 0L;
     private Long followersCounter = 0L;
     private Long commentsCounter = 0L;
-
+    private String about;
+    //-------------------------------------------------
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_movies",
             joinColumns = {
