@@ -725,4 +725,13 @@ public class UserService {
     public void saveUser(User user) {
         this.userRepository.save(user);
     }
+
+    public SocialInfoDto getSocialPageInfo(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
 }
