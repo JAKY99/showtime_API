@@ -153,4 +153,17 @@ public class UserController {
     public SocialInfoDto getSocialPageInfo(@RequestBody String email) {
         return userService.getSocialPageInfo(email);
     }
+    @PostMapping("social/search/user")
+    public SocialSearchResponseDto[] searchUser(@RequestBody String searchText) {
+        return userService.searchUser(searchText);
+    }
+    @PostMapping("social/search/user/detail")
+    public SocialInfoDto getUserSearchDetail(@RequestBody String username) {
+        return userService.getSocialDetail(username);
+    }
+    @PostMapping("social/topten")
+    public SocialTopTenUserDto[] getTopTen(@RequestBody String searchText) {
+        return userService.getTopTenUsers();
+    }
+
 }

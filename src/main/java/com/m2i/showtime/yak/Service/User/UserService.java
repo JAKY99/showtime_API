@@ -734,4 +734,45 @@ public class UserService {
         socialInfoDto.setTrophies("No trophies yet");
         return socialInfoDto;
     }
+
+    public SocialSearchResponseDto[] searchUser(String searchText) {
+        User[] usersFound = this.userRepository.searchUser(searchText);
+        SocialSearchResponseDto[] socialSearchResponseDtos = new SocialSearchResponseDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialSearchResponseDto socialSearchResponseDto = new SocialSearchResponseDto();
+            socialSearchResponseDto.setUsername(user.getUsername());
+            socialSearchResponseDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialSearchResponseDto.setProfilePicture(user.getProfilePicture());
+            socialSearchResponseDto.setScore(0);
+            socialSearchResponseDtos[i] = socialSearchResponseDto;
+            i++;
+        }
+        return socialSearchResponseDtos;
+    }
+
+    public SocialTopTenUserDto[] getTopTenUsers() {
+        User[] usersFound = Arrays.stream(this.userRepository.getTopTen()).limit(10).toArray(User[]::new);
+        SocialTopTenUserDto[] SocialTopTenUserDtos = new SocialTopTenUserDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialTopTenUserDto socialTopTenUserDto = new SocialTopTenUserDto();
+            socialTopTenUserDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialTopTenUserDto.setUsername(user.getUsername());
+            socialTopTenUserDto.setProfilePicture(user.getProfilePicture());
+            socialTopTenUserDto.setScore(0);
+            socialTopTenUserDto.setRank(i+1);
+            SocialTopTenUserDtos[i] = socialTopTenUserDto;
+            i++;
+        }
+        return SocialTopTenUserDtos;
+    }
+    public SocialInfoDto getSocialDetail(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
 }
