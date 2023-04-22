@@ -43,6 +43,8 @@ public class UserAuthService implements UserDetailsService {
         }
         User userToCreate = new User();
         PasswordEncoder passwordEncoder = this.encoder();
+        userToCreate.setFirstName(RegisterDto.getFirstname());
+        userToCreate.setLastName(RegisterDto.getLastname());
         userToCreate.setUsername(RegisterDto.getUsername());
         userToCreate.setPassword(passwordEncoder.encode(RegisterDto.getPassword()));
         userToCreate = setAuthoritiesForNewUser(userToCreate);
