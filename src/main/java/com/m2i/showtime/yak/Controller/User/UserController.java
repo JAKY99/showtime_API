@@ -121,11 +121,6 @@ public class UserController {
         return userService.getComments(movieId);
     }
 
-    @GetMapping("getUser/{user_id}")
-    public String getUserById(@PathVariable("user_id") Long user_id) {
-        return userService.getUserbyId(user_id).toString();
-    }
-
     @PostMapping("/increaseWatchedNumber")
     public boolean increaseWatchedNumber(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         userService.increaseWatchedNumber(UserWatchedMovieAddDto);
