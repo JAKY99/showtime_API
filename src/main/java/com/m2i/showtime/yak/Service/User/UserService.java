@@ -800,10 +800,4 @@ public class UserService {
         List<Comment> commentList = Arrays.asList(comments);
         return commentList;
     }
-
-    public String getUserbyId(Long userId) {
-        User user = this.userRepository.findUserById((long) userId);
-        String userName = user.getFirstName() + " " + user.getLastName();
-        return userName.toString();
-    }
 }
