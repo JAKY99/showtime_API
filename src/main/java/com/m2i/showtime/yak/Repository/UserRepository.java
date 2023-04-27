@@ -42,4 +42,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User[] searchUser(String searchText);
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role not like 'ADMIN' AND u.isDeleted = false ORDER BY u.totalMovieWatchedNumber DESC")
     User[] getTopTen();
+
 }
