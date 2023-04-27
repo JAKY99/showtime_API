@@ -3,6 +3,7 @@ package com.m2i.showtime.yak.Controller.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
@@ -12,12 +13,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -107,6 +108,22 @@ public class UserController {
     @PostMapping("/watchlistMoviesRange")
     public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.watchlistMoviesRange(fetchRangeDto);
+    }
+
+    @PostMapping("/saveComment/{movieId}")
+    public boolean saveComment(@RequestBody userCommentDto userCommentDto, @PathVariable("movieId") int movieId) {
+        userService.saveComment(userCommentDto, movieId);
+        return true;
+    }
+
+    @GetMapping("/getComments/{movieId}")
+    public List<Comment> getComments(@PathVariable("movieId") int movieId) {
+        return userService.getComments(movieId);
+    }
+
+    @GetMapping("getUser/{user_id}")
+    public String getUserById(@PathVariable("user_id") Long user_id) {
+        return userService.getUserbyId(user_id).toString();
     }
 
     @PostMapping("/increaseWatchedNumber")

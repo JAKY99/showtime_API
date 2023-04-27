@@ -9,16 +9,17 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Payload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
+import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
@@ -60,6 +61,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 @Service
 public class UserService {
@@ -67,6 +69,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
     private final MovieService movieService;
+    private final CommentRepository commentRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
     @Value("${application.bucketName}")
     private String bucketName;
@@ -95,10 +98,11 @@ public class UserService {
     private LoggerService LOGGER = new LoggerService();
     private final UserAuthService userAuthService;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER, UserAuthService userAuthService) {
+    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, CommentRepository commentRepository, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER, UserAuthService userAuthService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
+        this.commentRepository = commentRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
@@ -774,5 +778,32 @@ public class UserService {
         socialInfoDto.setComments("No comments yet");
         socialInfoDto.setTrophies("No trophies yet");
         return socialInfoDto;
+    }
+
+    public boolean saveComment(userCommentDto userCommentDto, int movieId) {
+        try {
+            User user = this.userRepository.findUserByEmail(userCommentDto.getUserMail()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+            Comment comment = new Comment();
+            comment.setContent(userCommentDto.getCommentText());
+            comment.setUser(user);
+            comment.setMovie_id((long) movieId);
+            this.commentRepository.save(comment);
+            return true;
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Comment> getComments(int movieId) {
+        Comment[] comments = this.commentRepository.getCommentsByMovieId((long) movieId);
+        List<Comment> commentList = Arrays.asList(comments);
+        return commentList;
+    }
+
+    public String getUserbyId(Long userId) {
+        User user = this.userRepository.findUserById((long) userId);
+        String userName = user.getFirstName() + " " + user.getLastName();
+        return userName.toString();
     }
 }
