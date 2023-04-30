@@ -10,6 +10,7 @@ import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -176,6 +177,17 @@ public class UserController {
     @PostMapping("social/topten")
     public SocialTopTenUserDto[] getTopTen(@RequestBody String searchText) {
         return userService.getTopTenUsers();
+    }
+
+    @PutMapping("exclude/actor/{IdActor}")
+    public void excludeActor(@PathVariable("IdActor") Long IdActor, Authentication authentication){
+        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+                                                                                         .toString());
+        long IdUser = userSimpleDto.orElseThrow(() -> {
+                                       throw new IllegalStateException("User not found.");
+                                   })
+                                   .getId();
+        userService.excludeActor(IdActor, IdUser);
     }
 
 }

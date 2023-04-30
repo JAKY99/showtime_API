@@ -9,16 +9,19 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.Payload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Actor;
 import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
+import com.m2i.showtime.yak.Repository.ActorRepository;
 import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
@@ -70,6 +73,7 @@ public class UserService {
     private final MovieRepository movieRepository;
     private final MovieService movieService;
     private final CommentRepository commentRepository;
+    private final ActorRepository actorRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
     @Value("${application.bucketName}")
     private String bucketName;
@@ -98,11 +102,19 @@ public class UserService {
     private LoggerService LOGGER = new LoggerService();
     private final UserAuthService userAuthService;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, CommentRepository commentRepository, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER, UserAuthService userAuthService) {
+    public UserService(UserRepository userRepository,
+                       MovieRepository movieRepository,
+                       MovieService movieService,
+                       CommentRepository commentRepository,
+                       UsersWatchedMovieRepository usersWatchedMovieRepository,
+                       RedisService redisService, HazelcastConfig hazelcastConfig,
+                       LoggerService LOGGER, UserAuthService userAuthService,
+                       ActorRepository actorRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
         this.commentRepository = commentRepository;
+        this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
@@ -799,5 +811,24 @@ public class UserService {
         Comment[] comments = this.commentRepository.getCommentsByMovieId((long) movieId);
         List<Comment> commentList = Arrays.asList(comments);
         return commentList;
+    }
+
+    public void excludeActor(Long idActor, long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Actor> excludedActorIdFromRecommended = user.getExcludedActorIdFromRecommended();
+
+        Optional<Actor> actor = actorRepository.findByTmdbId(idActor);
+
+        Actor newActor = null;
+        if (actor.isEmpty()) {
+            newActor = actorRepository.saveAndFlush(new Actor(idActor));
+        }
+        excludedActorIdFromRecommended.add(actor.orElse(newActor));
+
+        userRepository.saveAndFlush(user);
     }
 }
