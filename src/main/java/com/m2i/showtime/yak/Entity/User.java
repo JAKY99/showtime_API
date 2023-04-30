@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 public class User implements UserDetails {
-
     @Id
     @SequenceGenerator(
             name = "user_sequence",
@@ -75,6 +74,16 @@ public class User implements UserDetails {
     private Long followersCounter = 0L;
     private Long commentsCounter = 0L;
     private String about;
+    //-------------------------------------------------
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_excluded_actors",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "actor_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Actor> excludedActorIdFromRecommended = new HashSet<>();
     //-------------------------------------------------
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_movies",
