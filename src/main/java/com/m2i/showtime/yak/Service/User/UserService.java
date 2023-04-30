@@ -205,14 +205,12 @@ public class UserService {
 
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
 
-        System.out.println(serie);
-
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
 
-        Long SerieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
+        Long serieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
         Long userId = user.getId();
-        Optional<UsersWatchedSeries> optionalUserWatchedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(SerieId, userId);
+        Optional<UsersWatchedSeries> optionalUserWatchedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
         if (!optionalUserWatchedSerie.isPresent()) {
             user
                     .getWatchedSeries()
@@ -220,7 +218,7 @@ public class UserService {
             userRepository.save(user);
 
             // change status serie
-            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(SerieId, userId);
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
             relatedSerie.get().setStatus(Status.SEEN);
 
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
@@ -265,40 +263,41 @@ public class UserService {
 
     public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
+
+        // récup l'user
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
-        Optional<Season> seasonToAdd = serie
-                .getHasSeason()
-                .stream()
-                .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvEpisodeAddDto.getTvSeasonid()))
-                .findFirst();
-        Optional<Episode> episodeToAdd = seasonToAdd
-                .get()
-                .getHasEpisode()
-                .stream()
-                .filter(episode -> episode.getImbd_id().equals(userWatchedTvEpisodeAddDto.getEpisodeId()))
-                .findFirst();
-        if(!user
-                .getWatchedEpisodes()
-                .contains(episodeToAdd.get())){
-            user
-                    .getWatchedEpisodes()
-                    .add(episodeToAdd.get());
-            userRepository.save(user);
 
-            // methode pour ajouter le temps de visionnage de l'épisode
-            // méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés
-            // méthode pour rajouter la série si toutes les saisons sont visionnées
-        }
+        // récup obj episode
+        UsersWatchedEpisodeId usersWatchedEpisodeId = usersWatchedEpisodeRepository.findByTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
+        Long userId = user.getId();
+        //Check episode is in watchedListEpisode
+        Optional<UsersWatchedEpisode> optionalUserWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(usersWatchedEpisodeId.getEpisodeId(), userId);
 
-        //gestion du cas du revisionnage d'un episode en entier
-        if(user
-                .getWatchedEpisodes()
-                .contains(episodeToAdd.get())){
-            Optional<UsersWatchedEpisode> usersWachedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episodeToAdd.get().getImbd_id(),user.getId());
+        // si pas présent alors add
+        if (!optionalUserWatchedEpisode.isPresent()) {
+
+            Optional<Episode> episodeToAdd = serie
+                    .getHasSeason()
+                    .stream()
+                    .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvEpisodeAddDto.getTvSeasonid()))
+                    .findFirst()
+                    .get()
+                    .getHasEpisode()
+                    .stream()
+                    .filter(episode -> episode.getImbd_id().equals(userWatchedTvEpisodeAddDto.getEpisodeId()))
+                    .findFirst();
+            System.out.println("Tmdb Episode ID to add" + episodeToAdd.get().getImbd_id());
+
+            increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
+        }else{
+            Optional<UsersWatchedEpisode> usersWachedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(userWatchedTvEpisodeAddDto.getTvTmdbId(),user.getId());
             usersWachedEpisode.get().setWatchedNumber(usersWachedEpisode.get().getWatchedNumber()+1L);
             usersWatchedEpisodeRepository.save(usersWachedEpisode.get());
         }
+        // @TODO méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés
+
+        // @TODO methode pour ajouter le temps de visionnage de l'épisode
 
         return true;
     }
@@ -454,7 +453,16 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() + 1);
+        user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() + 1L);
+        userRepository.save(user);
+    }
+    public void increaseWatchedNumberEpisode(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        user.setTotalEpisodesWatchedNumber(user.getTotalEpisodesWatchedNumber() + 1L);
         userRepository.save(user);
     }
     public void decreaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
