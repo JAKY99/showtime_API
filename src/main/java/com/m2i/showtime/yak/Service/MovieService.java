@@ -242,7 +242,7 @@ public class MovieService {
             }
         }
 
-        if (!(resultSearch.results.stream().count() > 0)) throw new IllegalStateException("resultSearch is empty.");
+        if (resultSearch.results.stream().count() <= 0) throw new IllegalStateException("resultSearch is empty.");
 
         //REMOVE MOVIES ALREADY SEEN BY THE USER
         Optional<User> userOptional = userRepository.findById(idUser);
@@ -252,15 +252,20 @@ public class MovieService {
 
         user.getWatchedMovies()
             .forEach(userMovie -> {
-                TheMovieDbApiMovieDto theMovieDbApiMovieDto = resultSearch.results.stream()
+                boolean isPresent = resultSearch.results.stream()
+                                                        .anyMatch(x -> x.getId() == userMovie.getTmdbId());
+
+                TheMovieDbApiMovieDto theMovieDbApiMovieDto = null;
+                if (isPresent) {
+                    theMovieDbApiMovieDto = resultSearch.results.stream()
                                                                                   .filter(x -> x.getId() == userMovie.getTmdbId())
                                                                                   .findFirst()
                                                                                   .orElseThrow(() -> {
                                                                                       throw new IllegalStateException(
                                                                                               "Unable to filter resultSearch list while removing already seen movies.");
                                                                                   });
-
-                resultSearch.results.remove(theMovieDbApiMovieDto);
+                    resultSearch.results.remove(theMovieDbApiMovieDto);
+                }
             });
 
         //REMOVE MOVIES EXCLUDED ACTORS
