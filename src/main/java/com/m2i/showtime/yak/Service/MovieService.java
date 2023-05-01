@@ -242,6 +242,8 @@ public class MovieService {
             }
         }
 
+        if (!(resultSearch.results.stream().count() > 0)) throw new IllegalStateException("resultSearch is empty.");
+
         //REMOVE MOVIES ALREADY SEEN BY THE USER
         Optional<User> userOptional = userRepository.findById(idUser);
         User user = userOptional.orElseThrow(() -> {
