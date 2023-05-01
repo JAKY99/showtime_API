@@ -35,8 +35,9 @@ public class MovieService {
 
     private final ActorService actorService;
 
-    public MovieService(UserRepository userRepository, MovieRepository movieRepository, RedisConfig redisConfig,
-                        ActorService actorService) {
+    public MovieService(
+            UserRepository userRepository, MovieRepository movieRepository, RedisConfig redisConfig,
+            ActorService actorService) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.redisConfig = redisConfig;
@@ -236,8 +237,7 @@ public class MovieService {
             var resultTemp = gson.fromJson(resultToSendObj.toString(), SearchRecommendedMovieAPIDto.class);
             if (resultSearch.results != null) {
                 resultSearch.results.addAll(resultTemp.results);
-            }
-            else{
+            } else {
                 resultSearch.results = resultTemp.results;
             }
         }
@@ -248,15 +248,18 @@ public class MovieService {
             throw new IllegalStateException("User not found");
         });
 
-        user.getWatchedMovies().forEach(userMovie -> {
-            TheMovieDbApiMovieDto theMovieDbApiMovieDto =
-                    resultSearch.results.stream()
-                                        .filter(x-> x.getId() == userMovie.getTmdbId())
-                                        .findFirst()
-                                        .get();
+        user.getWatchedMovies()
+            .forEach(userMovie -> {
+                TheMovieDbApiMovieDto theMovieDbApiMovieDto = resultSearch.results.stream()
+                                                                                  .filter(x -> x.getId() == userMovie.getTmdbId())
+                                                                                  .findFirst()
+                                                                                  .orElseThrow(() -> {
+                                                                                      throw new IllegalStateException(
+                                                                                              "Unable to filter resultSearch list while removing already seen movies.");
+                                                                                  });
 
-            resultSearch.results.remove(theMovieDbApiMovieDto);
-        });
+                resultSearch.results.remove(theMovieDbApiMovieDto);
+            });
 
         //REMOVE MOVIES EXCLUDED ACTORS
         Set<Actor> excludedActorIdFromRecommended = user.getExcludedActorIdFromRecommended();
@@ -265,7 +268,8 @@ public class MovieService {
             try {
                 SearchCast movieCast = actorService.getMovieCast(movie.getId());
                 excludedActorIdFromRecommended.forEach(actor -> {
-                    if(movieCast.results.stream().anyMatch(actorCastDto -> actorCastDto.getId() == actor.getTmdbId())){
+                    if (movieCast.results.stream()
+                                         .anyMatch(actorCastDto -> actorCastDto.getId() == actor.getTmdbId())) {
                         resultSearch.results.remove(movie);
                     }
                 });
@@ -278,7 +282,7 @@ public class MovieService {
             }
         });
 
-        resultSearch.results = new ArrayList<>(resultSearch.results.subList(0 ,20));
+        resultSearch.results = new ArrayList<>(resultSearch.results.subList(0, 20));
         return resultSearch;
     }
 }
