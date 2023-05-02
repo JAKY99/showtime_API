@@ -92,7 +92,12 @@ public class TvService {
 
             Set<Episode> episodeSet = new HashSet<>();
             for (int j = 0; j < seasonDto.episodes.length; j++) {
-                Episode newEpisode = new Episode(seasonDto.episodes[j].id, seasonDto.episodes[j].name);
+                Episode newEpisode = new Episode(
+                        seasonDto.episodes[j].id,
+                        seasonDto.episodes[j].name ,
+                        seasonDto.episodes[j].season_number,
+                        seasonDto.episodes[j].episode_number
+                        );
                 episodeSet.add(newEpisode);
             }
 

@@ -26,12 +26,18 @@ public class Episode {
 
     private String name;
 
+    private Long season_number;
+
+    private Long episode_number;
+
 
     public Episode() {
     }
-    public Episode(Long imbd_id,String name) {
+    public Episode(Long imbd_id,String name, Long season_number, Long episode_number) {
         this.imbd_id = imbd_id;
         this.name = name;
+        this.season_number = season_number;
+        this.episode_number = episode_number;
 
     }
 }

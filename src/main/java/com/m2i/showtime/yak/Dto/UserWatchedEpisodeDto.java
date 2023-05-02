@@ -9,7 +9,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserWatchedEpisodeDto {
     String userMail ;
-    Long serieTmdbId;
-    Long seasonNumber;
-    Long episodeNumber;
+    Long episodeTmdbId;
 }

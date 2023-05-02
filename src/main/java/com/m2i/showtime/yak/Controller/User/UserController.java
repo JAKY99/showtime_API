@@ -2,6 +2,7 @@ package com.m2i.showtime.yak.Controller.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Episode;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
@@ -168,9 +169,15 @@ public class UserController {
         return userService.isTvInWatchlist(userWatchedSerieAddDto);
     }
 
+
     @PostMapping("/isEpisodeInWatchlist")
     public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
         return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
+    }
+
+    @PostMapping("/getLastSeenEpisode")
+    public Episode getLastSeenEpisode(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        return userService.getLastSeenEpisode(userWatchedSerieAddDto);
     }
 
 

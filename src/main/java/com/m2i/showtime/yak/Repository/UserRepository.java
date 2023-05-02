@@ -2,7 +2,9 @@ package com.m2i.showtime.yak.Repository;
 
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
+import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Entity.UsersWatchedEpisode;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -36,9 +38,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role='ADMIN'")
     Optional<User[]> findAllAdminUsers();
 
-    @Query("SELECT u FROM User u JOIN u.watchedSeries w WHERE u.username = ?1 and w.tmdbId = ?2")
-    Optional<UserSimpleDto> isEpisodeWatched(String email, long serieTmdbId, long seasonNumber, long episodeNumber);
-//    Unifinished a reprendre plus tard
+    @Query("SELECT u FROM UsersWatchedEpisode u WHERE u.user.username = ?1 and u.episode.imbd_id = ?2")
+    Boolean isEpisodeWatched(String email , long episodeTmdbId);
 
 
 }
