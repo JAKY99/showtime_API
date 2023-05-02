@@ -730,7 +730,7 @@ public class UserService {
             RegisterGoogleDto registerDto = new RegisterGoogleDto();
             registerDto.setUsername(email);
             registerDto.setPassword(newPassword);
-            registerDto.setFirstName(name);
+            registerDto.setFirstName(givenName);
             registerDto.setLastName(familyName);
             this.userAuthService.registerGoogleSignin(registerDto);
         }
