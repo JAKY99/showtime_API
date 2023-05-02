@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
 import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedEpisode;
+import com.m2i.showtime.yak.Entity.UsersWatchedSeason;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,7 +40,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User[]> findAllAdminUsers();
 
     @Query("SELECT u FROM UsersWatchedEpisode u WHERE u.user.username = ?1 and u.episode.imbd_id = ?2")
-    Boolean isEpisodeWatched(String email , long episodeTmdbId);
+    Optional<UsersWatchedEpisode> isEpisodeWatched(String email , long episodeTmdbId);
+
+    @Query("SELECT u FROM UsersWatchedSeason u WHERE u.user.username = ?1 and u.season.tmdbSeasonId = ?2")
+    Optional<UsersWatchedSeason> getSeasonStatus(String email , long seasonTmdbId);
 
 
 }

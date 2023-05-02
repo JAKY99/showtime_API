@@ -61,6 +61,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.checkerframework.checker.nullness.Opt.isPresent;
+
 @Service
 @EnableAsync
 public class UserService {
@@ -302,7 +304,8 @@ public class UserService {
 
             increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
         }
-        // @TODO méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés
+        // @TODO méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés && mettre le bon statut
+
 
 
         // @TODO methode pour ajouter le temps de visionnage de l'épisode
@@ -354,8 +357,8 @@ public class UserService {
 
         EpisodesSeen.forEach(episode -> {
             // return episode with the highest season_number and episode_number
-            if(episode.getSeason_number() > latestEpisode.get().getSeason_number()
-                    && episode.getEpisode_number() > latestEpisode.get().getEpisode_number()) {
+            if(episode.getSeason_number() >= latestEpisode.get().getSeason_number()
+                    && episode.getEpisode_number() >= latestEpisode.get().getEpisode_number()) {
                 latestEpisode.set(episode);
             }
         });
@@ -1028,11 +1031,33 @@ public class UserService {
 
     public boolean isEpisodeInWatchlist(UserWatchedEpisodeDto userWatchedEpisodeDto) {
         System.out.println(userWatchedEpisodeDto);
-        Boolean epIsWatched = userRepository.isEpisodeWatched(
+        Optional<UsersWatchedEpisode> seen = userRepository.isEpisodeWatched(
                 userWatchedEpisodeDto.getUserMail(),
                 userWatchedEpisodeDto.getEpisodeTmdbId()
         );
-        return epIsWatched;
+        if(seen.isPresent()){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
+
+    public StatusDto isSeasonInWatchlist(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
+        System.out.println(userWatchedTvSeasonAddDto);
+        Optional<UsersWatchedSeason> seasonStatus = userRepository.getSeasonStatus(
+                userWatchedTvSeasonAddDto.getUserMail(),
+                userWatchedTvSeasonAddDto.getTvSeasonid()
+
+        );
+        Status status = seasonStatus.isPresent() ? seasonStatus.get().getStatus() : Status.NOTSEEN;
+
+        StatusDto statusDto = new StatusDto();
+        statusDto.setStatus(status.getValue());
+
+        return  statusDto;
+//        return season.get().getStatus();
+
     }
 
 //    public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {

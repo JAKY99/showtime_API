@@ -175,6 +175,11 @@ public class UserController {
         return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
     }
 
+    @PostMapping("/isSeasonInWatchlist")
+    public StatusDto isSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
+        return userService.isSeasonInWatchlist(userWatchedTvSeasonAddDto);
+    }
+
     @PostMapping("/getLastSeenEpisode")
     public Episode getLastSeenEpisode(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
         return userService.getLastSeenEpisode(userWatchedSerieAddDto);
