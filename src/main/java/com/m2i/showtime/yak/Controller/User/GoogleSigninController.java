@@ -64,40 +64,48 @@ public class GoogleSigninController {
                 // Or, if multiple clients access the backend:
                 //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
                 .build();
-        GoogleIdToken idToken = verifier.verify(credential);
-        if (idToken != null) {
-            Payload payload = idToken.getPayload();
+        GoogleIdToken idToken = null;
+        try {
+            idToken = verifier.verify(credential);
+            if (idToken != null) {
+                Payload payload = idToken.getPayload();
 
-            // Print user identifier
-            String userId = payload.getSubject();
-            System.out.println("User ID: " + userId);
-            // Get profile information from payload
-            String email = payload.getEmail();
-            boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-            String name = (String) payload.get("name");
-            String pictureUrl = (String) payload.get("picture");
-            String locale = (String) payload.get("locale");
-            String familyName = (String) payload.get("family_name");
-            String givenName = (String) payload.get("given_name");
-            Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(payload);
-            String token = Jwts.builder()
-                    .setSubject(email)
-                    .claim("authorities", optionalUser.get().getGrantedAuthorities())
-                    .setIssuedAt(new Date())
-                    .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(jwtConfig.getTokenExpirationAfterDays())))
-                    .signWith(secretKey)
-                    .compact();
+                // Print user identifier
+                String userId = payload.getSubject();
+                System.out.println("User ID: " + userId);
+                // Get profile information from payload
+                String email = payload.getEmail();
+                boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+                String name = (String) payload.get("name");
+                String pictureUrl = (String) payload.get("picture");
+                String locale = (String) payload.get("locale");
+                String familyName = (String) payload.get("family_name");
+                String givenName = (String) payload.get("given_name");
+                Optional<User> optionalUser = this.userService.findOneUserByEmailOrCreateIt(payload);
+                String token = Jwts.builder()
+                        .setSubject(email)
+                        .claim("authorities", optionalUser.get().getGrantedAuthorities())
+                        .setIssuedAt(new Date())
+                        .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(jwtConfig.getTokenExpirationAfterDays())))
+                        .signWith(secretKey)
+                        .compact();
 
-            response.addHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getTokenPrefix() + token);
-            googleSigninReponseDto.setEmail(email);
+                response.addHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getTokenPrefix() + token);
+                googleSigninReponseDto.setEmail(email);
 
-            String url= redirectUrl+"auth/google?token=" + token;
-            response.sendRedirect(url);
+                String url= redirectUrl+"auth/google?token=" + token;
+                response.sendRedirect(url);
 //            return googleSigninReponseDto;
-            // Use or store profile information
-            // ...
+                // Use or store profile information
+                // ...
 
-        } else {
+            } else {
+                googleSigninReponseDto.setEmail("ERROR");
+                String url =  redirectUrl+"login?authGoogleError=error";
+                response.sendRedirect(url);
+            }
+
+        }catch(Exception e){
             googleSigninReponseDto.setEmail("ERROR");
             String url =  redirectUrl+"login?authGoogleError=error";
             response.sendRedirect(url);
