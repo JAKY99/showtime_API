@@ -54,7 +54,6 @@ public class GoogleSigninController {
     @PostMapping("/login/google")
     public void googleSignin(@RequestParam MultiValueMap<String, String> params, HttpServletResponse response) throws GeneralSecurityException, IOException {
         HttpTransport transport = new NetHttpTransport();
-       params = params;
         String credential = params.getFirst("credential");
         String clientId = params.getFirst("client_id");
         JsonFactory jsonFactory = new GsonFactory();
