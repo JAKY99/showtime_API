@@ -7,6 +7,7 @@ import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
+import org.apache.kafka.common.metrics.Stat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -155,7 +156,7 @@ public class UserController {
     }
 
     @PostMapping("/addSeasonInWatchlist")
-    public boolean addSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    public Status addSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
         return userService.addSeasonInWatchlist(userWatchedTvSeasonAddDto);
     }
 
@@ -169,6 +170,10 @@ public class UserController {
         return userService.isTvInWatchlist(userWatchedSerieAddDto);
     }
 
+    @PostMapping("/nbEpisodesWatchedInSerie")
+    public Long getNbEpisodesWatchedForSeason(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.getNbEpisodesWatchedForSeason(userWatchedTvSeasonAddDto.getTvSeasonid(), userWatchedTvSeasonAddDto.getUserMail());
+    }
 
     @PostMapping("/isEpisodeInWatchlist")
     public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
@@ -176,7 +181,7 @@ public class UserController {
     }
 
     @PostMapping("/isSeasonInWatchlist")
-    public StatusDto isSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
+    public Status isSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
         return userService.isSeasonInWatchlist(userWatchedTvSeasonAddDto);
     }
 

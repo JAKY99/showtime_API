@@ -12,4 +12,7 @@ public interface SeasonHasEpisodeRepository extends JpaRepository<SeasonHasEpiso
 
     @Query("SELECT s FROM SeasonHasEpisode s WHERE s.season.tmdbSeasonId = ?1")
     List<SeasonHasEpisode> findBySeasonImdbId(Long seasonImdbId);
+
+//    @Query("SELECT s FROM SeasonHasEpisode s WHERE s.season.tmdbSeasonId = ?1")
+//    Optional<SeasonHasEpisode> findBySeasonImdbId(Long seasonImdbId);
 }

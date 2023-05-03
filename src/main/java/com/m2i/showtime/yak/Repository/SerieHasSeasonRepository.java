@@ -11,4 +11,5 @@ public interface SerieHasSeasonRepository extends JpaRepository<SerieHasSeason, 
     @Query("SELECT m FROM SerieHasSeason m WHERE m.serie.tmdbId = ?1")
     List<SerieHasSeason> findAllRelatedSeason(Long serieId);
 
+
 }
