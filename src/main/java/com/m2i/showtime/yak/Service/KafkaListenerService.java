@@ -51,6 +51,14 @@ public class KafkaListenerService {
         elasticSearchService.dailyUpdate();
     }
 
+    @KafkaListener(topics = "${spring.profiles.active}UserComment", groupId = "${spring.profiles.active}")
+    public void listenCommentUser(String message) {
+        String userName = message.split("/")[1];
+        String messageToSend = message.split("/")[0];
+        simpMessagingTemplate.convertAndSend("/topic/user/"+env+"/"+userName, messageToSend);
+        LOGGER.print("Received Message in group " + env + " : " + message);
+    }
+
     @KafkaListener(topics = "${spring.profiles.active}User", groupId = "${spring.profiles.active}")
     public void listenGroupFooUser(String message) {
         simpMessagingTemplate.convertAndSend("/topic/user/"+env, message);

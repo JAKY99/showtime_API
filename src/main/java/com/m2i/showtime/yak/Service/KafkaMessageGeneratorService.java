@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.m2i.showtime.yak.Dto.CommentNotifDto;
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
 import com.m2i.showtime.yak.Dto.KafkaResponseDto;
 import com.m2i.showtime.yak.Dto.MessageAdminDto;
@@ -101,5 +102,33 @@ public class KafkaMessageGeneratorService {
             }
         });
         return new KafkaResponseDto("Sending message to topic: " + kafkaMessageDto.getTopicName() + "With message : " + kafkaMessageDto.getMessage());
+    }
+
+    public void sendCommentNotif(CommentNotifDto commentNotifDto) {
+
+
+        LOGGER.print("Sending message to topic: " + commentNotifDto.getTopicName());
+        LOGGER.print("With message : " + commentNotifDto.getMessage());
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(commentNotifDto.getTopicName(), commentNotifDto.getMessage() + "/" + commentNotifDto.getUsername());
+
+        simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                LOGGER.print("Sent message=[" + commentNotifDto.getMessage() +
+                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                LOGGER.print("Unable to send message=["
+                        + commentNotifDto.getMessage() + "] due to : " + ex.getMessage());
+                AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                client.close();
+                kafkaAdmin.initialize();
+            }
+        });
     }
 }
