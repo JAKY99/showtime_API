@@ -9,7 +9,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Payload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -21,6 +20,7 @@ import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
+import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Repository.ActorRepository;
 import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
@@ -29,6 +29,9 @@ import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +43,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.crypto.SecretKey;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -101,6 +106,8 @@ public class UserService {
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     private final UserAuthService userAuthService;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
     @Autowired
     public UserService(UserRepository userRepository,
                        MovieRepository movieRepository,
@@ -109,7 +116,7 @@ public class UserService {
                        UsersWatchedMovieRepository usersWatchedMovieRepository,
                        RedisService redisService, HazelcastConfig hazelcastConfig,
                        LoggerService LOGGER, UserAuthService userAuthService,
-                       ActorRepository actorRepository) {
+                       ActorRepository actorRepository, SecretKey secretKey, JwtConfig jwtConfig) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
@@ -120,6 +127,8 @@ public class UserService {
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
         this.userAuthService = userAuthService;
+        this.secretKey = secretKey;
+        this.jwtConfig = jwtConfig;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -792,27 +801,6 @@ public class UserService {
         return socialInfoDto;
     }
 
-    public boolean saveComment(userCommentDto userCommentDto, int movieId) {
-        try {
-            User user = this.userRepository.findUserByEmail(userCommentDto.getUserMail()).orElseThrow(() -> new IllegalStateException(UserNotFound));
-            Comment comment = new Comment();
-            comment.setContent(userCommentDto.getCommentText());
-            comment.setUser(user);
-            comment.setMovie_id((long) movieId);
-            this.commentRepository.save(comment);
-            return true;
-        }catch (Exception e){
-            System.out.println(e.getMessage());
-            return false;
-        }
-    }
-
-    public List<Comment> getComments(int movieId) {
-        Comment[] comments = this.commentRepository.getCommentsByMovieId((long) movieId);
-        List<Comment> commentList = Arrays.asList(comments);
-        return commentList;
-    }
-
     public void excludeActor(Long idActor, long idUser) {
         Optional<User> userOptional = userRepository.findById(idUser);
         User user = userOptional.orElseThrow(() -> {
@@ -831,4 +819,5 @@ public class UserService {
 
         userRepository.saveAndFlush(user);
     }
+
 }

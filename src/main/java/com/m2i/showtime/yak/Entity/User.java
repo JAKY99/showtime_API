@@ -129,6 +129,7 @@ public class User implements UserDetails {
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
 
+
     public User(String firstName,
                 String lastName,
                 String username,

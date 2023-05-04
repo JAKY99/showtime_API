@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Controller;
 
+import com.m2i.showtime.yak.Dto.CommentNotifDto;
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
 import com.m2i.showtime.yak.Dto.KafkaResponseDto;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
@@ -18,6 +19,11 @@ public class KafkaController {
     @PostMapping("/send")
     public KafkaResponseDto sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
         return kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+    }
+
+    @PostMapping("/commentNotif")
+    public void sendCommentNotif(@RequestBody CommentNotifDto commentNotifDto) {
+        kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
     }
 
 }

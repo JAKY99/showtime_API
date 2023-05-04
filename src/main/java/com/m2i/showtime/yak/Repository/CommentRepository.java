@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    @Query("SELECT c FROM Comment c WHERE c.movie_id = ?1 and c.isSpoiler = false and c.isValidate = false order by c.datePublication desc")
+    @Query("SELECT c FROM Comment c WHERE c.movie_id = ?1 and c.isSpoiler = false and c.isValidate = true and c.isDeleted = false order by c.datePublication desc")
     Comment[] getCommentsByMovieId(long movieId);
+
+    @Query("SELECT c FROM Comment c WHERE c.movie_id = ?1 and c.user.id = ?2 and c.isValidate = false and c.isDeleted = false")
+    Comment[] getUserCommentsByMovieIdAndUserId(long movieId, long id);
 }

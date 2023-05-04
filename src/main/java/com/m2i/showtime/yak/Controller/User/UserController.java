@@ -9,6 +9,7 @@ import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 
+import liquibase.pro.packaged.R;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -109,17 +110,6 @@ public class UserController {
     @PostMapping("/watchlistMoviesRange")
     public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.watchlistMoviesRange(fetchRangeDto);
-    }
-
-    @PostMapping("/saveComment/{movieId}")
-    public boolean saveComment(@RequestBody userCommentDto userCommentDto, @PathVariable("movieId") int movieId) {
-        userService.saveComment(userCommentDto, movieId);
-        return true;
-    }
-
-    @GetMapping("/getComments/{movieId}")
-    public List<Comment> getComments(@PathVariable("movieId") int movieId) {
-        return userService.getComments(movieId);
     }
 
     @PostMapping("/increaseWatchedNumber")

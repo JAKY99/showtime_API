@@ -50,5 +50,13 @@
                                  constraintName="fk_usecom_on_user" referencedColumnNames="id"
                                  referencedTableName="_user"/>
     </changeSet>
+    <changeSet id="1683122224251-1" author="Joe JC (generated)">
+        <addColumn tableName="comment">
+            <column name="is_deleted" type="BOOLEAN" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="1683122224251-2" author="Joe JC (generated)">
+        <addNotNullConstraint columnName="is_deleted" tableName="comment"/>
+    </changeSet>
 
 </databaseChangeLog>
