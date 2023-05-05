@@ -9,6 +9,7 @@ import com.m2i.showtime.yak.Entity.Season;
 import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import org.joda.time.DateTime;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -21,6 +22,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -89,20 +91,29 @@ public class TvService {
             JSONObject documentObj2 = new JSONObject(resp.body().toString());
 
             AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2) , AddSeasonDto.class);
+            if(seasonDto.air_date != null) {
 
-            Set<Episode> episodeSet = new HashSet<>();
-            for (int j = 0; j < seasonDto.episodes.length; j++) {
-                Episode newEpisode = new Episode(
-                        seasonDto.episodes[j].id,
-                        seasonDto.episodes[j].name ,
-                        seasonDto.episodes[j].season_number,
-                        seasonDto.episodes[j].episode_number
+                LocalDate today = LocalDate.now();
+                LocalDate date = LocalDate.parse(seasonDto.air_date);
+
+                if (!date.isAfter(today)) {
+
+                    Set<Episode> episodeSet = new HashSet<>();
+                    for (int j = 0; j < seasonDto.episodes.length; j++) {
+                        Episode newEpisode = new Episode(
+                                seasonDto.episodes[j].id,
+                                seasonDto.episodes[j].name,
+                                seasonDto.episodes[j].season_number,
+                                seasonDto.episodes[j].episode_number
                         );
-                episodeSet.add(newEpisode);
-            }
+                        episodeSet.add(newEpisode);
+                    }
 
-            Season season = new Season(seasons[i].season_number, seasons[i].id, seasons[i].name ,episodeSet);
-            seasonList.add(season);
+                    Season season = new Season(seasons[i].season_number, seasons[i].id, seasons[i].name, episodeSet);
+                    seasonList.add(season);
+
+                }
+            }
         }
 
         Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
