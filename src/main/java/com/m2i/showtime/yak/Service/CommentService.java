@@ -1,12 +1,17 @@
 package com.m2i.showtime.yak.Service;
 
+import com.m2i.showtime.yak.Dto.CommentLikeDto;
 import com.m2i.showtime.yak.Dto.CommentNotifDto;
+import com.m2i.showtime.yak.Dto.Search.CommentGetDto;
+import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.userCommentDto;
 import com.m2i.showtime.yak.Entity.Comment;
+import com.m2i.showtime.yak.Entity.Like;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Repository.CommentRepository;
+import com.m2i.showtime.yak.Repository.LikeRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -17,10 +22,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class CommentService {
@@ -32,9 +34,10 @@ public class CommentService {
     private final SecretKey secretKey;
     private final JwtConfig jwtConfig;
     private final String UserNotFound="User not found";
+    private final LikeRepository likeRepository;
 
 
-    public CommentService(MovieService movieService, MovieRepository movieRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService, UserRepository userRepository, CommentRepository commentRepository, SecretKey secretKey, JwtConfig jwtConfig) {
+    public CommentService(MovieService movieService, MovieRepository movieRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService, UserRepository userRepository, CommentRepository commentRepository, SecretKey secretKey, JwtConfig jwtConfig, LikeRepository likeRepository) {
         this.movieService = movieService;
         this.movieRepository = movieRepository;
         this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
@@ -42,6 +45,7 @@ public class CommentService {
         this.commentRepository = commentRepository;
         this.secretKey = secretKey;
         this.jwtConfig = jwtConfig;
+        this.likeRepository = likeRepository;
     }
 
     public boolean saveComment(userCommentDto userCommentDto) {
@@ -60,31 +64,46 @@ public class CommentService {
         }
     }
 
-    public List<Comment> getComments(int movieId) {
-        Comment[] comments = this.commentRepository.getCommentsByMovieId((long) movieId);
-        List<Comment> commentList = Arrays.asList(comments);
-        return commentList;
+    public List<CommentGetDto> getComments(int movieId, UserSimpleDto userSimpleDto) {
+        List<CommentGetDto> response = new ArrayList<>();
+        Optional<Comment[]> commentOptional = this.commentRepository.getCommentsByMovieId((long) movieId);
+        User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        for (Comment comment : commentOptional.get()) {
+            CommentGetDto commentGetDto = new CommentGetDto();
+            commentGetDto.setComments(comment);
+            Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
+            if (like.isPresent()) {
+                commentGetDto.setLiked(true);
+            }
+            response.add(commentGetDto);
+
+        }
+
+        return response;
     }
 
-    public List<Comment> getUserComments(int movieId, String token) {
-        token = token.replace(jwtConfig.getTokenPrefix(), "");
-        Jws<Claims> claimsJws = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
-        User user = this.userRepository.findUserByEmail(claimsJws.getBody().getSubject()).orElseThrow(() -> new IllegalStateException(UserNotFound));
-        Comment[] comments = this.commentRepository.getUserCommentsByMovieIdAndUserId((long) movieId, (long) user.getId());
-        List<Comment> commentList = new LinkedList<Comment>(Arrays.asList(comments));
-        for (Comment comment : commentList) {
+    public List<CommentGetDto> getUserComments(int movieId, UserSimpleDto userSimpleDto) {
+        //A changer token
+        List<CommentGetDto> response = new ArrayList<>();
+        User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Optional<Comment[]> comments = this.commentRepository.getUserCommentsByMovieIdAndUserId((long) movieId, (long) user.getId());
+        for (Comment comment : comments.get()) {
             LocalDateTime pubishDate = comment.getDatePublication();
             LocalDateTime now = LocalDateTime.now();
-            if (pubishDate.plusDays(1).isBefore(now) && comment.isValidate() == false && comment.isSpoiler() == true) {
+            if (pubishDate.plusDays(1).isBefore(now) && comment.isValidate() == true && comment.isSpoiler() == false) {
                 comment.setDeleted(true);
-                commentList.remove(comment);
                 this.commentRepository.save(comment);
+            } else if (comment.isDeleted() == false) {
+                CommentGetDto commentGetDto = new CommentGetDto();
+                commentGetDto.setComments(comment);
+                Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
+                if (like.isPresent()) {
+                    commentGetDto.setLiked(true);
+                }
+                response.add(commentGetDto);
             }
         }
-        return commentList;
+        return response;
     }
 
     public List<Comment> getAllComments() {
@@ -144,4 +163,30 @@ public class CommentService {
         }
     }
 
+    public CommentGetDto likeComment(UserSimpleDto userSimpleDto, CommentLikeDto commentLikeDto) {
+        User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        CommentGetDto commentGetDto = new CommentGetDto();
+        Optional<Comment> comment = this.commentRepository.findById(commentLikeDto.getCommentId());
+        if (comment.isEmpty()) throw new IllegalStateException("Comment not found");
+        Like likeUser = this.likeRepository.findbyUserIdAndCommentId(user.getId(), comment.get().getId());
+        if (likeUser == null) {
+            Like like = new Like();
+            like.setCommentId(comment.get().getId());
+            like.setUserId(user.getId());
+            this.likeRepository.save(like);
+            comment.get().getLikes().add(like);
+            this.commentRepository.save(comment.get());
+            commentGetDto.setComments(comment.get());
+            Optional<Like> likeResponse = this.likeRepository.getLikeByCommentIdAndUserId(comment.get().getId(), user.getId());
+            if (likeResponse.isPresent()) {
+                commentGetDto.setLiked(true);
+            }
+        } else {
+            comment.get().getLikes().remove(likeUser);
+            this.commentRepository.save(comment.get());
+            this.likeRepository.delete(likeUser);
+            commentGetDto.setComments(comment.get());
+        }
+        return commentGetDto;
+    }
 }
