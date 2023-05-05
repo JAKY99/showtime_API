@@ -1,14 +1,10 @@
 package com.m2i.showtime.yak.Entity;
 
+
 import lombok.Getter;
 import lombok.Setter;
-import org.joda.time.DateTime;
-
 import javax.persistence.*;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -27,12 +23,14 @@ public class Comment {
         @ManyToOne
         private User user;
 
-
         private String content;
         private LocalDateTime datePublication = LocalDateTime.now();
         private boolean isValidate = false;
         private boolean isSpoiler = false;
         private boolean isDeleted = false;
+
+        @OneToMany(cascade = CascadeType.ALL)
+        private Set<Like> likes;
 
         public Comment() {
         }
