@@ -887,12 +887,13 @@ public class UserService {
         return socialFollowingResponseDto;
     }
 
-    public void notificationToUser(String email, Notification notification) throws JSONException {
+    public boolean notificationToUser(String email, Notification notification) throws JSONException {
         String topicName=this.ENV+"UserNotificationService";
         User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
         user.getNotifications().add(notification);
         userRepository.saveAndFlush(user);
         this.kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
+        return true;
     }
 
     public Set<Notification> getUserNotification(String email) {

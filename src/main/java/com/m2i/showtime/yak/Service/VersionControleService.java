@@ -59,7 +59,7 @@ public class VersionControleService {
         KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
         kafkaMessageDto.setTopicName(env + "User");
         kafkaMessageDto.setMessage("New update");
-        kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+        this.kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
         return true;
     }
 

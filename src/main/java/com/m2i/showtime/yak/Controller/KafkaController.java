@@ -18,12 +18,12 @@ public class KafkaController {
     }
     @PostMapping("/send")
     public KafkaResponseDto sendMessage(@RequestBody KafkaMessageDto kafkaMessageDto) {
-        return kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+        return this.kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
     }
 
     @PostMapping("/commentNotif")
     public void sendCommentNotif(@RequestBody CommentNotifDto commentNotifDto) {
-        kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
+        this.kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
     }
 
 }
