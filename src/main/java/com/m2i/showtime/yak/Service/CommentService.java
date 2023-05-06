@@ -29,8 +29,8 @@ import java.util.*;
 public class CommentService {
     private final MovieService movieService;
     private final MovieRepository movieRepository;
-    @Autowired
-    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
+
+//    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final SecretKey secretKey;
@@ -39,10 +39,24 @@ public class CommentService {
     private final LikeRepository likeRepository;
 
 
-    public CommentService(MovieService movieService, MovieRepository movieRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService, UserRepository userRepository, CommentRepository commentRepository, SecretKey secretKey, JwtConfig jwtConfig, LikeRepository likeRepository) {
+//    public CommentService(MovieService movieService, MovieRepository movieRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService, UserRepository userRepository, CommentRepository commentRepository, SecretKey secretKey, JwtConfig jwtConfig, LikeRepository likeRepository) {
+//        this.movieService = movieService;
+//        this.movieRepository = movieRepository;
+//        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
+//        this.userRepository = userRepository;
+//        this.commentRepository = commentRepository;
+//        this.secretKey = secretKey;
+//        this.jwtConfig = jwtConfig;
+//        this.likeRepository = likeRepository;
+//    }
+    public CommentService(MovieService movieService,
+                          MovieRepository movieRepository,
+                          UserRepository userRepository,
+                          CommentRepository commentRepository,
+                          SecretKey secretKey, JwtConfig jwtConfig,
+                          LikeRepository likeRepository) {
         this.movieService = movieService;
         this.movieRepository = movieRepository;
-        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.secretKey = secretKey;
@@ -156,7 +170,7 @@ public class CommentService {
             data.put("status","rejected");
             commentNotifDto.setUsername(comment1.getUser().getUsername());
             commentNotifDto.setMessage(data.toString());
-            this.kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
+//            this.kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
             this.commentRepository.save(comment1);
             return true;
         }catch (Exception e){
