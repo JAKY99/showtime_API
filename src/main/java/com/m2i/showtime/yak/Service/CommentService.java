@@ -18,6 +18,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -28,6 +29,7 @@ import java.util.*;
 public class CommentService {
     private final MovieService movieService;
     private final MovieRepository movieRepository;
+    @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
