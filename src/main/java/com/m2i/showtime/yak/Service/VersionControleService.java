@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Dto.VersionControlDto;
 import com.m2i.showtime.yak.Dto.responseAndroidVersionDto;
 import com.m2i.showtime.yak.Entity.VersionControle;
 import com.m2i.showtime.yak.Repository.VersionControleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +25,7 @@ public class VersionControleService {
     private String versionNameAndroid;
     @Value("${spring.profiles.active}")
     private String env;
+    @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     public VersionControleService(VersionControleRepository versionControleRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService) {
         this.versionControleRepository = versionControleRepository;

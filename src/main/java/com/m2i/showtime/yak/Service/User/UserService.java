@@ -79,6 +79,7 @@ public class UserService {
     private final ActorRepository actorRepository;
     private final GenreRepository genreRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
+    @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
     private String bucketName;
