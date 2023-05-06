@@ -506,9 +506,9 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoSocialInfos profileLazyUserDtoSocialInfos = new ProfileLazyUserDtoSocialInfos();
-        profileLazyUserDtoSocialInfos.setFollowersCounter(user.getFollowersCounter());
-        profileLazyUserDtoSocialInfos.setFollowingsCounter(user.getFollowingsCounter());
-        profileLazyUserDtoSocialInfos.setCommentsCounter(user.getCommentsCounter());
+        profileLazyUserDtoSocialInfos.setFollowersCounter((long) user.getFollowers().size());
+        profileLazyUserDtoSocialInfos.setFollowingsCounter((long) user.getFollowing().size());
+        profileLazyUserDtoSocialInfos.setCommentsCounter((long) user.getComments().size());
         return profileLazyUserDtoSocialInfos;
 
 
@@ -820,4 +820,36 @@ public class UserService {
         userRepository.saveAndFlush(user);
     }
 
+    public SocialFollowingResponseDto getFollowingStatus(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(user.getFollowing().contains(userToFollow));
+        return socialFollowingResponseDto;
+    }
+
+    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(false);
+        if(!user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().add(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(true);
+        }
+        return socialFollowingResponseDto;
+    }
+    public SocialFollowingResponseDto actionUnfollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(true);
+        if(user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().remove(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(false);
+        }
+        return socialFollowingResponseDto;
+    }
 }

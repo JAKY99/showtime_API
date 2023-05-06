@@ -143,6 +143,10 @@ public class UserController {
     public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(@RequestBody String email) {
         return userService.getProfileSocialInfos(email);
     }
+    @PostMapping("profile/lazy/socialInfos/followingStatus")
+    public SocialFollowingResponseDto getProfileSocialInfosFollowing(@RequestBody SocialFollowingRequestDto information) {
+        return userService.getFollowingStatus(information);
+    }
     @PostMapping("profile/lazy/lastWatchedMovies")
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
@@ -178,6 +182,15 @@ public class UserController {
                                    })
                                    .getId();
         userService.excludeActor(IdActor, IdUser);
+    }
+
+    @PostMapping("profile/lazy/socialAction/followUser")
+    public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information) {
+        return userService.actionFollowUser(information);
+    }
+    @PostMapping("profile/lazy/socialAction/unfollowUser")
+    public SocialFollowingResponseDto actionUnfollowUser(@RequestBody SocialFollowingRequestDto information) {
+        return userService.actionUnfollowUser(information);
     }
 
 }
