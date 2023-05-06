@@ -23,6 +23,7 @@ import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
@@ -76,6 +77,7 @@ public class UserService {
     private final MovieService movieService;
     private final CommentRepository commentRepository;
     private final ActorRepository actorRepository;
+    private final GenreRepository genreRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
@@ -112,7 +114,7 @@ public class UserService {
     public UserService(UserRepository userRepository,
                        MovieRepository movieRepository,
                        MovieService movieService,
-                       CommentRepository commentRepository,
+                       CommentRepository commentRepository, GenreRepository genreRepository,
                        UsersWatchedMovieRepository usersWatchedMovieRepository,
                        KafkaMessageGeneratorService kafkaMessageGeneratorService, RedisService redisService, HazelcastConfig hazelcastConfig,
                        LoggerService LOGGER, UserAuthService userAuthService,
@@ -122,6 +124,7 @@ public class UserService {
         this.movieService = movieService;
         this.commentRepository = commentRepository;
         this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
+        this.genreRepository = genreRepository;
         this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
@@ -817,6 +820,25 @@ public class UserService {
             newActor = actorRepository.saveAndFlush(new Actor(idActor));
         }
         excludedActorIdFromRecommended.add(actor.orElse(newActor));
+
+        userRepository.saveAndFlush(user);
+    }
+
+    public void excludeGenre(Long idGenre, Long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Genre> excludedGenreIdFromRecommended = user.getExcludedGenreIdFromRecommended();
+
+        Optional<Genre> genre = genreRepository.findByTmdbId(idGenre);
+
+        Genre newGenre = null;
+        if (genre.isEmpty()) {
+            newGenre = genreRepository.saveAndFlush(new Genre(idGenre));
+        }
+        excludedGenreIdFromRecommended.add(genre.orElse(newGenre));
 
         userRepository.saveAndFlush(user);
     }

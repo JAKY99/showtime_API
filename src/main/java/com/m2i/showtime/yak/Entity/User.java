@@ -84,6 +84,16 @@ public class User implements UserDetails {
                     @JoinColumn(name = "actor_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Actor> excludedActorIdFromRecommended = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_excluded_genres",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "genre_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Genre> excludedGenreIdFromRecommended = new HashSet<>();
     //-------------------------------------------------
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_movies",
