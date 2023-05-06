@@ -10,9 +10,9 @@ import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.NotificationRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -22,7 +22,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import java.util.Optional;
 

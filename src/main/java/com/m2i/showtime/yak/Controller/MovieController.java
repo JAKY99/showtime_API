@@ -1,5 +1,4 @@
 package com.m2i.showtime.yak.Controller;
-
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Repository.MovieRepository;
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -18,18 +16,21 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/movie")
-
 public class MovieController {
     @Value("${application.elasticurl}")
     private String elasticbaseUrl;
     @Value("${application.imdb.apiKey}")
     private String apiKey;
-    public final MovieRepository movieRepo;
-    public final MovieService movieService;
-    @Autowired
-    public final UserService userService;
 
-    public MovieController(MovieRepository movieRepo, MovieService movieService, UserService userService) {
+    public final MovieRepository movieRepo;
+
+    public final MovieService movieService;
+
+    public final UserService userService;
+    @Autowired
+    public MovieController(MovieRepository movieRepo,
+                           MovieService movieService,
+                           UserService userService) {
         this.movieRepo = movieRepo;
         this.movieService = movieService;
         this.userService = userService;

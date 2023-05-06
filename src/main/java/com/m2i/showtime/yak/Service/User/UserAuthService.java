@@ -9,6 +9,7 @@ import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.RoleRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,7 +27,9 @@ public class UserAuthService implements UserDetailsService {
 
     private final UserRepository userRepository ;
     private final RoleRepository roleRepository;
-    private final KafkaMessageGeneratorService kafkaMessageGeneratorService ;
+    @Autowired
+    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
+    @Autowired
     public UserAuthService(UserRepository userRepository, RoleRepository roleRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;

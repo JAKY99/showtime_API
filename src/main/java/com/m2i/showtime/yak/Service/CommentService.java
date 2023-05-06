@@ -5,23 +5,16 @@ import com.m2i.showtime.yak.Dto.CommentNotifDto;
 import com.m2i.showtime.yak.Dto.Search.CommentGetDto;
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.userCommentDto;
-import com.m2i.showtime.yak.Entity.Comment;
-import com.m2i.showtime.yak.Entity.Like;
-import com.m2i.showtime.yak.Entity.Movie;
-import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Jwt.JwtConfig;
+import com.m2i.showtime.yak.Entity.*;
+
 import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.LikeRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
+import com.m2i.showtime.yak.Service.User.UserService;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -29,25 +22,20 @@ import java.util.*;
 public class CommentService {
     private final MovieService movieService;
     private final MovieRepository movieRepository;
-    @Autowired
-    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
-    private final SecretKey secretKey;
-    private final JwtConfig jwtConfig;
     private final String UserNotFound="User not found";
     private final LikeRepository likeRepository;
 
+    private final UserService userService;
 
-    public CommentService(MovieService movieService, MovieRepository movieRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService, UserRepository userRepository, CommentRepository commentRepository, SecretKey secretKey, JwtConfig jwtConfig, LikeRepository likeRepository) {
+    public CommentService(MovieService movieService, MovieRepository movieRepository, UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, UserService userService) {
         this.movieService = movieService;
         this.movieRepository = movieRepository;
-        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
-        this.secretKey = secretKey;
-        this.jwtConfig = jwtConfig;
         this.likeRepository = likeRepository;
+        this.userService = userService;
     }
 
     public boolean saveComment(userCommentDto userCommentDto) {
@@ -151,13 +139,12 @@ public class CommentService {
             this.commentRepository.save(comment1);
             Optional<Movie> currentMovie = movieRepository.findByTmdbId(comment1.getMovie_id());
             String message = "Votre commentaire sur le film " + currentMovie.get().getName() + " a été signalé comme spoil";
-            JSONObject data = new JSONObject();
-            data.put("message",message);
-            data.put("status","rejected");
-            commentNotifDto.setUsername(comment1.getUser().getUsername());
-            commentNotifDto.setMessage(data.toString());
-            kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
             this.commentRepository.save(comment1);
+            Notification notification = new Notification();
+            notification.setMessage(message);
+            notification.setType("comment");
+            notification.setSeverity("info");
+            userService.notificationToUser(comment1.getUser().getUsername(),notification);
             return true;
         }catch (Exception e){
             System.out.println(e.getMessage());
@@ -190,5 +177,10 @@ public class CommentService {
             commentGetDto.setComments(comment.get());
         }
         return commentGetDto;
+    }
+
+    public Optional<UserSimpleDto> getUserByEmail(String email) {
+        Optional<UserSimpleDto> user = userRepository.findSimpleUserByEmail(email);
+        return user;
     }
 }
