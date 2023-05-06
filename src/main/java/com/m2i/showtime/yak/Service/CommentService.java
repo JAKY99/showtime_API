@@ -19,7 +19,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
-import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.util.*;

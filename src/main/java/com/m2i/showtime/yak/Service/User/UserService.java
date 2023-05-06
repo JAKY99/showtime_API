@@ -114,11 +114,17 @@ public class UserService {
     public UserService(UserRepository userRepository,
                        MovieRepository movieRepository,
                        MovieService movieService,
-                       CommentRepository commentRepository, GenreRepository genreRepository,
+                       CommentRepository commentRepository,
+                       GenreRepository genreRepository,
                        UsersWatchedMovieRepository usersWatchedMovieRepository,
-                       KafkaMessageGeneratorService kafkaMessageGeneratorService, RedisService redisService, HazelcastConfig hazelcastConfig,
-                       LoggerService LOGGER, UserAuthService userAuthService,
-                       ActorRepository actorRepository, SecretKey secretKey, JwtConfig jwtConfig) {
+                       KafkaMessageGeneratorService kafkaMessageGeneratorService,
+                       RedisService redisService,
+                       HazelcastConfig hazelcastConfig,
+                       LoggerService LOGGER,
+                       UserAuthService userAuthService,
+                       ActorRepository actorRepository,
+                       SecretKey secretKey,
+                       JwtConfig jwtConfig) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
