@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.User.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,7 @@ public class MovieController {
     private String apiKey;
     public final MovieRepository movieRepo;
     public final MovieService movieService;
+    @Autowired
     public final UserService userService;
 
     public MovieController(MovieRepository movieRepo, MovieService movieService, UserService userService) {
