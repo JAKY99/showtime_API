@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Comment;
+import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
 
 import liquibase.pro.packaged.R;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +24,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.Set;
 
 
 @RestController
@@ -185,12 +187,19 @@ public class UserController {
     }
 
     @PostMapping("profile/lazy/socialAction/followUser")
-    public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information) {
+    public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information) throws JSONException {
         return userService.actionFollowUser(information);
     }
     @PostMapping("profile/lazy/socialAction/unfollowUser")
     public SocialFollowingResponseDto actionUnfollowUser(@RequestBody SocialFollowingRequestDto information) {
         return userService.actionUnfollowUser(information);
     }
-
+    @PostMapping("get/notifications")
+    public Set<Notification> getUserNotifications(@RequestBody String email) {
+        return userService.getUserNotification(email);
+    }
+    @PostMapping("update/notifications")
+    public boolean updateUserNotifications(@RequestBody String email) {
+        return userService.updateUserNotification(email);
+    }
 }

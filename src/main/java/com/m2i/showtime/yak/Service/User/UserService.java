@@ -15,26 +15,22 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
-import com.m2i.showtime.yak.Entity.Actor;
-import com.m2i.showtime.yak.Entity.Comment;
-import com.m2i.showtime.yak.Entity.Movie;
-import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
+import com.m2i.showtime.yak.Entity.*;
 import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Repository.ActorRepository;
 import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
+import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -71,6 +67,7 @@ import java.time.Period;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 @Service
 public class UserService {
 
@@ -80,6 +77,7 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final ActorRepository actorRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
+    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
     private String bucketName;
     @Value("${application.awsAccessKey}")
@@ -108,19 +106,22 @@ public class UserService {
     private final UserAuthService userAuthService;
     private final SecretKey secretKey;
     private final JwtConfig jwtConfig;
+    @Value("${spring.profiles.active}")
+    private String ENV;
     @Autowired
     public UserService(UserRepository userRepository,
                        MovieRepository movieRepository,
                        MovieService movieService,
                        CommentRepository commentRepository,
                        UsersWatchedMovieRepository usersWatchedMovieRepository,
-                       RedisService redisService, HazelcastConfig hazelcastConfig,
+                       KafkaMessageGeneratorService kafkaMessageGeneratorService, RedisService redisService, HazelcastConfig hazelcastConfig,
                        LoggerService LOGGER, UserAuthService userAuthService,
                        ActorRepository actorRepository, SecretKey secretKey, JwtConfig jwtConfig) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
         this.commentRepository = commentRepository;
+        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
         this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
@@ -828,7 +829,7 @@ public class UserService {
         return socialFollowingResponseDto;
     }
 
-    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) {
+    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) throws JSONException {
         User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
@@ -837,6 +838,11 @@ public class UserService {
             userToFollow.getFollowers().add(user);
             userRepository.saveAndFlush(userToFollow);
             socialFollowingResponseDto.setFollowing(true);
+            Notification notification = new Notification();
+            notification.setType("follow");
+            notification.setSeverity("info");
+            notification.setMessage(user.getFirstName() + " " + user.getLastName() + " started following you");
+            this.notificationToUser(userToFollow.getUsername(), notification);
         }
         return socialFollowingResponseDto;
     }
@@ -851,5 +857,29 @@ public class UserService {
             socialFollowingResponseDto.setFollowing(false);
         }
         return socialFollowingResponseDto;
+    }
+
+    public void notificationToUser(String email, Notification notification) throws JSONException {
+        String topicName=this.ENV+"UserNotificationService";
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        user.getNotifications().add(notification);
+        userRepository.saveAndFlush(user);
+        kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
+    }
+
+    public Set<Notification> getUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        return user.getNotifications();
+    }
+
+    public boolean updateUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        user.getNotifications()
+                .stream()
+                .filter(notification -> notification.getStatus()==NotificationStatus.UNREAD)
+                .forEach(notification -> notification.setStatus(NotificationStatus.READ));
+        userRepository.saveAndFlush(user);
+        return true;
     }
 }

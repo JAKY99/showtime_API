@@ -11,6 +11,8 @@ import com.m2i.showtime.yak.Repository.NotificationRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -125,6 +127,42 @@ public class KafkaMessageGeneratorService {
             public void onFailure(Throwable ex) {
                 LOGGER.print("Unable to send message=["
                         + commentNotifDto.getMessage() + "] due to : " + ex.getMessage());
+                AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                client.close();
+                kafkaAdmin.initialize();
+            }
+        });
+    }
+
+    public void sendNotification(User user, Notification notification,String topicName) throws JSONException {
+        LOGGER.print("Sending message to topic: " + user.getUsername());
+        LOGGER.print("With message : " + notification.getMessage());
+        JSONObject data = new JSONObject();
+        data.put("message", notification.getMessage());
+        data.put("severity", notification.getSeverity());
+        data.put("type", notification.getType());
+        data.put("id", notification.getId());
+        data.put("dateCreated", notification.getDateCreated());
+        data.put("read", notification.getStatus());
+        data.put("dateRead", notification.getDateRead());
+        data.put("target", user.getUsername());
+
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(topicName, data.toString());
+
+        simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                LOGGER.print("Sent message=[" + notification.getMessage() +
+                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                LOGGER.print("Unable to send message=["
+                        + notification.getMessage() + "] due to : " + ex.getMessage());
                 AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
                 client.close();
                 kafkaAdmin.initialize();
