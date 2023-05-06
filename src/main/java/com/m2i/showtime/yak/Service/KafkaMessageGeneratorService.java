@@ -134,7 +134,7 @@ public class KafkaMessageGeneratorService {
         });
     }
 
-    public void sendNotification(User user, Notification notification,String topicName) throws JSONException {
+    public boolean sendNotification(User user, Notification notification,String topicName) throws JSONException {
         LOGGER.print("Sending message to topic: " + user.getUsername());
         LOGGER.print("With message : " + notification.getMessage());
         JSONObject data = new JSONObject();
@@ -168,5 +168,6 @@ public class KafkaMessageGeneratorService {
                 kafkaAdmin.initialize();
             }
         });
+        return true;
     }
 }

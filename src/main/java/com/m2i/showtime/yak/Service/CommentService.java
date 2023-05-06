@@ -19,7 +19,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
-
+import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -154,7 +154,7 @@ public class CommentService {
             data.put("status","rejected");
             commentNotifDto.setUsername(comment1.getUser().getUsername());
             commentNotifDto.setMessage(data.toString());
-            kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
+            this.kafkaMessageGeneratorService.sendCommentNotif(commentNotifDto);
             this.commentRepository.save(comment1);
             return true;
         }catch (Exception e){

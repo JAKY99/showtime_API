@@ -864,7 +864,7 @@ public class UserService {
         User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
         user.getNotifications().add(notification);
         userRepository.saveAndFlush(user);
-        kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
+        this.kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
     }
 
     public Set<Notification> getUserNotification(String email) {
