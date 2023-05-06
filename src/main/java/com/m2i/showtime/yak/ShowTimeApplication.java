@@ -13,6 +13,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,17 @@ import static com.m2i.showtime.yak.Security.Role.AppUserRole.*;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@ComponentScan({ "com.m2i.showtime.yak.Service",
+		"com.m2i.showtime.yak.Service.User",
+		"com.m2i.showtime.yak.Security",
+		"com.m2i.showtime.yak.Controller",
+		"com.m2i.showtime.yak.Repository",
+		"com.m2i.showtime.yak.Entity",
+		"com.m2i.showtime.yak.Dto",
+		"com.m2i.showtime.yak.Configuration",
+		"com.m2i.showtime.yak.Jwt",
+		"com.m2i.showtime.yak.common.notification",
+})
 public class ShowTimeApplication {
 	private static final Logger LOGGER = LogManager.getLogger(ShowTimeApplication.class);
 	private final PasswordEncoder passwordEncoder;

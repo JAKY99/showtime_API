@@ -7,7 +7,6 @@ import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.userCommentDto;
 import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Service.CommentService;
-import com.m2i.showtime.yak.Service.User.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +20,9 @@ import java.util.Optional;
 public class CommentController {
 
     private final CommentService commentService;
-    private final UserService userService;
 
-    public CommentController(CommentService commentService, UserService userService) {
+    public CommentController(CommentService commentService) {
         this.commentService = commentService;
-        this.userService = userService;
     }
 
     @PostMapping("/saveComment")
@@ -36,7 +33,7 @@ public class CommentController {
 
     @GetMapping("/getComments/{movieId}")
     public List<CommentGetDto> getComments(Authentication authentication, @PathVariable("movieId") int movieId) {
-        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+        Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
         return commentService.getComments(movieId, userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");
@@ -45,7 +42,7 @@ public class CommentController {
 
     @GetMapping("/getUserComments/{movieId}")
     public List<CommentGetDto> getUserComments(Authentication authentication, @PathVariable("movieId") int movieId) {
-        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+        Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
         return commentService.getUserComments(movieId, userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");
@@ -79,7 +76,7 @@ public class CommentController {
 
     @PostMapping("/likeComment")
     public CommentGetDto likeComment(Authentication authentication, @RequestBody CommentLikeDto commentLikeDto) {
-        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+        Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
         return commentService.likeComment(userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");

@@ -1,39 +1,27 @@
 package com.m2i.showtime.yak.Service;
 
-
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-@Component
-@EnableScheduling
-@EnableAsync
+
 @Getter
 @Setter
+@Service
 public class KafkaListenerService {
-
-    @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
     private final ElasticsearchService elasticSearchService;
     private final LoggerService LOGGER = new LoggerService();
     @Value("${spring.profiles.active}")
     private String env;
-
+    @Autowired
     public KafkaListenerService(ElasticsearchService elasticSearchService) {
         this.elasticSearchService = elasticSearchService;
     }
@@ -61,7 +49,7 @@ public class KafkaListenerService {
         LOGGER.print("Received Message in group " + env + " : " + message);
     }
     @KafkaListener(topics = "${spring.profiles.active}UserNotificationService", groupId = "${spring.profiles.active}")
-    public void listenUserNotificationService(String message) throws JSONException {
+    public void listenUserNotificationService(String message){
         JSONObject data = new JSONObject(message);
         simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
         LOGGER.print("Received Message in group " + env + " : " + message);

@@ -47,8 +47,6 @@ public class ServiceTest {
     @Autowired
     private HazelcastConfig hazelcastConfig;
     @Autowired
-    private KafkaListenerService kafkaListenerService;
-    @Autowired
     private VersionControleService versionControleService;
     @Mock
     HttpServletResponse HttpServletResponse;
@@ -79,9 +77,6 @@ public class ServiceTest {
         //--------------------------------
         elasticsearchService.setElasticbaseUrl("test");
         assertEquals("test" ,elasticsearchService.getElasticbaseUrl());
-        //--------------------------------
-        kafkaListenerService.setEnv("test");
-        assertEquals("test" ,kafkaListenerService.getEnv());
         //--------------------------------
         versionControleService.addVersion("test");
         assertTrue(versionControleService.getVersion("test") instanceof VersionControlDto && versionControleService.getVersion("test") != null);

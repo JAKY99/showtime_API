@@ -31,7 +31,6 @@ import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -79,7 +78,6 @@ public class UserService {
     private final ActorRepository actorRepository;
     private final GenreRepository genreRepository;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
-    @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
     private String bucketName;
@@ -107,8 +105,6 @@ public class UserService {
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     private final UserAuthService userAuthService;
-    private final SecretKey secretKey;
-    private final JwtConfig jwtConfig;
     @Value("${spring.profiles.active}")
     private String ENV;
     @Autowired
@@ -123,9 +119,8 @@ public class UserService {
                        HazelcastConfig hazelcastConfig,
                        LoggerService LOGGER,
                        UserAuthService userAuthService,
-                       ActorRepository actorRepository,
-                       SecretKey secretKey,
-                       JwtConfig jwtConfig) {
+                       ActorRepository actorRepository
+                        ) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.movieService = movieService;
@@ -138,8 +133,6 @@ public class UserService {
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
         this.userAuthService = userAuthService;
-        this.secretKey = secretKey;
-        this.jwtConfig = jwtConfig;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -858,7 +851,7 @@ public class UserService {
         return socialFollowingResponseDto;
     }
 
-    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) throws JSONException {
+    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) {
         User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
@@ -888,7 +881,7 @@ public class UserService {
         return socialFollowingResponseDto;
     }
 
-    public boolean notificationToUser(String email, Notification notification) throws JSONException {
+    public boolean notificationToUser(String email, Notification notification){
         String topicName=this.ENV+"UserNotificationService";
         User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
         user.getNotifications().add(notification);
