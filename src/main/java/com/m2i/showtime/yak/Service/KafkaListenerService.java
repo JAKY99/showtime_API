@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -56,6 +58,12 @@ public class KafkaListenerService {
         String userName = message.split("/")[1];
         String messageToSend = message.split("/")[0];
         simpMessagingTemplate.convertAndSend("/topic/user/"+env+"/"+userName, messageToSend);
+        LOGGER.print("Received Message in group " + env + " : " + message);
+    }
+    @KafkaListener(topics = "${spring.profiles.active}UserNotificationService", groupId = "${spring.profiles.active}")
+    public void listenUserNotificationService(String message) throws JSONException {
+        JSONObject data = new JSONObject(message);
+        simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
         LOGGER.print("Received Message in group " + env + " : " + message);
     }
 
