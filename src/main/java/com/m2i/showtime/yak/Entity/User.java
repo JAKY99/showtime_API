@@ -128,7 +128,16 @@ public class User implements UserDetails {
 
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_followers",
+            joinColumns = @JoinColumn(name = "following_id"),
+            inverseJoinColumns = @JoinColumn(name = "follower_id")
+    )
+    private Set<User> followers = new HashSet<>();
 
+    @ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
+    private Set<User> following = new HashSet<>();
 
     public User(String firstName,
                 String lastName,
