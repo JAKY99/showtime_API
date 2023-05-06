@@ -186,6 +186,17 @@ public class UserController {
         userService.excludeActor(IdActor, IdUser);
     }
 
+    @PutMapping("exclude/genre/{IdGenre}")
+    public void excludeGenre(@PathVariable("IdGenre") Long IdGenre, Authentication authentication){
+        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+                                                                                         .toString());
+        long IdUser = userSimpleDto.orElseThrow(() -> {
+                                       throw new IllegalStateException("User not found.");
+                                   })
+                                   .getId();
+        userService.excludeGenre(IdGenre, IdUser);
+    }
+
     @PostMapping("profile/lazy/socialAction/followUser")
     public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information) throws JSONException {
         return userService.actionFollowUser(information);

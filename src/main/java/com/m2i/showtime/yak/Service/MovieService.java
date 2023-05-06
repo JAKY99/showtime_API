@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.RedisConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Actor;
+import com.m2i.showtime.yak.Entity.Genre;
 import com.m2i.showtime.yak.Entity.Movie;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.MovieRepository;
@@ -21,6 +22,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
@@ -219,12 +221,25 @@ public class MovieService {
 
     public SearchRecommendedMovieAPIDto getRecommendedMoviesForUser(
             long idUser) throws URISyntaxException, IOException, InterruptedException {
-        String urlToCall = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=";
+        String urlToCall = "https://api.themoviedb.org/3/discover/movie?api_key=" + apiKey + "&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false";
+
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Genre> excludedGenreIdFromRecommended = user.getExcludedGenreIdFromRecommended();
+        if (!excludedGenreIdFromRecommended.isEmpty()){
+            List<String> tmdbGenreListString = excludedGenreIdFromRecommended.stream().map(x -> x.getTmdbId().toString()).collect(
+                    Collectors.toList());
+            urlToCall += "&without_genres=" + String.join(",", tmdbGenreListString);
+        }
+
         SearchRecommendedMovieAPIDto resultSearch = new SearchRecommendedMovieAPIDto();
 
         for (int i = 1; i < 5; i++) {
             HttpRequest request = HttpRequest.newBuilder()
-                                             .uri(new URI(urlToCall + i))
+                                             .uri(new URI(urlToCall + "&page=" + i))
                                              .GET()
                                              .build();
             HttpClient client = HttpClient.newHttpClient();
@@ -245,11 +260,6 @@ public class MovieService {
         if (resultSearch.results.stream().count() <= 0) throw new IllegalStateException("resultSearch is empty.");
 
         //REMOVE MOVIES ALREADY SEEN BY THE USER
-        Optional<User> userOptional = userRepository.findById(idUser);
-        User user = userOptional.orElseThrow(() -> {
-            throw new IllegalStateException("User not found");
-        });
-
         user.getWatchedMovies()
             .forEach(userMovie -> {
                 boolean isPresent = resultSearch.results.stream()
@@ -288,6 +298,8 @@ public class MovieService {
                 throw new RuntimeException(e);
             }
         });
+
+        if (resultSearch.results.stream().count() <= 0) throw new IllegalStateException("resultSearch is empty.");
 
         resultSearch.results = new ArrayList<>(resultSearch.results.subList(0, 20));
         return resultSearch;
