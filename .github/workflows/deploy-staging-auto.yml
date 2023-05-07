@@ -117,7 +117,7 @@ jobs:
     environment: staging
     runs-on: ubuntu-latest
     container:
-      image: kevinpsirius/javadeployspring:v1
+      image: kevinpsirius/javadeployspring:v2
       env:
         sshKey: ${{ secrets.SSH_KEY }}
         envDeploymentStaging: ${{ secrets.ENVDEPLOYMENTSTAGING }}

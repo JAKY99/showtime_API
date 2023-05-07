@@ -121,7 +121,7 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     container:
-      image: kevinpsirius/javadeployspring:v1
+      image: kevinpsirius/javadeployspring:v2
       env:
         sshKey: ${{ secrets.SSH_KEY }}
         envDeploymentProd: ${{ secrets.ENVDEPLOYMENTPRODUCTION }}
