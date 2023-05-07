@@ -128,6 +128,11 @@ jobs:
     steps:
       - name: Generate the updated target directory to push on staging
         run: |
+          git clone https://github.com/JAKY99/showtime_API.git
+          rm showtime_API/src/main/resources/liquibase.properties 
+          mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
+          rm showtime_API/src/main/resources/application.properties 
+          mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
           rm -rf $(pwd)/showtime_API/target
           rm .env
           touch .env && echo "$envDeploymentStaging" >> .env
