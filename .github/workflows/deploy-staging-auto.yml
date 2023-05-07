@@ -130,8 +130,7 @@ jobs:
           rm showtime_API/src/main/resources/application.properties 
           mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
           rm -rf $(pwd)/showtime_API/target
-          rm .env
-          touch .env && echo "$envDeploymentStaging" >> .env
+          touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
           cd $(pwd)/showtime_API && mvn clean install -DskipTests
       - name: Generate SSH connection to server with ansible for staging
         run: |
