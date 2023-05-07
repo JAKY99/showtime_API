@@ -1,4 +1,4 @@
-name: workflow testless staging
+name: workflow hotfix staging (testless)
 on:
   workflow_dispatch:
     inputs:

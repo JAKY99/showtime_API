@@ -1,4 +1,4 @@
-name: workflow production without sonarqube test
+name: workflow hotfix production (testless)
 on:
   workflow_dispatch:
     inputs:
