@@ -112,7 +112,6 @@ jobs:
           sed -i "s/hostname-redis/redis/g" src/test/resources/application.properties
           mvn -B liquibase:dropAll
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec
-
   staging-deploy:
     needs: sonarqube-test
     environment: staging
@@ -121,7 +120,20 @@ jobs:
       image: kevinpsirius/pipeline_deployment_image:v3
       env:
         sshKey: ${{ secrets.SSH_KEY }}
+        envDeploymentStaging: ${{ secrets.ENVDEPLOYMENTSTAGING }}
     steps:
+      - name: Generate the updated target directory to push on staging
+        run: |
+          rm src/main/resources/liquibase.properties 
+          mv src/main/resources/liquibase.dev.properties src/main/resources/liquibase.properties 
+          rm src/main/resources/application.properties 
+          mv src/main/resources/application.dev.properties src/main/resources/application.properties 
+          rm src/test/resources/application.properties
+          mv src/test/resources/application.dev.properties src/test/resources/application.properties
+          rm -rf $(pwd)/showtime_API/target
+          rm .env
+          touch .env && echo "$envDeploymentStaging" >> .env
+          cd $(pwd)/showtime_API && mvn clean install -DskipTests
       - name: Generate SSH connection to server with ansible for staging
         run: |
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
