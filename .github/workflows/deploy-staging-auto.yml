@@ -132,4 +132,4 @@ jobs:
           touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
           cd showtime_API && mvn clean install -DskipTests
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
-          rsync -avz -e "ssh -i /var/www/html/mypckey.pem" --delete showtime_API/target/ ubuntu@ec2-3-129-154-103.us-east-2.compute.amazonaws.com:/home/ubuntu/kubernetes-showtime-project/build_spring_api_target_staging/
+          cd /var/www/html/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"

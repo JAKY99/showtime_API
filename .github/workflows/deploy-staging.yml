@@ -133,7 +133,6 @@ jobs:
           mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
           rm showtime_API/src/main/resources/application.properties 
           mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
-          rm -rf /showtime_API/target
           touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
           cd showtime_API && mvn clean install -DskipTests
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
