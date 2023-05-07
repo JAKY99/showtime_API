@@ -101,7 +101,8 @@ public class UserService {
     private RedisService redisService;
     private HazelcastConfig hazelcastConfig;
     private final String UserNotFound="User not found";
-    private final String tempPathName="/src/main/profile_pic_temp/original_";
+    @Value("${spring.tempPathName}")
+    private String tempPathName;
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     private final UserAuthService userAuthService;
@@ -317,9 +318,9 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName + fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);
