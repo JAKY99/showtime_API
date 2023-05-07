@@ -22,8 +22,9 @@ public class KafkaListenerService {
     @Value("${spring.profiles.active}")
     private String env;
     @Autowired
-    public KafkaListenerService(ElasticsearchService elasticSearchService) {
+    public KafkaListenerService(ElasticsearchService elasticSearchService, SimpMessagingTemplate simpMessagingTemplate) {
         this.elasticSearchService = elasticSearchService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @KafkaListener(topics = "topicName")
@@ -52,7 +53,7 @@ public class KafkaListenerService {
     public void listenUserNotificationService(String message){
         JSONObject data = new JSONObject(message);
         simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
-        LOGGER.print("Received Message in group " + env + " : " + message);
+        LOGGER.print("Received Message in group " + env + " : " + data.toString());
     }
 
     @KafkaListener(topics = "${spring.profiles.active}User", groupId = "${spring.profiles.active}")
