@@ -132,7 +132,5 @@ jobs:
           rm -rf $(pwd)/showtime_API/target
           touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
           cd $(pwd)/showtime_API && mvn clean install -DskipTests
-      - name: Generate SSH connection to server with ansible for staging
-        run: |
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
           cd /var/www/html/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
