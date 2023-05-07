@@ -121,10 +121,21 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     container:
-      image: kevinpsirius/pipeline_deployment_image:v3
+      image: kevinpsirius/javadeployspring:v1
       env:
         sshKey: ${{ secrets.SSH_KEY }}
+        envDeploymentProd: ${{ secrets.ENVDEPLOYMENTPRODUCTION }}
     steps:
+      - name: Generate the updated target directory to push on production
+        run: |
+          git clone https://github.com/JAKY99/showtime_API.git
+          rm showtime_API/src/main/resources/liquibase.properties 
+          mv showtime_API/src/main/resources/liquibase.prod.properties showtime_API/src/main/resources/liquibase.properties 
+          rm showtime_API/src/main/resources/application.properties 
+          mv showtime_API/src/main/resources/application.prod.properties showtime_API/src/main/resources/application.properties
+          rm -rf $(pwd)/showtime_API/target
+          touch showtime_API/.env && echo "$envDeploymentProd" >> showtime_API/.env
+          cd $(pwd)/showtime_API && mvn clean install -DskipTests
       - name: Generate SSH connection to server with ansible for production
         run: |
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
