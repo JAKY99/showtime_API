@@ -121,10 +121,17 @@ jobs:
     environment: staging
     runs-on: ubuntu-latest
     container:
-      image: kevinpsirius/pipeline_deployment_image:v3
+      image: kevinpsirius/pipeline_deployment_image:v1
       env:
         sshKey: ${{ secrets.SSH_KEY }}
+        envDeploymentStaging: ${{ secrets.ENVDEPLOYMENTSTAGING }}
     steps:
+      - name: Generate the updated target directory to push on staging
+        run: |
+          rm -rf $(pwd)/showtime_API/target
+          rm .env
+          touch .env && echo "$envDeploymentStaging" >> .env
+          cd $(pwd)/showtime_API && mvn clean install -DskipTests
       - name: Generate SSH connection to server with ansible for staging
         run: |
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
