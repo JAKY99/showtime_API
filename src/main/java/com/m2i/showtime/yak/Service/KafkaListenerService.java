@@ -52,8 +52,8 @@ public class KafkaListenerService {
     @KafkaListener(topics = "${spring.profiles.active}UserNotificationService", groupId = "${spring.profiles.active}")
     public void listenUserNotificationService(String message){
         JSONObject data = new JSONObject(message);
+        LOGGER.print("Received Message in group " + env +"UserNotificationService : " + data.toString());
         simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
-        LOGGER.print("Received Message in group " + env + " : " + data.toString());
     }
 
     @KafkaListener(topics = "${spring.profiles.active}User", groupId = "${spring.profiles.active}")
