@@ -135,7 +135,7 @@ public class KafkaMessageGeneratorService {
     }
 
     public boolean sendNotification(User user, Notification notification,String topicName) throws JSONException {
-        LOGGER.print("Sending message to topic: " + user.getUsername());
+        LOGGER.print("Sending message to topic: " + topicName);
         LOGGER.print("With message : " + notification.getMessage());
         JSONObject data = new JSONObject();
         data.put("message", notification.getMessage());
