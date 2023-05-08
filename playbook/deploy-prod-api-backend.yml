@@ -4,7 +4,7 @@
 
   tasks:
   - name: clear folder before sync
-    shell: rm kubernetes-showtime-project/build_spring_api_target_prod/*
+    shell: rm -rf kubernetes-showtime-project/build_spring_api_target_prod/*
   - name: Rsync CI folder to remote staging folder
     synchronize:
       src: /__w/showtime_API/showtime_API/showtime_API/target/
