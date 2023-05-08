@@ -24,6 +24,6 @@ jobs:
           rm showtime_API/src/main/resources/application.properties 
           mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
           touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
-          cd showtime_API && mvn clean install -DskipTests --update-snapshots
+          cd showtime_API && mvn dependency:purge-local-repository &&  mvn clean install -DskipTests --update-snapshots
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
           cd playbook  && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
