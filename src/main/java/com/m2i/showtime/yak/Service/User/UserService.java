@@ -89,7 +89,7 @@ public class UserService {
     private String awsSesAccessKey;
     @Value("${application.awsSesSecretKey}")
     private String awsSesSecretKey;
-    @Value("${application.imdb.apiKey}")
+    @Value("${external.service.imdb.apiKey}")
     private String apiKey;
     @Value("${spring.mail.resetPasswordUrl}")
     private String resetPasswordUrl;
