@@ -6,8 +6,10 @@ import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
 import com.m2i.showtime.yak.Entity.Notification;
+import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.NotificationRepository;
+import com.m2i.showtime.yak.Repository.RoleRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.modelmapper.ModelMapper;
@@ -28,11 +30,13 @@ public class UserManagementService {
     @Autowired
     private final NotificationRepository notificationRepository;
 
+    private final RoleRepository roleRepository;
     @Autowired
-    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationRepository notificationRepository) {
+    public UserManagementService(UserRepository userRepository, PasswordEncoder passwordEncoder, NotificationRepository notificationRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationRepository = notificationRepository;
+        this.roleRepository = roleRepository;
     }
 
     public PageListResultDto getAllUsers(SearchParamsDto searchParamsDto){
@@ -191,5 +195,10 @@ public class UserManagementService {
                     }
                 );
         userRepository.save(user);
+    }
+
+    public List<Role> getAllRoles() {
+        List<Role>  roles = this.roleRepository.findAll();
+        return roles;
     }
 }

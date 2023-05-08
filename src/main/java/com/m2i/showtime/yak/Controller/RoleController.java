@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Controller;
 
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +31,25 @@ public class RoleController {
     @DeleteMapping(path = "{roleId}")
     public void deleteRole(@PathVariable("roleId") Long roleId){
         roleService.deleteRole(roleId);
+    }
+
+    @PostMapping("/aggrid/all")
+    public List<RoleManagerDto> getRolesAggrid() {
+        return roleService.getRolesAgGrid();
+    }
+    @PostMapping("/aggrid/edit")
+    public ResponseApiAgGridDto editRolesAggrid(@RequestBody EditRoleManagerRequestDto editRoleManagerRequestDto) {
+        return roleService.editRolesAggrid(editRoleManagerRequestDto);
+    }
+
+    @PostMapping("/aggrid/add")
+    public ResponseApiAgGridDto addRolesAggrid(@RequestBody AddRoleManagerRequestDto addRoleManagerRequestDto) {
+        return roleService.addRolesAggrid(addRoleManagerRequestDto);
+    }
+
+
+    @PostMapping("/aggrid/delete")
+    public ResponseApiAgGridDto deleteRolesAggrid(@RequestBody DeleteRoleManagerRequestDto deleteRoleManagerRequestDto ) {
+        return roleService.deleteRolesAggrid(deleteRoleManagerRequestDto);
     }
 }

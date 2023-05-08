@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -115,5 +116,10 @@ public class PermissionService {
         }
 
         permissionRepository.delete(permissionOptional.get());
+    }
+
+    public List<Permission> getPermissionsAggrid() {
+        List<Permission> permissions = permissionRepository.findAll();
+        return permissions;
     }
 }
