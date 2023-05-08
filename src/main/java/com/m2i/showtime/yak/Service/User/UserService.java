@@ -187,6 +187,23 @@ public class UserService {
             user.setUsername(modifiedUser.getUsername());
         }
     }
+
+    @Transactional
+    public void editAccountInfos(Long userId,
+                                 EditAccountInfosDto modifiedUser) {
+        User user = userRepository.findById(userId)
+                                  .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
+        if (modifiedUser.getFirstName() != null &&
+                modifiedUser.getFirstName().length() > 0 &&
+                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
+            user.setFirstName(modifiedUser.getFirstName());
+        }
+        if (modifiedUser.getLastName() != null &&
+                modifiedUser.getLastName().length() > 0 &&
+                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
+            user.setLastName(modifiedUser.getLastName());
+        }
+    }
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
@@ -532,6 +549,8 @@ public class UserService {
         profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePicture());
         profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPicture());
         profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        profileLazyUserDtoAvatar.setFirstName(user.getFirstName());
+        profileLazyUserDtoAvatar.setLastName(user.getLastName());
         return profileLazyUserDtoAvatar;
     }
 

@@ -1,4 +1,5 @@
 package com.m2i.showtime.yak.Controller.User;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Notification;
@@ -57,6 +58,19 @@ public class UserController {
         userService.updateUser(userId, modifiedUser);
     }
 
+    @PreAuthorize("hasAnyAuthority('user:edit')")
+    @PutMapping("/edit-account")
+    public void editAccount(
+            @RequestBody EditAccountInfosDto modifiedUser, Authentication authentication) {
+        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+                                                                                         .toString());
+        long IdUser = userSimpleDto.orElseThrow(() -> {
+                                       throw new IllegalStateException("User not found.");
+                                   })
+                                   .getId();
+        userService.editAccountInfos(IdUser, modifiedUser);
+    }
+
     @PreAuthorize("hasAnyAuthority('user:delete', 'user:manage_users')")
     @DeleteMapping("{userId}")
     public void deleteUser(@PathVariable("userId") Long userId) {
@@ -68,41 +82,51 @@ public class UserController {
     public boolean isMovieInWatchlist(@RequestBody UserWatchedMovieDto userWatchedMovieDto) {
         return userService.isMovieInWatchlist(userWatchedMovieDto);
     }
+
     @PostMapping("/isMovieInMovieToWatchlist")
     public boolean isMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
         return userService.isMovieInMovieToWatchlist(userWatchedMovieAddDto);
     }
+
     @PostMapping("/isMovieInFavoritelist")
     public boolean isMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto userWatchedMovieAddDto) {
         return userService.isMovieInFavoritelist(userWatchedMovieAddDto);
     }
 
     @PostMapping("/addMovieInWatchlist")
-    public boolean addMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+    public boolean addMovieInWatchlist(
+            @RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         return userService.addMovieInWatchlist(UserWatchedMovieAddDto);
     }
+
     @PostMapping("/toggleMovieInFavoritelist")
     public boolean toggleMovieInFavoritelist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
     }
+
     @PostMapping("/toggleMovieInMovieToWatchlist")
     public boolean toggleMovieInMovieToWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) {
         return userService.toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto);
     }
+
     @PostMapping("/removeMovieInWatchlist")
-    public boolean removeMovieInWatchlist(@RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
-         userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
+    public boolean removeMovieInWatchlist(
+            @RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        userService.removeMovieInWatchlist(UserWatchedMovieAddDto);
         return true;
     }
+
     @PostMapping("/lastWatchedMoviesRange")
     public fetchRangeListDto lastWatchedMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.lastWatchedMoviesRange(fetchRangeDto);
 
     }
+
     @PostMapping("/favoritesMoviesRange")
     public fetchRangeListDto favoritesMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.favoritesMoviesRange(fetchRangeDto);
     }
+
     @PostMapping("/watchlistMoviesRange")
     public fetchRangeListDto watchlistMoviesRange(@RequestBody fetchRangeDto fetchRangeDto) {
         return userService.watchlistMoviesRange(fetchRangeDto);
@@ -113,64 +137,77 @@ public class UserController {
         userService.increaseWatchedNumber(UserWatchedMovieAddDto);
         return true;
     }
+
     @PostMapping("/uploadProfilePicture")
     public UploadPictureDtoResponse uploadProfilePic(
-            @RequestParam("email") String email,
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
-        return userService.uploadProfilePic(email,file);
+            @RequestParam("email") String email, @RequestParam("file") MultipartFile file) throws IOException {
+        return userService.uploadProfilePic(email, file);
     }
+
     @PostMapping("/uploadBackgroundPicture")
     public UploadBackgroundDtoResponse uploadBackgroundPic(
-            @RequestParam("email") String email,
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
-        return userService.uploadBackgroundPic(email,file);
+            @RequestParam("email") String email, @RequestParam("file") MultipartFile file) throws IOException {
+        return userService.uploadBackgroundPic(email, file);
     }
+
     @PostMapping("profile/lazy/header")
-    public ProfileLazyUserDtoHeader getProfileHeader(@RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
+    public ProfileLazyUserDtoHeader getProfileHeader(
+            @RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
         return userService.getProfileHeaderData(email);
     }
+
     @PostMapping("profile/lazy/avatar")
     public ProfileLazyUserDtoAvatar getProfileAvatar(@RequestBody String email) {
         return userService.getProfileAvatar(email);
     }
+
     @PostMapping("profile/lazy/socialInfos")
     public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(@RequestBody String email) {
         return userService.getProfileSocialInfos(email);
     }
+
     @PostMapping("profile/lazy/socialInfos/followingStatus")
-    public SocialFollowingResponseDto getProfileSocialInfosFollowing(@RequestBody SocialFollowingRequestDto information) {
+    public SocialFollowingResponseDto getProfileSocialInfosFollowing(
+            @RequestBody SocialFollowingRequestDto information) {
         return userService.getFollowingStatus(information);
     }
+
     @PostMapping("profile/lazy/lastWatchedMovies")
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
     }
-     @GetMapping("/refresh")
-    public void refreshToken(HttpServletResponse response, @RequestHeader HashMap refreshToken) throws ServletException, IOException {
-        JwtUsernameAndPasswordAuthenticationFilter.refreshToken(response, refreshToken.get("refresh").toString());
+
+    @GetMapping("/refresh")
+    public void refreshToken(
+            HttpServletResponse response, @RequestHeader HashMap refreshToken) throws ServletException, IOException {
+        JwtUsernameAndPasswordAuthenticationFilter.refreshToken(
+                response, refreshToken.get("refresh")
+                                      .toString());
 
     }
+
     @PostMapping("social/info")
     public SocialInfoDto getSocialPageInfo(@RequestBody String email) {
         return userService.getSocialPageInfo(email);
     }
+
     @PostMapping("social/search/user")
     public SocialSearchResponseDto[] searchUser(@RequestBody String searchText) {
         return userService.searchUser(searchText);
     }
+
     @PostMapping("social/search/user/detail")
     public SocialInfoDto getUserSearchDetail(@RequestBody String username) {
         return userService.getSocialDetail(username);
     }
+
     @PostMapping("social/topten")
     public SocialTopTenUserDto[] getTopTen(@RequestBody String searchText) {
         return userService.getTopTenUsers();
     }
 
     @PutMapping("exclude/actor/{IdActor}")
-    public void excludeActor(@PathVariable("IdActor") Long IdActor, Authentication authentication){
+    public void excludeActor(@PathVariable("IdActor") Long IdActor, Authentication authentication) {
         Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
                                                                                          .toString());
         long IdUser = userSimpleDto.orElseThrow(() -> {
@@ -181,7 +218,7 @@ public class UserController {
     }
 
     @PutMapping("exclude/genre/{IdGenre}")
-    public void excludeGenre(@PathVariable("IdGenre") Long IdGenre, Authentication authentication){
+    public void excludeGenre(@PathVariable("IdGenre") Long IdGenre, Authentication authentication) {
         Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
                                                                                          .toString());
         long IdUser = userSimpleDto.orElseThrow(() -> {
@@ -192,35 +229,37 @@ public class UserController {
     }
 
     @PostMapping("profile/lazy/socialAction/followUser")
-    public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information){
+    public SocialFollowingResponseDto actionFollowUser(@RequestBody SocialFollowingRequestDto information) {
         return userService.actionFollowUser(information);
     }
+
     @PostMapping("profile/lazy/socialAction/unfollowUser")
     public SocialFollowingResponseDto actionUnfollowUser(@RequestBody SocialFollowingRequestDto information) {
         return userService.actionUnfollowUser(information);
     }
+
     @PostMapping("get/notifications")
     public Set<Notification> getUserNotifications(@RequestBody String email) {
         return userService.getUserNotification(email);
     }
+
     @PostMapping("update/notifications")
     public boolean updateUserNotifications(@RequestBody String email) {
         return userService.updateUserNotification(email);
     }
+
     @PostMapping("/tempForCrop/uploadProfilePicture")
     public UploadPictureDtoResponse uploadProfilePicTempForCrop(
-            @RequestParam("email") String email,
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
-        return userService.uploadProfilePicTempForCrop(email,file);
+            @RequestParam("email") String email, @RequestParam("file") MultipartFile file) throws IOException {
+        return userService.uploadProfilePicTempForCrop(email, file);
     }
+
     @PostMapping("/tempForCrop/uploadBackgroundPicture")
     public UploadBackgroundDtoResponse uploadBackgroundPicTempForCrop(
-            @RequestParam("email") String email,
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
-        return userService.uploadBackgroundPicTempForCrop(email,file);
+            @RequestParam("email") String email, @RequestParam("file") MultipartFile file) throws IOException {
+        return userService.uploadBackgroundPicTempForCrop(email, file);
     }
+
     @PostMapping("profile/lazy/tempForCrop")
     public ProfileLazyUserDtoAvatar getProfileAvatarTempForCrop(@RequestBody String email) {
         return userService.getTempForCropUrl(email);
