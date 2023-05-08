@@ -136,4 +136,4 @@ jobs:
           touch showtime_API/.env && echo "$envDeploymentStaging" >> showtime_API/.env
           cd showtime_API && mvn clean install -DskipTests
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
-          cd /var/www/html/showtime_API/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
+           cd showtime_API/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
