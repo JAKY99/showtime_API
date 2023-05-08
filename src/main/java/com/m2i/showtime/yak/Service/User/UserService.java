@@ -552,10 +552,10 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName +fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
 
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        File fileToUpload = new File( basePath + tempPathName +fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);

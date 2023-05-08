@@ -13,7 +13,7 @@ import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 
 import com.m2i.showtime.yak.Service.User.UserService;
-import org.json.JSONObject;
+
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -60,6 +60,10 @@ public class CommentService {
         User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         for (Comment comment : commentOptional.get()) {
             CommentGetDto commentGetDto = new CommentGetDto();
+            comment.getUser().setComments(null);
+            comment.getUser().setPassword(null);
+            comment.getUser().setFollowers(null);
+            comment.getUser().setFollowing(null);
             commentGetDto.setComments(comment);
             Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
             if (like.isPresent()) {
@@ -83,7 +87,13 @@ public class CommentService {
             if (pubishDate.plusDays(1).isBefore(now) && comment.isValidate() == true && comment.isSpoiler() == false) {
                 comment.setDeleted(true);
                 this.commentRepository.save(comment);
-            } else if (comment.isDeleted() == false) {
+            }
+            if(comment.isDeleted() == false) {
+                comment.getUser().setComments(null);
+                comment.getUser().setPassword(null);
+                comment.getUser().setFollowers(null);
+                comment.getUser().setFollowing(null);
+
                 CommentGetDto commentGetDto = new CommentGetDto();
                 commentGetDto.setComments(comment);
                 Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
@@ -98,6 +108,12 @@ public class CommentService {
 
     public List<Comment> getAllComments() {
         List<Comment> commentList = this.commentRepository.findAll();
+        for (Comment comment : commentList) {
+            comment.getUser().setComments(null);
+            comment.getUser().setPassword(null);
+            comment.getUser().setFollowers(null);
+            comment.getUser().setFollowing(null);
+        }
         return commentList;
     }
 
@@ -176,6 +192,11 @@ public class CommentService {
             this.likeRepository.delete(likeUser);
             commentGetDto.setComments(comment.get());
         }
+        commentGetDto.getComments().getUser().setComments(null);
+        commentGetDto.getComments().getUser().setPassword(null);
+        commentGetDto.getComments().getUser().setFollowers(null);
+        commentGetDto.getComments().getUser().setFollowing(null);
+
         return commentGetDto;
     }
 

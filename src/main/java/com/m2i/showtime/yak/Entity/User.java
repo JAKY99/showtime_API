@@ -1,5 +1,9 @@
 package com.m2i.showtime.yak.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(value = {"comments"})
 public class User implements UserDetails {
     @Id
     @SequenceGenerator(
@@ -136,7 +141,9 @@ public class User implements UserDetails {
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Notification> notifications = new HashSet<>();
 
+
     @OneToMany(cascade = CascadeType.ALL)
+    @JsonBackReference
     private Set<Comment> comments = new HashSet<>();
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
