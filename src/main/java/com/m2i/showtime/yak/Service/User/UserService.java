@@ -213,6 +213,7 @@ public class UserService {
             optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
             usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
         }
+        System.out.println(this.apiKey);
         this.increaseTotalMovieWatchedTime(userWatchedMovieAddDto);
         return true;
     }
