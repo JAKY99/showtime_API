@@ -272,6 +272,9 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
+        System.out.println(result_search.getTitle());
+        System.out.println(result_search.getRuntime());
+
         Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
