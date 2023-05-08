@@ -18,7 +18,7 @@ import java.net.http.HttpResponse;
 @Service
 public class ActorService {
 
-    @Value("${application.imdb.apiKey}")
+    @Value("${external.service.imdb.apiKey}")
     private String apiKey;
     private final ActorRepository actorRepository;
 
