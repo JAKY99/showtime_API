@@ -227,7 +227,8 @@ public class MovieService {
         User user = userOptional.orElseThrow(() -> {
             throw new IllegalStateException("User not found");
         });
-
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
         Set<Genre> excludedGenreIdFromRecommended = user.getExcludedGenreIdFromRecommended();
         if (!excludedGenreIdFromRecommended.isEmpty()){
             List<String> tmdbGenreListString = excludedGenreIdFromRecommended.stream().map(x -> x.getTmdbId().toString()).collect(
