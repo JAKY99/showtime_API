@@ -11,6 +11,7 @@ import com.m2i.showtime.yak.Service.User.UserManagementService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -30,7 +31,7 @@ public class UserManagementController {
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")
     @PostMapping("aggrid/all")
-    public Object[] getAllUsersAGgrid() {
+    public List<User> getAllUsersAGgrid() {
         return  userManagementService.getAllUsersAggrid();
     }
     @PreAuthorize("hasAnyAuthority('user:manage_users')")

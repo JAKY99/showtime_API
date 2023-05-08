@@ -79,6 +79,7 @@ public class RedisService {
         }
         HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
         getDataFromRedisDto.setData(check);
+
         return getDataFromRedisDto;
     }
     public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {

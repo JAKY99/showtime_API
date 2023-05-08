@@ -19,10 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class UserManagementService {
@@ -97,8 +94,15 @@ public class UserManagementService {
         return response;
 
     }
-    public Object[] getAllUsersAggrid(){
-        return userRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).toArray();
+    public List<User> getAllUsersAggrid(){
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            user.setPassword("");
+            user.setComments(null);
+            user.setFollowing(null);
+            user.setFollowers(null);
+        }
+        return allUsers;
     }
     public void deleteUser(Long userId){
         if (!userRepository.existsById(userId)){
