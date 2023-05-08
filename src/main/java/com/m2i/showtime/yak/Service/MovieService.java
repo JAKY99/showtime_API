@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 public class MovieService {
 
-    @Value("${application.imdb.apiKey}")
+    @Value("${external.service.imdb.apiKey}")
     private String apiKey;
 
     private final UserRepository userRepository;
