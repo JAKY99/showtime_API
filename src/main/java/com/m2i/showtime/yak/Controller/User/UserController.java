@@ -219,7 +219,7 @@ public class UserController {
             @RequestParam("email") String email,
             @RequestParam("file") MultipartFile file
     ) throws IOException {
-        return userService.uploadBackgroundPic(email,file);
+        return userService.uploadBackgroundPicTempForCrop(email,file);
     }
     @PostMapping("profile/lazy/tempForCrop")
     public ProfileLazyUserDtoAvatar getProfileAvatarTempForCrop(@RequestBody String email) {
