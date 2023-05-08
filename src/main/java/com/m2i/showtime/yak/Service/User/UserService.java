@@ -1030,7 +1030,7 @@ public class UserService {
         );
         String key = s3client.getObject(this.bucketName,fileName).getKey();
         String url = s3client.getUrl(this.bucketName, key).toString();
-        user.setProfilePictureTempForCrop(url+"?"+System.currentTimeMillis());
+        user.setBackgroundPictureTempForCrop(url+"?"+System.currentTimeMillis());
         userRepository.save(user);
         if(fileToUpload.delete()){
             LOGGER.print("File deleted successfully");
