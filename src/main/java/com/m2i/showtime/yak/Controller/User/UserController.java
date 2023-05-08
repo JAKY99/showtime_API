@@ -58,7 +58,7 @@ public class UserController {
         userService.updateUser(userId, modifiedUser);
     }
 
-    @PreAuthorize("hasAnyAuthority('user:edit')")
+    @PreAuthorize("hasAnyAuthority('user:edit','user:manage_users')")
     @PutMapping("/edit-account")
     public void editAccount(
             @RequestBody EditAccountInfosDto modifiedUser, Authentication authentication) {
