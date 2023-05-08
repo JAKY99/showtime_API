@@ -258,7 +258,7 @@ public class UserService {
     }
     public void increaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -275,7 +275,8 @@ public class UserService {
         System.out.println(result_search.getTitle());
         System.out.println(result_search.getRuntime());
         System.out.println(response.body().toString());
-
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
         Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
@@ -283,7 +284,7 @@ public class UserService {
     }
     public void decreaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
