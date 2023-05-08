@@ -24,6 +24,7 @@ import java.util.Set;
 import static com.m2i.showtime.yak.Security.Role.AppUserRole.*;
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class ShowTimeApplication {
 	private static final Logger LOGGER = LogManager.getLogger(ShowTimeApplication.class);
 	private final PasswordEncoder passwordEncoder;
