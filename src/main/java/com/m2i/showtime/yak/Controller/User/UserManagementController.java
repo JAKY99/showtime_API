@@ -6,6 +6,7 @@ import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
 import com.m2i.showtime.yak.Dto.UpdateUserDto;
 import com.m2i.showtime.yak.Entity.Notification;
+import com.m2i.showtime.yak.Entity.Role;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Service.User.UserManagementService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,5 +75,11 @@ public class UserManagementController {
     @PostMapping("notification/update")
     public void upNotificationUser(@RequestBody String username){
          userManagementService.updateUserAlertNotifications(username);
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("role/aggrid/all")
+    public List<Role> getRolesAgGrid(){
+        return userManagementService.getAllRoles();
     }
 }

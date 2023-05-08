@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
 @RequestMapping("api/v1/permission")
@@ -48,5 +50,11 @@ public class PermissionController {
     @DeleteMapping("/{id}")
     public void deletePermission(@PathVariable("id") Long id) {
         permissionService.deletePermission(id);
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_permission')")
+    @GetMapping("/aggrid/all")
+    public List<Permission> getPermissionsAggrid() {
+        return permissionService.getPermissionsAggrid();
     }
 }
