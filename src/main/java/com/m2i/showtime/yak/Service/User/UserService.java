@@ -906,4 +906,140 @@ public class UserService {
         userRepository.saveAndFlush(user);
         return true;
     }
+    public UploadPictureDtoResponse uploadProfilePicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        String fileName = user.getId() + "_profile_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setProfilePictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        fileToUpload.delete();
+        originalFile.delete();
+        UploadPictureDtoResponse uploadPictureDtoResponse = new UploadPictureDtoResponse();
+        uploadPictureDtoResponse.setNewPictureUrl(url);
+        return uploadPictureDtoResponse;
+    }
+    public ProfileLazyUserDtoAvatar getTempForCropUrl(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
+        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePictureTempForCrop());
+        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPictureTempForCrop());
+        profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        return profileLazyUserDtoAvatar;
+    }
+    public UploadBackgroundDtoResponse uploadBackgroundPicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        if(file.isEmpty()){
+            throw new IllegalStateException("File is empty");
+        }
+        String fileName = user.getId() + "_background_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
+
+        File fileToUpload = new File( basePath + tempPathName +fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setProfilePictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        if(fileToUpload.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        if(originalFile.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
+        uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
+        return uploadBackgroundDtoResponse;
+    }
 }

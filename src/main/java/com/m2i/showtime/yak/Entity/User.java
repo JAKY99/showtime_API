@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @NoArgsConstructor
-@JsonIgnoreProperties(value = {"comments"})
 public class User implements UserDetails {
     @Id
     @SequenceGenerator(
@@ -46,6 +45,9 @@ public class User implements UserDetails {
     @Column(name = "profile_picture")
     private String profilePicture;
     private String backgroundPicture;
+    @Column(name = "profile_picture_temp_for_crop")
+    private String profilePictureTempForCrop;
+    private String backgroundPictureTempForCrop;
     @Column(name = "_password")
     private String password;
     private String country;

@@ -207,4 +207,22 @@ public class UserController {
     public boolean updateUserNotifications(@RequestBody String email) {
         return userService.updateUserNotification(email);
     }
+    @PostMapping("/tempForCrop/uploadProfilePicture")
+    public UploadPictureDtoResponse uploadProfilePicTempForCrop(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return userService.uploadProfilePicTempForCrop(email,file);
+    }
+    @PostMapping("/tempForCrop/uploadBackgroundPicture")
+    public UploadBackgroundDtoResponse uploadBackgroundPicTempForCrop(
+            @RequestParam("email") String email,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return userService.uploadBackgroundPic(email,file);
+    }
+    @PostMapping("profile/lazy/tempForCrop")
+    public ProfileLazyUserDtoAvatar getProfileAvatarTempForCrop(@RequestBody String email) {
+        return userService.getTempForCropUrl(email);
+    }
 }
