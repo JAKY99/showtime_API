@@ -1,8 +1,11 @@
 package com.m2i.showtime.yak.Entity;
 
 
+import com.fasterxml.jackson.annotation.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.modelmapper.ModelMapper;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -21,8 +24,8 @@ public class Comment {
         private Long movie_id;
 
         @ManyToOne
+        @JsonIgnoreProperties("comments")
         private User user;
-
         private String content;
         private LocalDateTime datePublication = LocalDateTime.now();
         private boolean isValidate = false;
@@ -30,6 +33,7 @@ public class Comment {
         private boolean isDeleted = false;
 
         @OneToMany(cascade = CascadeType.ALL)
+        @JsonManagedReference
         private Set<Like> likes;
 
         public Comment() {
