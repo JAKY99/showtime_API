@@ -970,8 +970,8 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
-        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePictureTempForCrop());
-        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPictureTempForCrop());
+        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePictureTempForCrop()==null?"":user.getProfilePictureTempForCrop());
+        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPictureTempForCrop()==null?"":user.getBackgroundPictureTempForCrop());
         profileLazyUserDtoAvatar.setFullName(user.getFullName());
         return profileLazyUserDtoAvatar;
     }
