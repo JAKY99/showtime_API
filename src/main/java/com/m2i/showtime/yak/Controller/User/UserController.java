@@ -3,7 +3,9 @@ package com.m2i.showtime.yak.Controller.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Episode;
+import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Entity.UsersWatchedSeries;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
@@ -14,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -189,6 +192,17 @@ public class UserController {
     public Episode getLastSeenEpisode(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
         return userService.getLastSeenEpisode(userWatchedSerieAddDto);
     }
+
+    @PostMapping("/fetchTvWatching")
+    public ArrayList<Long> fetchTvWatching(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchTvWatching(userMailDto);
+    }
+
+    @PostMapping("/fetchTvWatched")
+    public ArrayList<Long> fetchTvWatched(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchTvWatched(userMailDto);
+    }
+
 
 
 }

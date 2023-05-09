@@ -10,6 +10,8 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
     @Query("SELECT u FROM Serie u WHERE u.tmdbId = ?1")
     Optional<Serie> findSerieByTmdbId(Long tmdbId);
 
+
+
 //    @Query("SELECT u FROM UsersWatchedSeries u WHERE u.serie.hasSeason = ?1")
 //    Optional<Serie> userWatchedEpisodes(Serie serie);
 }

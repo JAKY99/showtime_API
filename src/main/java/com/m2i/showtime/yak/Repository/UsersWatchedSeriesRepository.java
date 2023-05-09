@@ -19,5 +19,11 @@ public interface UsersWatchedSeriesRepository extends JpaRepository<UsersWatched
     @Query("SELECT u FROM UsersWatchedSeries u WHERE u.serie.id = ?1 AND u.user.id = ?2")
     Optional<UsersWatchedSeries> findBySerieAndUserId(Long  SerieId, Long tmdbId);
 
+    @Query("SELECT u FROM UsersWatchedSeries u WHERE u.status = '1' AND u.user.username = ?1")
+    Optional<UsersWatchedSeries[]> getWatchingSeries(String username);
+
+    @Query("SELECT u FROM UsersWatchedSeries u WHERE u.status = '2' AND u.user.username = ?1")
+    Optional<UsersWatchedSeries[]> getWatchedSeries(String username);
+
 
 }

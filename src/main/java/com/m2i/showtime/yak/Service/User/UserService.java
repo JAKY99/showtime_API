@@ -1164,9 +1164,26 @@ public class UserService {
         return  status;
     }
 
-//    public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
-//        Optional<UserSimpleDto> user = userRepository.isMovieWatched(
-//                userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
-//        return user.isEmpty() ? false : true;
-//    }
+    public ArrayList<Long> fetchTvWatching(UserMailDto userMailDto) {
+        Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchingSeries(userMailDto.getUserMail());
+        return getTvIdsFromList(watchingSeriesRelation);
+    }
+
+    public ArrayList<Long> fetchTvWatched(UserMailDto userMailDto) {
+        Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchedSeries(userMailDto.getUserMail());
+        return getTvIdsFromList(watchingSeriesRelation);
+    }
+
+    private ArrayList<Long> getTvIdsFromList(Optional<UsersWatchedSeries[]> watchingSeriesRelation) {
+        ArrayList<Long> seriesWatching = new ArrayList<>();
+        if(watchingSeriesRelation.isPresent()){
+
+            for(UsersWatchedSeries usersWatchedSeries : watchingSeriesRelation.get()){
+                seriesWatching.add(usersWatchedSeries.getSerie().getTmdbId());
+            }
+            return seriesWatching;
+        }else{
+            return null;
+        }
+    }
 }
