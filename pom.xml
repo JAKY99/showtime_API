@@ -203,6 +203,14 @@
 	</dependencies>
 
 	<build>
+	<resources>
+		<resource>
+			<directory>src/main/resources</directory>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</resource>
+	</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.liquibase</groupId>
