@@ -1,39 +1,30 @@
 package com.m2i.showtime.yak.Service;
 
-
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-@Component
-@EnableScheduling
-@EnableAsync
+
 @Getter
 @Setter
+@Service
 public class KafkaListenerService {
-
-    @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
     private final ElasticsearchService elasticSearchService;
     private final LoggerService LOGGER = new LoggerService();
     @Value("${spring.profiles.active}")
     private String env;
-
-    public KafkaListenerService(ElasticsearchService elasticSearchService) {
+    @Autowired
+    public KafkaListenerService(ElasticsearchService elasticSearchService, SimpMessagingTemplate simpMessagingTemplate) {
         this.elasticSearchService = elasticSearchService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
     @KafkaListener(topics = "topicName")
@@ -49,6 +40,20 @@ public class KafkaListenerService {
     @KafkaListener(topics = "elasticsearchUpdate")
     public void listenGroupFooElasticsearchUpdate(String message) throws IOException, URISyntaxException, InterruptedException {
         elasticSearchService.dailyUpdate();
+    }
+
+    @KafkaListener(topics = "${spring.profiles.active}UserComment", groupId = "${spring.profiles.active}")
+    public void listenCommentUser(String message) {
+        String userName = message.split("/")[1];
+        String messageToSend = message.split("/")[0];
+        simpMessagingTemplate.convertAndSend("/topic/user/"+env+"/"+userName, messageToSend);
+        LOGGER.print("Received Message in group " + env + " : " + message);
+    }
+    @KafkaListener(topics = "${spring.profiles.active}UserNotificationService", groupId = "${spring.profiles.active}")
+    public void listenUserNotificationService(String message){
+        JSONObject data = new JSONObject(message);
+        LOGGER.print("Received Message in group " + env +"UserNotificationService : " + data.toString());
+        simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
     }
 
     @KafkaListener(topics = "${spring.profiles.active}User", groupId = "${spring.profiles.active}")

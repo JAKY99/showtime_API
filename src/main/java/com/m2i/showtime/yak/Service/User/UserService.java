@@ -9,10 +9,21 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Jwt.JwtConfig;
+import com.m2i.showtime.yak.Repository.ActorRepository;
+import com.m2i.showtime.yak.Repository.CommentRepository;
+import com.m2i.showtime.yak.Repository.MovieRepository;
+import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
+import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Entity.*;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Repository.*;
@@ -20,6 +31,7 @@ import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
 import com.m2i.showtime.yak.Service.TvService;
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +45,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.crypto.SecretKey;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -62,6 +76,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 @Service
 @EnableAsync
 public class UserService {
@@ -73,8 +88,12 @@ public class UserService {
 
     private final TvRepository tvRepository;
     private final MovieService movieService;
+    private final CommentRepository commentRepository;
+    private final ActorRepository actorRepository;
+    private final GenreRepository genreRepository;
     private final TvService tvService;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
+    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
     private String bucketName;
     @Value("${application.awsAccessKey}")
@@ -85,7 +104,7 @@ public class UserService {
     private String awsSesAccessKey;
     @Value("${application.awsSesSecretKey}")
     private String awsSesSecretKey;
-    @Value("${application.imdb.apiKey}")
+    @Value("${external.service.imdb.apiKey}")
     private String apiKey;
     @Value("${spring.mail.resetPasswordUrl}")
     private String resetPasswordUrl;
@@ -97,7 +116,8 @@ public class UserService {
     private RedisService redisService;
     private HazelcastConfig hazelcastConfig;
     private final String UserNotFound="User not found";
-    private final String tempPathName="/src/main/profile_pic_temp/original_";
+    @Value("${spring.tempPathName}")
+    private String tempPathName;
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
     private final UsersWatchedSeriesRepository usersWatchedSeriesRepository;
@@ -108,15 +128,41 @@ public class UserService {
     private final SerieHasSeasonRepository serieHasSeasonRepository;
 
 
+    private final UserAuthService userAuthService;
+    @Value("${spring.profiles.active}")
+    private String ENV;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, TvRepository tvRepository, MovieService movieService, TvService tvService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER,
-                       UsersWatchedSeriesRepository usersWatchedSeriesRepository, UsersWatchedEpisodeRepository usersWatchedEpisodeRepository, UsersWatchedSeasonRepository usersWatchedSeasonRepository , SeasonRepository seasonRepository, SeasonHasEpisodeRepository seasonHasEpisodeRepository,
-                       SerieHasSeasonRepository serieHasSeasonRepository , SerieRepository serieRepository){
+    public UserService(UserRepository userRepository,
+                       MovieRepository movieRepository,
+                       MovieService movieService,
+                       CommentRepository commentRepository,
+                       GenreRepository genreRepository,
+                       UsersWatchedMovieRepository usersWatchedMovieRepository,
+                       KafkaMessageGeneratorService kafkaMessageGeneratorService,
+                       RedisService redisService,
+                       HazelcastConfig hazelcastConfig,
+                       LoggerService LOGGER,
+                       UserAuthService userAuthService,
+                       ActorRepository actorRepository,
+                       UsersWatchedSeriesRepository usersWatchedSeriesRepository,
+                       UsersWatchedEpisodeRepository usersWatchedEpisodeRepository,
+                       UsersWatchedSeasonRepository usersWatchedSeasonRepository,
+                       SeasonRepository seasonRepository,
+                       TvRepository tvRepository,
+                       SeasonHasEpisodeRepository seasonHasEpisodeRepository,
+                       SerieHasSeasonRepository serieHasSeasonRepository,
+                       SerieRepository serieRepository,
+                       TvService tvService
+                        ) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
         this.tvRepository = tvRepository;
         this.movieService = movieService;
+        this.commentRepository = commentRepository;
+        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
+        this.genreRepository = genreRepository;
+        this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
@@ -128,6 +174,7 @@ public class UserService {
         this.seasonHasEpisodeRepository = seasonHasEpisodeRepository;
         this.serieHasSeasonRepository = serieHasSeasonRepository;
         this.serieRepository = serieRepository;
+        this.userAuthService = userAuthService;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -181,6 +228,23 @@ public class UserService {
             user.setUsername(modifiedUser.getUsername());
         }
     }
+
+    @Transactional
+    public void editAccountInfos(Long userId,
+                                 EditAccountInfosDto modifiedUser) {
+        User user = userRepository.findById(userId)
+                                  .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
+        if (modifiedUser.getFirstName() != null &&
+                modifiedUser.getFirstName().length() > 0 &&
+                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
+            user.setFirstName(modifiedUser.getFirstName());
+        }
+        if (modifiedUser.getLastName() != null &&
+                modifiedUser.getLastName().length() > 0 &&
+                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
+            user.setLastName(modifiedUser.getLastName());
+        }
+    }
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
@@ -207,6 +271,7 @@ public class UserService {
             optionalUserWatchedMovie.get().setWatchedNumber(currentWatchedNumber+1L);
             usersWatchedMovieRepository.save(optionalUserWatchedMovie.get());
         }
+        System.out.println(this.apiKey);
         this.increaseTotalMovieWatchedTime(userWatchedMovieAddDto);
         return true;
     }
@@ -665,7 +730,7 @@ public class UserService {
     }
     public void increaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -679,6 +744,11 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
+        System.out.println(result_search.getTitle());
+        System.out.println(result_search.getRuntime());
+        System.out.println(response.body().toString());
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
         Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
@@ -686,7 +756,7 @@ public class UserService {
     }
     public void decreaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -725,9 +795,9 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName + fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);
@@ -918,9 +988,9 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoSocialInfos profileLazyUserDtoSocialInfos = new ProfileLazyUserDtoSocialInfos();
-        profileLazyUserDtoSocialInfos.setFollowersCounter(user.getFollowersCounter());
-        profileLazyUserDtoSocialInfos.setFollowingsCounter(user.getFollowingsCounter());
-        profileLazyUserDtoSocialInfos.setCommentsCounter(user.getCommentsCounter());
+        profileLazyUserDtoSocialInfos.setFollowersCounter((long) user.getFollowers().size());
+        profileLazyUserDtoSocialInfos.setFollowingsCounter((long) user.getFollowing().size());
+        profileLazyUserDtoSocialInfos.setCommentsCounter((long) user.getComments().size());
         return profileLazyUserDtoSocialInfos;
 
 
@@ -933,6 +1003,8 @@ public class UserService {
         profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePicture());
         profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPicture());
         profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        profileLazyUserDtoAvatar.setFirstName(user.getFirstName());
+        profileLazyUserDtoAvatar.setLastName(user.getLastName());
         return profileLazyUserDtoAvatar;
     }
 
@@ -959,10 +1031,10 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName +fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
 
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        File fileToUpload = new File( basePath + tempPathName +fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);
@@ -1133,6 +1205,321 @@ public class UserService {
     }
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+    }
+    public Optional<User> findOneUserByEmailOrCreateIt(GoogleIdToken.Payload payload) throws JsonProcessingException {
+        String email = payload.getEmail();
+        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+        String locale = (String) payload.get("locale");
+        String familyName = (String) payload.get("family_name");
+        String givenName = (String) payload.get("given_name");
+        Optional<User> user = this.userRepository.findUserByEmail(email);
+        if(user.isPresent()){
+            return user;
+        }
+        if(!user.isPresent()){
+            String newPassword = UUID.randomUUID().toString();
+            RegisterGoogleDto registerDto = new RegisterGoogleDto();
+            registerDto.setUsername(email);
+            registerDto.setPassword(newPassword);
+            registerDto.setFirstName(givenName);
+            registerDto.setLastName(familyName);
+            this.userAuthService.registerGoogleSignin(registerDto);
+        }
+
+        return this.userRepository.findUserByEmail(email);
+    }
+
+    public void saveUser(User user) {
+        this.userRepository.save(user);
+    }
+
+    public SocialInfoDto getSocialPageInfo(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
+
+    public SocialSearchResponseDto[] searchUser(String searchText) {
+        User[] usersFound = this.userRepository.searchUser(searchText);
+        SocialSearchResponseDto[] socialSearchResponseDtos = new SocialSearchResponseDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialSearchResponseDto socialSearchResponseDto = new SocialSearchResponseDto();
+            socialSearchResponseDto.setUsername(user.getUsername());
+            socialSearchResponseDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialSearchResponseDto.setProfilePicture(user.getProfilePicture());
+            socialSearchResponseDto.setScore(0);
+            socialSearchResponseDtos[i] = socialSearchResponseDto;
+            i++;
+        }
+        return socialSearchResponseDtos;
+    }
+
+    public SocialTopTenUserDto[] getTopTenUsers() {
+        User[] usersFound = Arrays.stream(this.userRepository.getTopTen()).limit(10).toArray(User[]::new);
+        SocialTopTenUserDto[] SocialTopTenUserDtos = new SocialTopTenUserDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialTopTenUserDto socialTopTenUserDto = new SocialTopTenUserDto();
+            socialTopTenUserDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialTopTenUserDto.setUsername(user.getUsername());
+            socialTopTenUserDto.setProfilePicture(user.getProfilePicture());
+            socialTopTenUserDto.setScore(0);
+            socialTopTenUserDto.setRank(i+1);
+            SocialTopTenUserDtos[i] = socialTopTenUserDto;
+            i++;
+        }
+        return SocialTopTenUserDtos;
+    }
+    public SocialInfoDto getSocialDetail(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
+
+    public void excludeActor(Long idActor, long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Actor> excludedActorIdFromRecommended = user.getExcludedActorIdFromRecommended();
+
+        Optional<Actor> actor = actorRepository.findByTmdbId(idActor);
+
+        Actor newActor = null;
+        if (actor.isEmpty()) {
+            newActor = actorRepository.saveAndFlush(new Actor(idActor));
+        }
+        excludedActorIdFromRecommended.add(actor.orElse(newActor));
+
+        userRepository.saveAndFlush(user);
+    }
+
+    public void excludeGenre(Long idGenre, Long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Genre> excludedGenreIdFromRecommended = user.getExcludedGenreIdFromRecommended();
+
+        Optional<Genre> genre = genreRepository.findByTmdbId(idGenre);
+
+        Genre newGenre = null;
+        if (genre.isEmpty()) {
+            newGenre = genreRepository.saveAndFlush(new Genre(idGenre));
+        }
+        excludedGenreIdFromRecommended.add(genre.orElse(newGenre));
+
+        userRepository.saveAndFlush(user);
+    }
+
+    public SocialFollowingResponseDto getFollowingStatus(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(user.getFollowing().contains(userToFollow));
+        return socialFollowingResponseDto;
+    }
+
+    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(false);
+        if(!user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().add(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(true);
+            Notification notification = new Notification();
+            notification.setType("follow");
+            notification.setSeverity("info");
+            notification.setMessage(user.getFirstName() + " " + user.getLastName() + " started following you");
+            this.notificationToUser(userToFollow.getUsername(), notification);
+        }
+        return socialFollowingResponseDto;
+    }
+    public SocialFollowingResponseDto actionUnfollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(true);
+        if(user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().remove(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(false);
+        }
+        return socialFollowingResponseDto;
+    }
+
+    public boolean notificationToUser(String email, Notification notification){
+        String topicName=this.ENV+"UserNotificationService";
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        user.getNotifications().add(notification);
+        userRepository.saveAndFlush(user);
+        this.kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
+        return true;
+    }
+
+    public Set<Notification> getUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        return user.getNotifications();
+    }
+
+    public boolean updateUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        user.getNotifications()
+                .stream()
+                .filter(notification -> notification.getStatus()==NotificationStatus.UNREAD)
+                .forEach(notification -> notification.setStatus(NotificationStatus.READ));
+        userRepository.saveAndFlush(user);
+        return true;
+    }
+    public UploadPictureDtoResponse uploadProfilePicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        String fileName = user.getId() + "_profile_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setProfilePictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        fileToUpload.delete();
+        originalFile.delete();
+        UploadPictureDtoResponse uploadPictureDtoResponse = new UploadPictureDtoResponse();
+        uploadPictureDtoResponse.setNewPictureUrl(url);
+        return uploadPictureDtoResponse;
+    }
+    public ProfileLazyUserDtoAvatar getTempForCropUrl(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
+        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePictureTempForCrop()==null?"":user.getProfilePictureTempForCrop());
+        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPictureTempForCrop()==null?"":user.getBackgroundPictureTempForCrop());
+        profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        return profileLazyUserDtoAvatar;
+    }
+    public UploadBackgroundDtoResponse uploadBackgroundPicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        if(file.isEmpty()){
+            throw new IllegalStateException("File is empty");
+        }
+        String fileName = user.getId() + "_background_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
+
+        File fileToUpload = new File( basePath + tempPathName +fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setBackgroundPictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        if(fileToUpload.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        if(originalFile.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
+        uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
+        return uploadBackgroundDtoResponse;
     }
 
     public boolean isEpisodeInWatchlist(UserWatchedEpisodeDto userWatchedEpisodeDto) {

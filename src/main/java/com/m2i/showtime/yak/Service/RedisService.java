@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -62,26 +59,27 @@ public class RedisService {
         }
     }
 
-    public getDataFromRedisDto getRedisCacheData(String encodedUrl, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
+    public getDataFromRedisDto getRedisCacheData(String brutUrl, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlApi = URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8);
+        URI encodedUrl = new URI(brutUrl);
         getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
-        String  check = redisLetuceConfig.redisClient().connect().sync().get(urlApi);
+        String  check = redisLetuceConfig.redisClient().connect().sync().get(encodedUrl.toString());
         if(check==null) {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(urlApi))
+                    .uri(encodedUrl)
                     .GET()
                     .build();
             HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
             JSONObject documentObj = new JSONObject(response.body().toString());
             getDataFromRedisDto.setData(documentObj.toString());
-            redisLetuceConfig.redisClient().connect().sync().set(urlApi, documentObj.toString());
-            redisLetuceConfig.redisClient().connect().sync().expire(urlApi, 3600);
+            redisLetuceConfig.redisClient().connect().sync().set(encodedUrl.toString(), documentObj.toString());
+            redisLetuceConfig.redisClient().connect().sync().expire(encodedUrl.toString(), 3600);
             HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
             return getDataFromRedisDto;
         }
         HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
         getDataFromRedisDto.setData(check);
+
         return getDataFromRedisDto;
     }
     public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {

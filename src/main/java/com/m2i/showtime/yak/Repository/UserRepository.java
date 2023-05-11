@@ -38,6 +38,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<UserSimpleDto> isMovieInMovieToWatch(String email, long tmdbId);
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role='ADMIN'")
     Optional<User[]> findAllAdminUsers();
+    @Query("SELECT u FROM User u JOIN u.role r  " +
+            "WHERE r.role not like 'ADMIN' " +
+            "AND u.firstName LIKE %?1%" +
+            "OR u.lastName LIKE %?1%" +
+            "OR u.username LIKE %?1%" +
+            "AND u.isDeleted = false")
+    User[] searchUser(String searchText);
+    @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role not like 'ADMIN' AND u.isDeleted = false ORDER BY u.totalMovieWatchedNumber DESC")
+    User[] getTopTen();
 
     @Query("SELECT u FROM UsersWatchedEpisode u WHERE u.user.username = ?1 and u.episode.imbd_id = ?2")
     Optional<UsersWatchedEpisode> isEpisodeWatched(String email , long episodeTmdbId);

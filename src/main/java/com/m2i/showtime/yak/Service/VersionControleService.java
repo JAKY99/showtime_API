@@ -2,8 +2,10 @@ package com.m2i.showtime.yak.Service;
 
 import com.m2i.showtime.yak.Dto.KafkaMessageDto;
 import com.m2i.showtime.yak.Dto.VersionControlDto;
+import com.m2i.showtime.yak.Dto.responseAndroidVersionDto;
 import com.m2i.showtime.yak.Entity.VersionControle;
 import com.m2i.showtime.yak.Repository.VersionControleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,8 +19,13 @@ import java.util.Optional;
 @Service
 public class VersionControleService {
     private final VersionControleRepository versionControleRepository;
+    @Value ("${version.code.android}")
+    private String versionCodeAndroid;
+    @Value ("${version.name.android}")
+    private String versionNameAndroid;
     @Value("${spring.profiles.active}")
     private String env;
+    @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     public VersionControleService(VersionControleRepository versionControleRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService) {
         this.versionControleRepository = versionControleRepository;
@@ -54,7 +61,14 @@ public class VersionControleService {
         KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
         kafkaMessageDto.setTopicName(env + "User");
         kafkaMessageDto.setMessage("New update");
-        kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+        this.kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
         return true;
+    }
+
+    public responseAndroidVersionDto getAndroidVersion() {
+        responseAndroidVersionDto responseAndroidVersionDto = new responseAndroidVersionDto();
+        responseAndroidVersionDto.setVersionCode(versionCodeAndroid);
+        responseAndroidVersionDto.setVersionName(versionNameAndroid);
+        return responseAndroidVersionDto;
     }
 }
