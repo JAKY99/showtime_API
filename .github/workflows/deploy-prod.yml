@@ -101,6 +101,8 @@ jobs:
           echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
           echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile 
           source /etc/profile 
+          touch src/main/resources/.env
+          echo "$envStaging" >> src/main/resources/.env
           touch .env 
           echo "$envStaging" >> .env 
           sleep 15 

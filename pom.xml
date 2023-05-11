@@ -203,7 +203,16 @@
 	</dependencies>
 
 	<build>
+	<testResources>
+		<testResource>
+			<directory>src/test/resources</directory>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</testResource>
+	</testResources>
 	<resources>
+
 		<resource>
 			<directory>src/main/resources</directory>
 			<includes>
