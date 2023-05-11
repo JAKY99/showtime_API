@@ -1,5 +1,4 @@
 package com.m2i.showtime.yak.Dto;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,7 +8,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserWatchedMovieDto {
+public class UserWatchedTvEpisodeAddDto {
     String userMail ;
-    Long tmdbId;
+    Long tvTmdbId;
+    Long tvSeasonid;
+    Long episodeId;
 }

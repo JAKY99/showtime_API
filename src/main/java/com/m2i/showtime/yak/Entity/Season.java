@@ -1,29 +1,56 @@
 package com.m2i.showtime.yak.Entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Cascade;
+
+import javax.persistence.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "season")
+@Getter
+@AllArgsConstructor
+@Setter
 public class Season {
     @Id
+    @SequenceGenerator(
+            name = "season_sequence",
+            sequenceName = "season_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "season_sequence"
+    )
     private Long id;
 
-    private String season_number;
+    private Long season_number;
+
+    private Long tmdbSeasonId;
 
     private String name;
     public Season() {
 
     }
-    @OneToMany
-    private List<Episode> episodes;
-    public Season(Long id, String name, String season_number, List<Episode> episodes) {
-        this.id = id;
-        this.name = name;
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "season_has_episodes",
+            joinColumns = {
+                    @JoinColumn(name = "season_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "episode_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Episode> hasEpisode = new HashSet<>();
+
+    public Season(Long season_number, Long tmdbSeasonId, String name, Set<Episode> hasEpisode) {
         this.season_number = season_number;
-        this.episodes= episodes;
+        this.tmdbSeasonId = tmdbSeasonId;
+        this.name = name;
+        this.hasEpisode = hasEpisode;
     }
+
 }

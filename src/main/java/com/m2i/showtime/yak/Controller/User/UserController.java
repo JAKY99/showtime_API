@@ -2,11 +2,16 @@ package com.m2i.showtime.yak.Controller.User;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Episode;
+import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
+import com.m2i.showtime.yak.Entity.UsersWatchedSeries;
+import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
+import org.apache.kafka.common.metrics.Stat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +21,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.Set;
 
 
@@ -176,6 +183,58 @@ public class UserController {
     public ProfileLazyUserDtoLastWatchedMovies getProfileLastWatchedMovies(@RequestBody String email) {
         return userService.getProfileLastWatchedMoviesData(email);
     }
+
+    @PostMapping("/addSerieInWatchlist")
+    public boolean addSerieInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+        return userService.addSerieInWatchlist(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("/addSeasonInWatchlist")
+    public Status addSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+        return userService.addSeasonInWatchlist(userWatchedTvSeasonAddDto);
+    }
+
+    @PostMapping("/addEpisodeInWatchlist")
+    public boolean addEpisodeInWatchlist(@RequestBody UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+        return userService.addEpisodeInWatchlist(userWatchedTvEpisodeAddDto);
+    }
+
+    @PostMapping("/isSerieInWatchlist")
+    public StatusDto isTvInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.isTvInWatchlist(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("/nbEpisodesWatchedInSerie")
+    public Long getNbEpisodesWatchedForSeason(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException {
+        return userService.getNbEpisodesWatchedForSeason(userWatchedTvSeasonAddDto.getTvSeasonid(), userWatchedTvSeasonAddDto.getUserMail());
+    }
+
+    @PostMapping("/isEpisodeInWatchlist")
+    public boolean isEpisodeInWatchlist(@RequestBody UserWatchedEpisodeDto userWatchedEpisodeDto) {
+        return userService.isEpisodeInWatchlist(userWatchedEpisodeDto);
+    }
+
+    @PostMapping("/isSeasonInWatchlist")
+    public Status isSeasonInWatchlist(@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
+        return userService.isSeasonInWatchlist(userWatchedTvSeasonAddDto);
+    }
+
+    @PostMapping("/getLastSeenEpisode")
+    public Episode getLastSeenEpisode(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        return userService.getLastSeenEpisode(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("/fetchTvWatching")
+    public ArrayList<Long> fetchTvWatching(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchTvWatching(userMailDto);
+    }
+
+    @PostMapping("/fetchTvWatched")
+    public ArrayList<Long> fetchTvWatched(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchTvWatched(userMailDto);
+    }
+
+
 
     @GetMapping("/refresh")
     public void refreshToken(

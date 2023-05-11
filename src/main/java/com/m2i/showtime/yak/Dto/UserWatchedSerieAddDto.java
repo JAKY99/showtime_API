@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserWatchedMovieDto {
+public class UserWatchedSerieAddDto {
     String userMail ;
     Long tmdbId;
 }

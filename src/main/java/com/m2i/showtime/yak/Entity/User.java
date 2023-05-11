@@ -129,6 +129,8 @@ public class User implements UserDetails {
                     @JoinColumn(name = "movie_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Movie> watchlistMovies = new HashSet<>();
+
+
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_series",
             joinColumns = {
@@ -138,6 +140,30 @@ public class User implements UserDetails {
                     @JoinColumn(name = "serie_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Serie> watchedSeries = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watched_seasons",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "season_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Season> watchedSeasons = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watched_episodes",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "episode_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Episode> watchedEpisodes = new HashSet<>();
+
+
+
+
     @ManyToOne
     private Role role;
     @OneToMany(cascade = CascadeType.ALL)
