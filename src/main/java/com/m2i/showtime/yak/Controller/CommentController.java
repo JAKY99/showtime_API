@@ -1,11 +1,9 @@
 package com.m2i.showtime.yak.Controller;
 
-import com.m2i.showtime.yak.Dto.CommentLikeDto;
-import com.m2i.showtime.yak.Dto.CommentNotifDto;
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Dto.Search.CommentGetDto;
-import com.m2i.showtime.yak.Dto.UserSimpleDto;
-import com.m2i.showtime.yak.Dto.userCommentDto;
 import com.m2i.showtime.yak.Entity.Comment;
+import com.m2i.showtime.yak.Entity.Response;
 import com.m2i.showtime.yak.Service.CommentService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -81,5 +79,20 @@ public class CommentController {
         return commentService.likeComment(userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");
                 }), commentLikeDto);
+    }
+
+    @PostMapping("/addResponseComment")
+    public boolean addResponseComment(Authentication authentication, @RequestBody ResponseCommentDto responseCommentDto) {
+        Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
+                .toString());
+        commentService.addResponseComment(userSimpleDto.orElseThrow(() -> {
+                    throw new IllegalStateException("User not found.");
+                }), responseCommentDto);
+        return true;
+    }
+
+    @GetMapping("fetchResponseComment/{commentId}")
+    public List<Response> fetchResponseComment(@PathVariable("commentId") Long commentId) {
+        return commentService.fetchResponseComment(commentId);
     }
 }

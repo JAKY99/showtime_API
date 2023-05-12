@@ -1,16 +1,10 @@
 package com.m2i.showtime.yak.Service;
 
-import com.m2i.showtime.yak.Dto.CommentLikeDto;
-import com.m2i.showtime.yak.Dto.CommentNotifDto;
+import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Dto.Search.CommentGetDto;
-import com.m2i.showtime.yak.Dto.UserSimpleDto;
-import com.m2i.showtime.yak.Dto.userCommentDto;
 import com.m2i.showtime.yak.Entity.*;
 
-import com.m2i.showtime.yak.Repository.CommentRepository;
-import com.m2i.showtime.yak.Repository.LikeRepository;
-import com.m2i.showtime.yak.Repository.MovieRepository;
-import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.Repository.*;
 
 import com.m2i.showtime.yak.Service.User.UserService;
 
@@ -28,14 +22,17 @@ public class CommentService {
     private final LikeRepository likeRepository;
 
     private final UserService userService;
+    private final ResponseRepository responseRepository;
 
-    public CommentService(MovieService movieService, MovieRepository movieRepository, UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, UserService userService) {
+    public CommentService(MovieService movieService, MovieRepository movieRepository, UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, UserService userService,
+                          ResponseRepository responseRepository) {
         this.movieService = movieService;
         this.movieRepository = movieRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.likeRepository = likeRepository;
         this.userService = userService;
+        this.responseRepository = responseRepository;
     }
 
     public boolean saveComment(userCommentDto userCommentDto) {
@@ -66,6 +63,8 @@ public class CommentService {
             comment.getUser().setFollowing(null);
             commentGetDto.setComments(comment);
             Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
+            List<Response> responses = this.responseRepository.getResponsesByCommentId(comment.getId());
+            commentGetDto.setNumberResponse(responses.size());
             if (like.isPresent()) {
                 commentGetDto.setLiked(true);
             }
@@ -93,8 +92,9 @@ public class CommentService {
                 comment.getUser().setPassword(null);
                 comment.getUser().setFollowers(null);
                 comment.getUser().setFollowing(null);
-
+                List<Response> responses = this.responseRepository.getResponsesByCommentId(comment.getId());
                 CommentGetDto commentGetDto = new CommentGetDto();
+                commentGetDto.setNumberResponse(responses.size());
                 commentGetDto.setComments(comment);
                 Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.getId());
                 if (like.isPresent()) {
@@ -173,6 +173,8 @@ public class CommentService {
         CommentGetDto commentGetDto = new CommentGetDto();
         Optional<Comment> comment = this.commentRepository.findById(commentLikeDto.getCommentId());
         if (comment.isEmpty()) throw new IllegalStateException("Comment not found");
+        List<Response> responses = this.responseRepository.getResponsesByCommentId(comment.get().getId());
+        commentGetDto.setNumberResponse(responses.size());
         Like likeUser = this.likeRepository.findbyUserIdAndCommentId(user.getId(), comment.get().getId());
         if (likeUser == null) {
             Like like = new Like();
@@ -203,5 +205,27 @@ public class CommentService {
     public Optional<UserSimpleDto> getUserByEmail(String email) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserByEmail(email);
         return user;
+    }
+
+    public boolean addResponseComment(UserSimpleDto userSimpleDto, ResponseCommentDto responseCommentDto) {
+        try {
+            User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+            Optional<Comment> comment = this.commentRepository.findById(responseCommentDto.getCommentId());
+            Response response = new Response();
+            response.setUser(user);
+            response.setContent(responseCommentDto.getText());
+            response.setComment(comment.get());
+            responseRepository.save(response);
+            return true;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Response> fetchResponseComment(Long commentId) {
+        Optional<Comment> comment = this.commentRepository.findById(commentId);
+        List<Response> responseList = this.responseRepository.findAllByComment(comment.get());
+        return responseList;
     }
 }

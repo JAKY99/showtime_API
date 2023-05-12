@@ -28,13 +28,16 @@ public class Comment {
         private User user;
         private String content;
         private LocalDateTime datePublication = LocalDateTime.now();
-        private boolean isValidate = false;
+        private boolean isValidate = true;
         private boolean isSpoiler = false;
         private boolean isDeleted = false;
 
         @OneToMany(cascade = CascadeType.ALL)
         @JsonManagedReference
         private Set<Like> likes;
+
+        @OneToMany(cascade = CascadeType.ALL)
+        private Set<Response> responses;
 
         public Comment() {
         }

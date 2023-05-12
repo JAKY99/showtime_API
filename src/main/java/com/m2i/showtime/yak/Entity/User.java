@@ -130,6 +130,9 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> watchlistMovies = new HashSet<>();
 
+    @OneToMany
+    private Set<Response> responses = new HashSet<>();
+
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_series",
