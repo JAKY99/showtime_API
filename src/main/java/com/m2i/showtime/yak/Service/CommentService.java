@@ -226,6 +226,12 @@ public class CommentService {
     public List<Response> fetchResponseComment(Long commentId) {
         Optional<Comment> comment = this.commentRepository.findById(commentId);
         List<Response> responseList = this.responseRepository.findAllByComment(comment.get());
+        for (Response response : responseList) {
+            response.getUser().setComments(null);
+            response.getUser().setPassword(null);
+            response.getUser().setFollowers(null);
+            response.getUser().setFollowing(null);
+        }
         return responseList;
     }
 }
