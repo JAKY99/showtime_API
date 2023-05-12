@@ -58,8 +58,10 @@ public class TvService {
     }
 
     public AddSerieDto getSerieDetails(Long tmdbId) throws URISyntaxException, IOException, InterruptedException {
+        System.out.println("tmdb key :"+TMDB_KEY);
         HttpClient client = HttpClient.newHttpClient();
         String urlToCall =  "https://api.themoviedb.org/3/tv/" + tmdbId + "?api_key=" + TMDB_KEY;
+        System.out.println("urlToCall :"+urlToCall);
         HttpRequest dataFromSerie = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -68,7 +70,7 @@ public class TvService {
 
         JSONObject documentObj = new JSONObject(response.body().toString());
         Gson gson = new Gson();
-
+        System.out.println("response :"+documentObj.toString());
         return gson.fromJson(String.valueOf(documentObj) , AddSerieDto.class);
     }
 
