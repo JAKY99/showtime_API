@@ -206,6 +206,7 @@
 	<testResources>
 		<testResource>
 			<directory>src/test/resources</directory>
+			<filtering>true</filtering>
 			<includes>
 				<include>**/*</include>
 			</includes>
@@ -215,6 +216,7 @@
 
 		<resource>
 			<directory>src/main/resources</directory>
+			<filtering>true</filtering>
 			<includes>
 				<include>**/*</include>
 			</includes>
