@@ -28,6 +28,10 @@ import java.util.concurrent.Future;
 
 @Service
 public class TvService {
+
+    @Value("${external.service.imdb.apiKey}")
+
+    private String TMDB_KEY;
     private final UserRepository userRepository;
     private final RedisConfig redisConfig;
     private final TvRepository tvRepository;
@@ -37,12 +41,8 @@ public class TvService {
         this.redisConfig = redisConfig;
         this.tvRepository = tvRepository;
     }
-//    @Value("${TMDB_BASE_URL}")
-//    private String TMDB_BASE_URL;
 
-    @Value("${application.imdb.apiKey}")
 
-    private String TMDB_KEY;
 
     public List<Serie> getSeries() {
         return tvRepository.findAll();
