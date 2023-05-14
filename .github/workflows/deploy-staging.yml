@@ -100,9 +100,11 @@ jobs:
           mv src/test/resources/application.ci.properties src/test/resources/application.properties
           echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
           echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile 
-          source /etc/profile 
-          touch .env 
+          source /etc/profile
+          touch .env  
           echo "$envStaging" >> .env 
+          touch src/main/resources/.env  
+          echo "$envStaging" >> src/main/resources/.env 
           sleep 15 
           sed -i "s/hostname-postgres/postgres/g" src/main/resources/application.properties 
           sed -i "s/hostname-postgres/postgres/g" src/test/resources/application.properties 
@@ -121,11 +123,19 @@ jobs:
     environment: staging
     runs-on: ubuntu-latest
     container:
-      image: kevinpsirius/pipeline_deployment_image:v3
+      image: kevinpsirius/javadeployspring:v2
       env:
         sshKey: ${{ secrets.SSH_KEY }}
+        envDeploymentStaging: ${{ secrets.ENVDEPLOYMENTSTAGING }}
     steps:
-      - name: Generate SSH connection to server with ansible for staging
+      - name: Generate the updated target directory to push on staging
         run: |
+          git clone https://github.com/JAKY99/showtime_API.git
+          rm showtime_API/src/main/resources/liquibase.properties 
+          mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
+          rm showtime_API/src/main/resources/application.properties 
+          mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
+          touch showtime_API/src/main/resources/.env && echo "$envDeploymentStaging" >> showtime_API/src/main/resources/.env 
+          cd showtime_API &&  mvn dependency:purge-local-repository && mvn clean install -DskipTests --update-snapshots
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
-          cd /var/www/html/playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
+          cd playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"

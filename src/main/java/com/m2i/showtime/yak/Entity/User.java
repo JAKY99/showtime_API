@@ -1,5 +1,9 @@
 package com.m2i.showtime.yak.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +25,6 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 public class User implements UserDetails {
-
     @Id
     @SequenceGenerator(
             name = "user_sequence",
@@ -42,6 +45,9 @@ public class User implements UserDetails {
     @Column(name = "profile_picture")
     private String profilePicture;
     private String backgroundPicture;
+    @Column(name = "profile_picture_temp_for_crop")
+    private String profilePictureTempForCrop;
+    private String backgroundPictureTempForCrop;
     @Column(name = "_password")
     private String password;
     private String country;
@@ -74,7 +80,28 @@ public class User implements UserDetails {
     private Long followingsCounter = 0L;
     private Long followersCounter = 0L;
     private Long commentsCounter = 0L;
+    private String about;
+    //-------------------------------------------------
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_excluded_actors",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "actor_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Actor> excludedActorIdFromRecommended = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_excluded_genres",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "genre_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Genre> excludedGenreIdFromRecommended = new HashSet<>();
+    //-------------------------------------------------
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_movies",
             joinColumns = {
@@ -102,6 +129,11 @@ public class User implements UserDetails {
                     @JoinColumn(name = "movie_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Movie> watchlistMovies = new HashSet<>();
+
+    @OneToMany
+    private Set<Response> responses = new HashSet<>();
+
+
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watched_series",
             joinColumns = {
@@ -111,10 +143,49 @@ public class User implements UserDetails {
                     @JoinColumn(name = "serie_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Serie> watchedSeries = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watched_seasons",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "season_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Season> watchedSeasons = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watched_episodes",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "episode_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Episode> watchedEpisodes = new HashSet<>();
+
+
+
+
     @ManyToOne
     private Role role;
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Notification> notifications = new HashSet<>();
+
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JsonBackReference
+    private Set<Comment> comments = new HashSet<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_followers",
+            joinColumns = @JoinColumn(name = "following_id"),
+            inverseJoinColumns = @JoinColumn(name = "follower_id")
+    )
+    private Set<User> followers = new HashSet<>();
+
+    @ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
+    private Set<User> following = new HashSet<>();
 
     public User(String firstName,
                 String lastName,

@@ -20,7 +20,6 @@ public class Movie {
             generator = "movie_sequence"
     )
     private Long id;
-
     private Long tmdbId;
     private String name;
 

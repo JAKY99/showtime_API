@@ -17,6 +17,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +49,7 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
         String token = authorizationHeader.replace(jwtConfig.getTokenPrefix(), "");
 
+
         try {
             Jws<Claims> claimsJws = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -69,7 +73,38 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (JwtException e) {
-            throw new IllegalStateException(String.format("Token %s cannot be trusted, %s", token, e.getMessage()));
+            String refreshHeader = request.getHeader(jwtConfig.getRefreshHeader());
+            String refreshtoken = refreshHeader.replace(jwtConfig.getTokenPrefix(), "");
+            if (Strings.isNullOrEmpty(refreshHeader) || !refreshHeader.startsWith(jwtConfig.getTokenPrefix())) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            try {
+                Jws<Claims> claimsJws = Jwts.parserBuilder()
+                        .setSigningKey(secretKey)
+                        .build()
+                        .parseClaimsJws(refreshtoken);
+
+                Claims body = claimsJws.getBody();
+                String username = body.getSubject();
+
+                var authorities = (List<Map<String, String>>) body.get("authorities");
+
+                Set<SimpleGrantedAuthority> simpleGrantedAuthorities = authorities.stream()
+                        .map(m -> new SimpleGrantedAuthority(m.get("authority")))
+                        .collect(Collectors.toSet());
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        username,
+                        null,
+                        simpleGrantedAuthorities
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (JwtException e1) {
+                throw new IllegalStateException(String.format("Token %s cannot be trusted, %s", token, e.getMessage()));
+            }
         }
 
         filterChain.doFilter(request, response);

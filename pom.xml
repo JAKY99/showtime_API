@@ -84,7 +84,8 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
-			<optional>true</optional>
+			<scope>runtime</scope>
+			<version>2.6.6</version>
 		</dependency>
 
 		<dependency>
@@ -194,9 +195,33 @@
 			<artifactId>hazelcast</artifactId>
 			<version>5.1.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>2.2.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
+	<testResources>
+		<testResource>
+			<directory>src/test/resources</directory>
+			<filtering>true</filtering>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</testResource>
+	</testResources>
+	<resources>
+
+		<resource>
+			<directory>src/main/resources</directory>
+			<filtering>true</filtering>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</resource>
+	</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.liquibase</groupId>

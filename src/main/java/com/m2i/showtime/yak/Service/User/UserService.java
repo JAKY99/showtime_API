@@ -9,30 +9,44 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
-import com.m2i.showtime.yak.Entity.Movie;
-import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Entity.UsersWatchedMovie;
+import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Jwt.JwtConfig;
+import com.m2i.showtime.yak.Repository.ActorRepository;
+import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
+import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+import com.m2i.showtime.yak.Repository.*;
+import com.m2i.showtime.yak.Entity.*;
+import com.m2i.showtime.yak.Enum.Status;
+import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
+import com.m2i.showtime.yak.Service.TvService;
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.crypto.SecretKey;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -57,14 +71,29 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.m2i.showtime.yak.common.notification.NotificationStatus;
 @Service
+@EnableAsync
 public class UserService {
 
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
+
+    private final SerieRepository serieRepository;
+
+    private final TvRepository tvRepository;
     private final MovieService movieService;
+    private final CommentRepository commentRepository;
+    private final ActorRepository actorRepository;
+    private final GenreRepository genreRepository;
+    private final TvService tvService;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
+    private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
     @Value("${application.bucketName}")
     private String bucketName;
     @Value("${application.awsAccessKey}")
@@ -75,7 +104,7 @@ public class UserService {
     private String awsSesAccessKey;
     @Value("${application.awsSesSecretKey}")
     private String awsSesSecretKey;
-    @Value("${application.imdb.apiKey}")
+    @Value("${external.service.imdb.apiKey}")
     private String apiKey;
     @Value("${spring.mail.resetPasswordUrl}")
     private String resetPasswordUrl;
@@ -87,18 +116,65 @@ public class UserService {
     private RedisService redisService;
     private HazelcastConfig hazelcastConfig;
     private final String UserNotFound="User not found";
-    private final String tempPathName="/src/main/profile_pic_temp/original_";
+    @Value("${spring.tempPathName}")
+    private String tempPathName;
     private final String basicErrorMessage="Something went wrong";
     private LoggerService LOGGER = new LoggerService();
+    private final UsersWatchedSeriesRepository usersWatchedSeriesRepository;
+    private final UsersWatchedEpisodeRepository usersWatchedEpisodeRepository;
+    private final UsersWatchedSeasonRepository usersWatchedSeasonRepository;
+    private final SeasonRepository seasonRepository;
+    private final SeasonHasEpisodeRepository seasonHasEpisodeRepository;
+    private final SerieHasSeasonRepository serieHasSeasonRepository;
+
+
+    private final UserAuthService userAuthService;
+    @Value("${spring.profiles.active}")
+    private String ENV;
     @Autowired
-    public UserService(UserRepository userRepository, MovieRepository movieRepository, MovieService movieService, UsersWatchedMovieRepository usersWatchedMovieRepository, RedisService redisService, HazelcastConfig hazelcastConfig, LoggerService LOGGER) {
+    public UserService(UserRepository userRepository,
+                       MovieRepository movieRepository,
+                       MovieService movieService,
+                       CommentRepository commentRepository,
+                       GenreRepository genreRepository,
+                       UsersWatchedMovieRepository usersWatchedMovieRepository,
+                       KafkaMessageGeneratorService kafkaMessageGeneratorService,
+                       RedisService redisService,
+                       HazelcastConfig hazelcastConfig,
+                       LoggerService LOGGER,
+                       UserAuthService userAuthService,
+                       ActorRepository actorRepository,
+                       UsersWatchedSeriesRepository usersWatchedSeriesRepository,
+                       UsersWatchedEpisodeRepository usersWatchedEpisodeRepository,
+                       UsersWatchedSeasonRepository usersWatchedSeasonRepository,
+                       SeasonRepository seasonRepository,
+                       TvRepository tvRepository,
+                       SeasonHasEpisodeRepository seasonHasEpisodeRepository,
+                       SerieHasSeasonRepository serieHasSeasonRepository,
+                       SerieRepository serieRepository,
+                       TvService tvService
+                        ) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
+        this.tvService = tvService;
+        this.tvRepository = tvRepository;
         this.movieService = movieService;
+        this.commentRepository = commentRepository;
+        this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
+        this.genreRepository = genreRepository;
+        this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
         this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
+        this.usersWatchedSeriesRepository = usersWatchedSeriesRepository;
+        this.usersWatchedEpisodeRepository = usersWatchedEpisodeRepository;
+        this.usersWatchedSeasonRepository = usersWatchedSeasonRepository;
+        this.seasonRepository = seasonRepository;
+        this.seasonHasEpisodeRepository = seasonHasEpisodeRepository;
+        this.serieHasSeasonRepository = serieHasSeasonRepository;
+        this.serieRepository = serieRepository;
+        this.userAuthService = userAuthService;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -152,6 +228,23 @@ public class UserService {
             user.setUsername(modifiedUser.getUsername());
         }
     }
+
+    @Transactional
+    public void editAccountInfos(Long userId,
+                                 EditAccountInfosDto modifiedUser) {
+        User user = userRepository.findById(userId)
+                                  .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
+        if (modifiedUser.getFirstName() != null &&
+                modifiedUser.getFirstName().length() > 0 &&
+                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
+            user.setFirstName(modifiedUser.getFirstName());
+        }
+        if (modifiedUser.getLastName() != null &&
+                modifiedUser.getLastName().length() > 0 &&
+                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
+            user.setLastName(modifiedUser.getLastName());
+        }
+    }
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
                 userWatchedMovieDto.getUserMail(), userWatchedMovieDto.getTmdbId());
@@ -182,6 +275,399 @@ public class UserService {
         return true;
     }
 
+    public boolean addSerieInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException {
+
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        Long serieId = tvRepository.findByTmdbId(userWatchedSerieAddDto.getTmdbId()).orElseThrow(() -> new IllegalStateException(basicErrorMessage)).getId();
+        Long userId = user.getId();
+        Optional<UsersWatchedSeries> optionalUserWatchedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
+        if (!optionalUserWatchedSerie.isPresent()) {
+            user
+                    .getWatchedSeries()
+                    .add(serie);
+            userRepository.save(user);
+
+            // change status serie
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
+            relatedSerie.get().setStatus(Status.SEEN);
+
+            this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+        }
+
+        // loop on all serie.getHasSeason()
+
+
+        serie.getHasSeason().forEach(season -> {
+            UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto = new UserWatchedTvSeasonAddDto(
+                    userWatchedSerieAddDto.getUserMail(),
+                    userWatchedSerieAddDto.getTmdbId(),
+                    season.getTmdbSeasonId()
+            );
+            try {
+                addSeasonInWatchlist(userWatchedTvSeasonAddDto);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+
+
+        if (optionalUserWatchedSerie.isPresent()) {
+            // increase watch nb
+            Long currentWatchedNumber = optionalUserWatchedSerie.get().getWatchedNumber();
+            optionalUserWatchedSerie.get().setWatchedNumber(currentWatchedNumber + 1L);
+
+            usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
+        }
+
+//        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
+//        this.increaseTotalMovieWatchedTime(userWatchedSerieAddDto);
+
+        return true;
+    }
+
+    public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
+
+        // récup l'user
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Long userId = user.getId();
+
+        // récup obj episode
+        Optional<Episode> episode = usersWatchedEpisodeRepository.findEpisodeByTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId());
+        //Check episode is in watchedListEpisode
+        Optional<UsersWatchedEpisode> optionalUserWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episode.get().getId(), userId);
+
+        // si pas présent alors add
+        if (!optionalUserWatchedEpisode.isPresent()) {
+
+            user
+                    .getWatchedEpisodes()
+                    .add(episode.get());
+            userRepository.save(user);
+
+
+            increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
+
+        }else{
+            Long currentWatchedNumber = optionalUserWatchedEpisode.get().getWatchedNumber();
+            optionalUserWatchedEpisode.get().setWatchedNumber(currentWatchedNumber+1L);
+            usersWatchedEpisodeRepository.save(optionalUserWatchedEpisode.get());
+
+            increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
+        }
+        // méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés && mettre le bon statut
+        if(userWatchedTvEpisodeAddDto.getTvSeasonid() != null){
+            updateSeasonStatus(userWatchedTvEpisodeAddDto.getTvSeasonid(), userWatchedTvEpisodeAddDto.getUserMail(), userWatchedTvEpisodeAddDto.getTvTmdbId());
+        }else{
+            // query pour récup la saison id
+            Optional<SeasonHasEpisode> seasonHasEpisode = seasonRepository.findSeasonWithEpisodeTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId());
+            updateSeasonStatus(seasonHasEpisode.get().getSeason().getTmdbSeasonId(), userWatchedTvEpisodeAddDto.getUserMail() , userWatchedTvEpisodeAddDto.getTvTmdbId());
+        }
+
+        // @TODO methode pour ajouter le temps de visionnage de l'épisode
+
+        return true;
+    }
+
+//    private Status updateSerieStatus (Long tvTmdbId, Long userId) {
+//
+//        Serie serie = this.tvRepository.findByTmdbId(tvTmdbId).orElseThrow(() -> new IllegalStateException(basicErrorMessage));
+//        serie.forE
+//
+//    }
+
+    public Long getNbEpisodesWatchedForSeason(Long tvSeasonTmdbId,String username){
+        Optional<User> optionalUser = userRepository.findUserByEmail(username);
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Long userId = user.getId();
+
+        List<SeasonHasEpisode> allEpisodes = this.seasonHasEpisodeRepository.findBySeasonImdbId(tvSeasonTmdbId);
+        AtomicInteger nbEpisodesSeen = new AtomicInteger();
+        allEpisodes.forEach(episode -> {
+            Optional<UsersWatchedEpisode> optionalUserWatchedEpisode = this.usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episode.getEpisode().getId(), userId);
+            if(optionalUserWatchedEpisode.isPresent()) {
+                nbEpisodesSeen.getAndIncrement();
+            }
+        });
+        return nbEpisodesSeen.longValue();
+    }
+
+    public Long getNbSeasonsWatchedForSerie(Long tvImdbId,User user){
+
+        Long userId = user.getId();
+
+        List<SerieHasSeason> allSeasons = this.serieHasSeasonRepository.findAllRelatedSeason(tvImdbId);
+        AtomicInteger nbSeasonsSeen = new AtomicInteger();
+        allSeasons.forEach(season -> {
+            Optional<UsersWatchedSeason> optionalUserWatchedSeason =
+                    this.usersWatchedSeasonRepository.findSeasonSeenByIdAndUserId(season.getSeason().getId(), userId);
+            if(optionalUserWatchedSeason.isPresent()) {
+                nbSeasonsSeen.getAndIncrement();
+            }
+        });
+        return nbSeasonsSeen.longValue();
+    }
+    private Status updateSeasonStatus (Long tvSeasonTmdbId, String username , Long tvTmdbId) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(username);
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Long userId = user.getId();
+
+        List<SeasonHasEpisode> allEpisodes = this.seasonHasEpisodeRepository.findBySeasonImdbId(tvSeasonTmdbId);
+        long nbEpisodesSeen = getNbEpisodesWatchedForSeason(tvSeasonTmdbId, username);
+
+        Status returnedStatus = Status.NOTSEEN;
+        // Si la relation n'existe pas, on la crée
+        Optional<UsersWatchedSeason> optionalUserWatchedSeason = this.usersWatchedSeasonRepository.findByTmdbIdAndUserId(tvSeasonTmdbId, userId);
+        if(!optionalUserWatchedSeason.isPresent()) {
+            Season season = this.seasonRepository.findByTmdbSeasonId(tvSeasonTmdbId).get();
+            user.getWatchedSeasons().add(season);
+            this.userRepository.save(user);
+        }
+
+        // update la relation si elle existe au dessus sinon la récup puis l'update selon condition
+        if(nbEpisodesSeen == allEpisodes.size()) {
+            if(optionalUserWatchedSeason.isPresent()) {
+                optionalUserWatchedSeason.get().setStatus(Status.SEEN);
+                returnedStatus = Status.SEEN;
+                this.usersWatchedSeasonRepository.save(optionalUserWatchedSeason.get());
+                updateSerieStatus(user,tvTmdbId);
+
+            }else{
+                Optional<UsersWatchedSeason> userWatchedSeason = this.usersWatchedSeasonRepository.findByTmdbIdAndUserId(tvSeasonTmdbId, userId);
+                if (userWatchedSeason.isPresent()) {
+                    userWatchedSeason.get().setStatus(Status.SEEN);
+                    returnedStatus = Status.SEEN;
+                    this.usersWatchedSeasonRepository.save(userWatchedSeason.get());
+                    updateSerieStatus(user, tvTmdbId);
+                }
+            }
+        }else if(nbEpisodesSeen > 0) {
+            if(optionalUserWatchedSeason.isPresent()) {
+                optionalUserWatchedSeason.get().setStatus(Status.WATCHING);
+                returnedStatus = Status.WATCHING;
+                this.usersWatchedSeasonRepository.save(optionalUserWatchedSeason.get());
+                updateSerieStatus(user, tvTmdbId);
+
+            }else{
+                Optional<UsersWatchedSeason> userWatchedSeason = this.usersWatchedSeasonRepository.findByTmdbIdAndUserId(tvSeasonTmdbId, userId);
+                if (userWatchedSeason.isPresent()) {
+                    userWatchedSeason.get().setStatus(Status.WATCHING);
+                    returnedStatus = Status.WATCHING;
+                    this.usersWatchedSeasonRepository.save(userWatchedSeason.get());
+                    updateSerieStatus(user, tvTmdbId);
+                }
+            }
+        }
+        return returnedStatus;
+    }
+
+    private void updateSerieStatus(User user, Long tvTmdbId) {
+        Optional<UsersWatchedSeries> optionalUserWatchedSeries = this.usersWatchedSeriesRepository.findByImdbIdAndUserMail(tvTmdbId, user.getUsername());
+//        List<UsersWatchedSeason> watchedSeasons = this.usersWatchedSeasonRepository.findBySerieTmdbId(tvTmdbId);
+
+        List<SerieHasSeason> allSeasons = this.serieHasSeasonRepository.findAllRelatedSeason(tvTmdbId);
+        long nbSeasonsSeen = getNbSeasonsWatchedForSerie(tvTmdbId, user);
+
+        if(!optionalUserWatchedSeries.isPresent()) {
+            Serie serie = this.serieRepository.findSerieByTmdbId(tvTmdbId).get();
+            user.getWatchedSeries().add(serie);
+            this.userRepository.save(user);
+        }
+
+        if(nbSeasonsSeen > 0) {
+            if(optionalUserWatchedSeries.isPresent()) {
+                optionalUserWatchedSeries.get().setStatus(Status.WATCHING);
+                this.usersWatchedSeriesRepository.save(optionalUserWatchedSeries.get());
+            }else{
+                Optional<UsersWatchedSeries> userWatchedSeries = this.usersWatchedSeriesRepository.findByImdbIdAndUserMail(tvTmdbId, user.getUsername());
+                if (userWatchedSeries.isPresent()) {
+                    userWatchedSeries.get().setStatus(Status.WATCHING);
+                    this.usersWatchedSeriesRepository.save(userWatchedSeries.get());
+                }
+            }
+        }
+
+        if(nbSeasonsSeen == allSeasons.size()) {
+            if(optionalUserWatchedSeries.isPresent()) {
+                optionalUserWatchedSeries.get().setStatus(Status.SEEN);
+                this.usersWatchedSeriesRepository.save(optionalUserWatchedSeries.get());
+            }else{
+                Optional<UsersWatchedSeries> userWatchedSeries = this.usersWatchedSeriesRepository.findByImdbIdAndUserMail(tvTmdbId, user.getUsername());
+                if (userWatchedSeries.isPresent()) {
+                    userWatchedSeries.get().setStatus(Status.SEEN);
+                    this.usersWatchedSeriesRepository.save(userWatchedSeries.get());
+                }
+            }
+        }
+    }
+
+    public Episode getLastSeenEpisode(UserWatchedSerieAddDto userWatchedSerieAddDto){
+        // récup tous les épisodes liés à userWatchedSerieAddDto.getTmdbId()
+
+        Optional<Serie> serie = this.serieRepository.findSerieByTmdbId(
+                userWatchedSerieAddDto.getTmdbId()
+        );
+        if(serie.isEmpty()) {
+            return new Episode(
+                    0L, "Serie not downloaded yet" , 1L, 1L
+            );
+
+        }
+        ArrayList<Episode> EpisodesSeen = new ArrayList<>();
+        serie.get().getHasSeason().forEach(season -> {
+            season.getHasEpisode().forEach(episode -> {
+                Optional<Episode> ep = this.usersWatchedEpisodeRepository.isEpisodeWatchedByUser(
+                        userWatchedSerieAddDto.getUserMail(),
+                        episode.getId()
+                );
+                ep.ifPresent(EpisodesSeen::add);
+            });
+        });
+        if(EpisodesSeen.isEmpty()) {
+            return new Episode(
+                    0L, "no realtion with this user yet" , 1L, 1L
+            );
+        }
+
+        AtomicReference<Episode> latestEpisode = new AtomicReference<>(EpisodesSeen.get(0));
+
+        EpisodesSeen.forEach(episode -> {
+            // return episode with the highest season_number and episode_number
+            if(episode.getSeason_number() >= latestEpisode.get().getSeason_number()
+                    && episode.getEpisode_number() >= latestEpisode.get().getEpisode_number()) {
+                latestEpisode.set(episode);
+            }
+        });
+
+        //vérif que latestEpisode est contenu dans serie
+        serie.get().getHasSeason().forEach(season -> {
+            if(season.getSeason_number() == latestEpisode.get().getSeason_number()) {
+                Long upperEpisodeNumber = latestEpisode.get().getEpisode_number() + 1L;
+                season.getHasEpisode().forEach(episode -> {
+                    if(episode.getEpisode_number() == upperEpisodeNumber) {
+                        latestEpisode.set(episode);
+                    }
+                });
+            }
+
+        });
+        return latestEpisode.get();
+    }
+
+    private boolean checkAllSeasonSeen (Long tvTmdbId, Long userId) {
+        // select all seasons realted to tvTmdbId in serie_has_season
+        List<SerieHasSeason> allSeasons =  this.serieHasSeasonRepository.findAllRelatedSeason(tvTmdbId);
+        boolean allSeasonsSeen = true;
+        for (int i = 0; i < allSeasons.size(); i++) {
+            if(this.usersWatchedSeasonRepository.findSeasonSeenByIdAndUserId( allSeasons.get(i).getSeason().getId(), userId).isEmpty()){
+                allSeasonsSeen = false;
+            }
+        }
+        return allSeasonsSeen;
+    }
+
+    public Status addSeasonInWatchlist(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto ) throws URISyntaxException, IOException, InterruptedException {
+        //create serie or get it
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvSeasonAddDto.getTvTmdbId());
+        Status returnedStatus = Status.NOTSEEN;
+        //get user
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvSeasonAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        //seek relation user_season
+        Optional<UsersWatchedSeason> relationUserSeason =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                userWatchedTvSeasonAddDto.getTvSeasonid(),
+                user.getId()
+        );
+
+        // create season if required
+        if(relationUserSeason.isEmpty()) {
+            Optional<Season> seasonToAdd = serie
+                    .getHasSeason()
+                    .stream()
+                    .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
+                    .findFirst();
+
+            // add season to user season's count
+            if(!user.getWatchedSeasons().contains(seasonToAdd.get())){
+                user.getWatchedSeasons().add(seasonToAdd.get());
+                userRepository.save(user);
+                // @TODO ajouter le temps de la série au compteur
+            }
+
+            // seek new relation user_season and update status
+            Optional<UsersWatchedSeason> relationUserSeasonWhenCreated =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                    userWatchedTvSeasonAddDto.getTvSeasonid(),
+                    user.getId()
+            );
+
+            if(relationUserSeasonWhenCreated.isPresent()) {
+                returnedStatus = Status.SEEN;
+                relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
+                usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+
+                updateSerieStatus(user, serie.getTmdbId());
+            }
+            // create relation user_episode for every ep of the season
+            createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
+        }else{
+            // update relation to SEEN + compteur de vues
+            relationUserSeason.get().setStatus(Status.SEEN);
+            returnedStatus = Status.SEEN;
+            relationUserSeason.get().setWatchedNumber(relationUserSeason.get().getWatchedNumber()+1L);
+            // @TODO ajouter le temps de la série au compteur v2
+            usersWatchedSeasonRepository.save(relationUserSeason.get());
+
+            updateSerieStatus(user, serie.getTmdbId());
+
+            createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
+
+        }
+        return returnedStatus;
+    }
+
+    @Async
+    public void createOrIncreaseUserWatchedEpisodeRelation(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto, User user) {
+
+        seasonHasEpisodeRepository.findBySeasonImdbId(userWatchedTvSeasonAddDto.getTvSeasonid())
+                .forEach(seasonHasEpisode -> {
+                    Episode episode = seasonHasEpisode.getEpisode();
+                    if(!user.getWatchedEpisodes().contains(episode)){
+                        user.getWatchedEpisodes().add(episode);
+                        userRepository.save(user);
+                    }else{
+                        // increase watch_number
+                        Optional<UsersWatchedEpisode> usersWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeImdbIdAndUserId(episode.getImbd_id(),user.getId());
+                        usersWatchedEpisode.get().setWatchedNumber(usersWatchedEpisode.get().getWatchedNumber()+1L);
+                        usersWatchedEpisodeRepository.save(usersWatchedEpisode.get());
+                    }
+                });
+    }
+
+    public StatusDto isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+
+        Optional<UsersWatchedSeries> serieStatus = usersWatchedSeriesRepository.findByImdbIdAndUserMail(
+                userWatchedSerieAddDto.getTmdbId(),
+                userWatchedSerieAddDto.getUserMail()
+        );
+
+        Status status = serieStatus.isPresent() ? serieStatus.get().getStatus() : Status.NOTSEEN;
+
+        StatusDto statusDto = new StatusDto();
+        statusDto.setStatus(status.getValue());
+
+        return  statusDto;
+    }
 
     public void removeMovieInWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
@@ -210,6 +696,26 @@ public class UserService {
          user.setTotalMovieWatchedNumber(user.getTotalMovieWatchedNumber() + 1);
          userRepository.save(user);
     }
+
+    public void increaseWatchedNumberSeries(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() + 1L);
+        userRepository.save(user);
+    }
+
+    public void increaseWatchedNumberEpisode(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        user.setTotalEpisodesWatchedNumber(user.getTotalEpisodesWatchedNumber() + 1L);
+        userRepository.save(user);
+    }
     public void decreaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         User user = userRepository.findUserByEmail(userWatchedMovieAddDto.getUserMail()).orElseThrow(()->new IllegalStateException(UserNotFound));
         Long movieId = movieRepository.findByTmdbId(userWatchedMovieAddDto.getTmdbId()).orElseThrow(()->new IllegalStateException(basicErrorMessage)).getId();
@@ -223,7 +729,7 @@ public class UserService {
     }
     public void increaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -237,6 +743,11 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
+        System.out.println(result_search.getTitle());
+        System.out.println(result_search.getRuntime());
+        System.out.println(response.body().toString());
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
         Long newWatchedTotalTime = user.getTotalMovieWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
         user.setTotalMovieWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
 
@@ -244,7 +755,7 @@ public class UserService {
     }
     public void decreaseTotalMovieWatchedTime(UserWatchedMovieAddDto userWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
-        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + apiKey;
+        String urlToCall =  "https://api.themoviedb.org/3/movie/" +  userWatchedMovieAddDto.getTmdbId() + "?api_key=" + this.apiKey;
         HttpRequest getKeywordsFromCurrentFavMovieRequest = HttpRequest.newBuilder()
                 .uri(new URI(urlToCall))
                 .GET()
@@ -283,9 +794,9 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName + fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);
@@ -476,9 +987,9 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoSocialInfos profileLazyUserDtoSocialInfos = new ProfileLazyUserDtoSocialInfos();
-        profileLazyUserDtoSocialInfos.setFollowersCounter(user.getFollowersCounter());
-        profileLazyUserDtoSocialInfos.setFollowingsCounter(user.getFollowingsCounter());
-        profileLazyUserDtoSocialInfos.setCommentsCounter(user.getCommentsCounter());
+        profileLazyUserDtoSocialInfos.setFollowersCounter((long) user.getFollowers().size());
+        profileLazyUserDtoSocialInfos.setFollowingsCounter((long) user.getFollowing().size());
+        profileLazyUserDtoSocialInfos.setCommentsCounter((long) user.getComments().size());
         return profileLazyUserDtoSocialInfos;
 
 
@@ -491,6 +1002,8 @@ public class UserService {
         profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePicture()==null?"":user.getProfilePicture());
         profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPicture()==null?"":user.getBackgroundPicture());
         profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        profileLazyUserDtoAvatar.setFirstName(user.getFirstName());
+        profileLazyUserDtoAvatar.setLastName(user.getLastName());
         return profileLazyUserDtoAvatar;
     }
 
@@ -517,10 +1030,10 @@ public class UserService {
                 .withRegion(Regions.US_EAST_2)
                 .build();
         s3client.deleteObject(this.bucketName,fileName);
-        file.transferTo( new File(basePath + tempPathName +fileName));
-        File originalFile = new File(basePath + tempPathName +fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
 
-        File fileToUpload = new File( basePath + "/src/main/profile_pic_temp/"+fileName);
+        File fileToUpload = new File( basePath + tempPathName +fileName);
         BufferedImage originalImage = ImageIO.read(originalFile);
         File output = fileToUpload;
         originalImage = this.removeAlphaChannel(originalImage);
@@ -691,5 +1204,372 @@ public class UserService {
     }
     public BufferedImage createImage(int width, int height, boolean hasAlpha) {
         return new BufferedImage(width, height, hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+    }
+    public Optional<User> findOneUserByEmailOrCreateIt(GoogleIdToken.Payload payload) throws JsonProcessingException {
+        String email = payload.getEmail();
+        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+        String locale = (String) payload.get("locale");
+        String familyName = (String) payload.get("family_name");
+        String givenName = (String) payload.get("given_name");
+        Optional<User> user = this.userRepository.findUserByEmail(email);
+        if(user.isPresent()){
+            return user;
+        }
+        if(!user.isPresent()){
+            String newPassword = UUID.randomUUID().toString();
+            RegisterGoogleDto registerDto = new RegisterGoogleDto();
+            registerDto.setUsername(email);
+            registerDto.setPassword(newPassword);
+            registerDto.setFirstName(givenName);
+            registerDto.setLastName(familyName);
+            this.userAuthService.registerGoogleSignin(registerDto);
+        }
+
+        return this.userRepository.findUserByEmail(email);
+    }
+
+    public void saveUser(User user) {
+        this.userRepository.save(user);
+    }
+
+    public SocialInfoDto getSocialPageInfo(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
+
+    public SocialSearchResponseDto[] searchUser(String searchText) {
+        User[] usersFound = this.userRepository.searchUser(searchText);
+        SocialSearchResponseDto[] socialSearchResponseDtos = new SocialSearchResponseDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialSearchResponseDto socialSearchResponseDto = new SocialSearchResponseDto();
+            socialSearchResponseDto.setUsername(user.getUsername());
+            socialSearchResponseDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialSearchResponseDto.setProfilePicture(user.getProfilePicture());
+            socialSearchResponseDto.setScore(0);
+            socialSearchResponseDtos[i] = socialSearchResponseDto;
+            i++;
+        }
+        return socialSearchResponseDtos;
+    }
+
+    public SocialTopTenUserDto[] getTopTenUsers() {
+        User[] usersFound = Arrays.stream(this.userRepository.getTopTen()).limit(10).toArray(User[]::new);
+        SocialTopTenUserDto[] SocialTopTenUserDtos = new SocialTopTenUserDto[usersFound.length];
+        int i=0;
+        for (User user : usersFound) {
+            SocialTopTenUserDto socialTopTenUserDto = new SocialTopTenUserDto();
+            socialTopTenUserDto.setFullName(user.getFirstName() + " " + user.getLastName());
+            socialTopTenUserDto.setUsername(user.getUsername());
+            socialTopTenUserDto.setProfilePicture(user.getProfilePicture());
+            socialTopTenUserDto.setScore(0);
+            socialTopTenUserDto.setRank(i+1);
+            SocialTopTenUserDtos[i] = socialTopTenUserDto;
+            i++;
+        }
+        return SocialTopTenUserDtos;
+    }
+    public SocialInfoDto getSocialDetail(String email) {
+        User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialInfoDto socialInfoDto = new SocialInfoDto();
+        socialInfoDto.setAbout(user.getAbout());
+        socialInfoDto.setComments("No comments yet");
+        socialInfoDto.setTrophies("No trophies yet");
+        return socialInfoDto;
+    }
+
+    public void excludeActor(Long idActor, long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Actor> excludedActorIdFromRecommended = user.getExcludedActorIdFromRecommended();
+
+        Optional<Actor> actor = actorRepository.findByTmdbId(idActor);
+
+        Actor newActor = null;
+        if (actor.isEmpty()) {
+            newActor = actorRepository.saveAndFlush(new Actor(idActor));
+        }
+        excludedActorIdFromRecommended.add(actor.orElse(newActor));
+
+        userRepository.saveAndFlush(user);
+    }
+
+    public void excludeGenre(Long idGenre, Long idUser) {
+        Optional<User> userOptional = userRepository.findById(idUser);
+        User user = userOptional.orElseThrow(() -> {
+            throw new IllegalStateException("User not found");
+        });
+
+        Set<Genre> excludedGenreIdFromRecommended = user.getExcludedGenreIdFromRecommended();
+
+        Optional<Genre> genre = genreRepository.findByTmdbId(idGenre);
+
+        Genre newGenre = null;
+        if (genre.isEmpty()) {
+            newGenre = genreRepository.saveAndFlush(new Genre(idGenre));
+        }
+        excludedGenreIdFromRecommended.add(genre.orElse(newGenre));
+
+        userRepository.saveAndFlush(user);
+    }
+
+    public SocialFollowingResponseDto getFollowingStatus(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(user.getFollowing().contains(userToFollow));
+        return socialFollowingResponseDto;
+    }
+
+    public SocialFollowingResponseDto actionFollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(false);
+        if(!user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().add(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(true);
+            Notification notification = new Notification();
+            notification.setType("follow");
+            notification.setSeverity("info");
+            notification.setMessage(user.getFirstName() + " " + user.getLastName() + " started following you");
+            this.notificationToUser(userToFollow.getUsername(), notification);
+        }
+        return socialFollowingResponseDto;
+    }
+    public SocialFollowingResponseDto actionUnfollowUser(SocialFollowingRequestDto information) {
+        User user = userRepository.findUserByEmail(information.getUsernameRequester()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        User userToFollow = userRepository.findUserByEmail(information.getUsernameRequested()).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        SocialFollowingResponseDto socialFollowingResponseDto = new SocialFollowingResponseDto();
+        socialFollowingResponseDto.setFollowing(true);
+        if(user.getFollowing().contains(userToFollow)){
+            userToFollow.getFollowers().remove(user);
+            userRepository.saveAndFlush(userToFollow);
+            socialFollowingResponseDto.setFollowing(false);
+        }
+        return socialFollowingResponseDto;
+    }
+
+    public boolean notificationToUser(String email, Notification notification){
+        String topicName=this.ENV+"UserNotificationService";
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        user.getNotifications().add(notification);
+        userRepository.saveAndFlush(user);
+        this.kafkaMessageGeneratorService.sendNotification(user, notification ,topicName);
+        return true;
+    }
+
+    public Set<Notification> getUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        return user.getNotifications();
+    }
+
+    public boolean updateUserNotification(String email) {
+        User user = userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        user.getNotifications()
+                .stream()
+                .filter(notification -> notification.getStatus()==NotificationStatus.UNREAD)
+                .forEach(notification -> notification.setStatus(NotificationStatus.READ));
+        userRepository.saveAndFlush(user);
+        return true;
+    }
+    public UploadPictureDtoResponse uploadProfilePicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        String fileName = user.getId() + "_profile_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName +"original_"+ fileName));
+        File originalFile = new File(basePath + tempPathName +"original_"+fileName);
+        File fileToUpload = new File( basePath + tempPathName+fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setProfilePictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        fileToUpload.delete();
+        originalFile.delete();
+        UploadPictureDtoResponse uploadPictureDtoResponse = new UploadPictureDtoResponse();
+        uploadPictureDtoResponse.setNewPictureUrl(url);
+        return uploadPictureDtoResponse;
+    }
+    public ProfileLazyUserDtoAvatar getTempForCropUrl(String email) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        ProfileLazyUserDtoAvatar profileLazyUserDtoAvatar = new ProfileLazyUserDtoAvatar();
+        profileLazyUserDtoAvatar.setProfilePicture(user.getProfilePictureTempForCrop()==null?"":user.getProfilePictureTempForCrop());
+        profileLazyUserDtoAvatar.setBackgroundPicture(user.getBackgroundPictureTempForCrop()==null?"":user.getBackgroundPictureTempForCrop());
+        profileLazyUserDtoAvatar.setFullName(user.getFullName());
+        return profileLazyUserDtoAvatar;
+    }
+    public UploadBackgroundDtoResponse uploadBackgroundPicTempForCrop(String email, @RequestParam("file") MultipartFile file) throws IOException {
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new IllegalStateException(
+                        ("user with id " + email + "does not exists")));
+        if(file.isEmpty()){
+            throw new IllegalStateException("File is empty");
+        }
+        String fileName = user.getId() + "_background_pic_temp_for_crop." + file.getOriginalFilename().split("\\.")[1];
+        AWSCredentials credentials = new BasicAWSCredentials(
+                this.awsAccessKey,
+                this.awsSecretKey
+        );
+
+        Path currentRelativePath = Paths.get("");
+        String basePath = currentRelativePath.toAbsolutePath().toString();
+
+        AmazonS3 s3client = AmazonS3ClientBuilder
+                .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_2)
+                .build();
+        s3client.deleteObject(this.bucketName,fileName);
+        file.transferTo( new File(basePath + tempPathName+"original_" +fileName));
+        File originalFile = new File(basePath + tempPathName+"original_" +fileName);
+
+        File fileToUpload = new File( basePath + tempPathName +fileName);
+        BufferedImage originalImage = ImageIO.read(originalFile);
+        File output = fileToUpload;
+        originalImage = this.removeAlphaChannel(originalImage);
+        long size = originalFile.length();
+        float quality = 0.0f;
+        if(size<3145728) {
+            quality = 1.0f;
+        }
+        if(size> 3145728 && size < 5242880) {
+            quality = 0.5f;
+        }
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        ImageWriter writer = writers.next();
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(output)) {
+            writer.setOutput(outputStream);
+            writer.write(null, new IIOImage(originalImage, null, null), param);
+        }
+        s3client.putObject(
+                this.bucketName,
+                fileName,
+                fileToUpload
+        );
+        String key = s3client.getObject(this.bucketName,fileName).getKey();
+        String url = s3client.getUrl(this.bucketName, key).toString();
+        user.setBackgroundPictureTempForCrop(url+"?"+System.currentTimeMillis());
+        userRepository.save(user);
+        if(fileToUpload.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        if(originalFile.delete()){
+            LOGGER.print("File deleted successfully");
+        }
+        UploadBackgroundDtoResponse uploadBackgroundDtoResponse = new UploadBackgroundDtoResponse();
+        uploadBackgroundDtoResponse.setNewBackgroundUrl(url);
+        return uploadBackgroundDtoResponse;
+    }
+
+    public boolean isEpisodeInWatchlist(UserWatchedEpisodeDto userWatchedEpisodeDto) {
+        Optional<UsersWatchedEpisode> seen = userRepository.isEpisodeWatched(
+                userWatchedEpisodeDto.getUserMail(),
+                userWatchedEpisodeDto.getEpisodeTmdbId()
+        );
+        if(seen.isPresent()){
+            return true;
+        }else{
+            return false;
+        }
+
+    }
+
+    public Status isSeasonInWatchlist(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) {
+        Status status = Status.NOTSEEN;
+        if(userWatchedTvSeasonAddDto.getTvSeasonid() == null){
+            return  status;
+        }
+        Optional<UsersWatchedSeason> seasonStatus = userRepository.getSeasonStatus(
+                userWatchedTvSeasonAddDto.getUserMail(),
+                userWatchedTvSeasonAddDto.getTvSeasonid()
+
+        );
+        if(seasonStatus.isPresent()){
+            status = seasonStatus.get().getStatus();
+        }
+        return  status;
+    }
+
+    public ArrayList<Long> fetchTvWatching(UserMailDto userMailDto) {
+        Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchingSeries(userMailDto.getUserMail());
+        return getTvIdsFromList(watchingSeriesRelation);
+    }
+
+    public ArrayList<Long> fetchTvWatched(UserMailDto userMailDto) {
+        Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchedSeries(userMailDto.getUserMail());
+        return getTvIdsFromList(watchingSeriesRelation);
+    }
+
+    private ArrayList<Long> getTvIdsFromList(Optional<UsersWatchedSeries[]> watchingSeriesRelation) {
+        ArrayList<Long> seriesWatching = new ArrayList<>();
+        if(watchingSeriesRelation.isPresent()){
+
+            for(UsersWatchedSeries usersWatchedSeries : watchingSeriesRelation.get()){
+                seriesWatching.add(usersWatchedSeries.getSerie().getTmdbId());
+            }
+            return seriesWatching;
+        }else{
+            return null;
+        }
     }
 }

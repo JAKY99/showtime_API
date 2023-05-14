@@ -70,7 +70,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
                 .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .antMatchers("/api/v*/registration/**", "/api/v*/login/**","/api/v*/kafka/**","/websocket/**","/api/v*/elasticsearch/**","/api/v1/health/**","/api/v1/version/**").permitAll()
+                .antMatchers("/api/v*/registration/**", "/api/v*/login/**","/websocket/**","/api/v*/elasticsearch/**","/api/v1/health/**","/api/v1/version/**","api/v1/login/google").permitAll()
                 .anyRequest()
                 .authenticated();
     }
@@ -94,8 +94,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         //List<String> allowOrigins = Arrays.asList("*");
         configuration.addAllowedOriginPattern("*");
         configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "Refresh"));
+        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Refresh,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
         //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

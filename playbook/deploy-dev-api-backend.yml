@@ -1,0 +1,19 @@
+- name: connect ssh and rsync new target folder and launch staging version of deploy-api.sh
+  hosts: server1
+  remote_user: ubuntu
+
+  tasks:
+  - name: clear folder before sync
+    shell: rm -rf kubernetes-showtime-project/build_spring_api_target_staging/*
+  - name: Rsync CI folder to remote staging folder
+    synchronize:
+      src: /__w/showtime_API/showtime_API/showtime_API/target/
+      dest: /home/ubuntu/kubernetes-showtime-project/build_spring_api_target_staging/
+      recursive: yes
+      rsync_opts:
+        - "--delete"
+        - "--omit-dir-times"
+        - "--no-perms"
+  - name: launch deploy script for staging Api
+    shell: cd kubernetes-showtime-project/host_staging && sudo bash deploy-api.sh
+    register: result

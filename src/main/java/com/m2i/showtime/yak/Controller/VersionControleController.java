@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Controller;
 
 import com.m2i.showtime.yak.Dto.VersionControlDto;
+import com.m2i.showtime.yak.Dto.responseAndroidVersionDto;
 import com.m2i.showtime.yak.Service.VersionControleService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,4 +27,8 @@ public class VersionControleController {
         return versionControleService.addVersion(type);
     }
 
+    @GetMapping("/android/information")
+    public responseAndroidVersionDto getAndroidVersion() {
+        return versionControleService.getAndroidVersion();
+    }
 }
