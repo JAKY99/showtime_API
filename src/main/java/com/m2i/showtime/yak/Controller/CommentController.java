@@ -5,6 +5,7 @@ import com.m2i.showtime.yak.Dto.Search.CommentGetDto;
 import com.m2i.showtime.yak.Entity.Comment;
 import com.m2i.showtime.yak.Entity.Response;
 import com.m2i.showtime.yak.Service.CommentService;
+import com.m2i.showtime.yak.Service.User.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -18,19 +19,27 @@ import java.util.Optional;
 public class CommentController {
 
     private final CommentService commentService;
+    private final UserService userService;
 
-    public CommentController(CommentService commentService) {
+    public CommentController(
+        CommentService commentService,
+        UserService userService
+    ) {
         this.commentService = commentService;
+        this.userService = userService;
     }
 
     @PostMapping("/saveComment")
-    public boolean saveComment(@RequestBody userCommentDto userCommentDto) {
+    public boolean saveComment(Authentication authentication,@RequestBody userCommentDto userCommentDto) {
+        String username = userService.getUserFromJwt(authentication);
+        userCommentDto.setUserMail(username);
         commentService.saveComment(userCommentDto);
         return true;
     }
 
     @GetMapping("/getComments/{movieId}")
     public List<CommentGetDto> getComments(Authentication authentication, @PathVariable("movieId") int movieId) {
+        userService.getUserFromJwt(authentication);
         Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
         return commentService.getComments(movieId, userSimpleDto.orElseThrow(() -> {

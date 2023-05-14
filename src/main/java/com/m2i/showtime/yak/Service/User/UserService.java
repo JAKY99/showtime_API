@@ -40,6 +40,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -1571,5 +1572,13 @@ public class UserService {
         }else{
             return null;
         }
+    }
+    public String getUserFromJwt(Authentication authentication){
+        String email = authentication.getPrincipal().toString();
+        Optional<User> user = userRepository.findUserByEmail(email);
+        if(user.isPresent()) {
+            return user.get().getUsername();
+        }
+        throw new IllegalStateException("invalid JWT - User not found");
     }
 }
