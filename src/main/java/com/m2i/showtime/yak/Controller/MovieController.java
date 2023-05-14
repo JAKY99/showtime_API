@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Controller;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Movie;
+import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.User.UserService;
@@ -48,9 +49,12 @@ public class MovieController {
     }
 
     @PutMapping("/{movieId}/user/{userId}")
-    Movie addUserToMovie(
+    Movie addUserToMovie(Authentication authentication,
             @PathVariable("movieId") Long movieId, @PathVariable("userId") Long userId) {
-        return movieService.addUserToMovie(movieId, userId);
+        String username = userService.getUserFromJwt(authentication);
+        Optional<UserSimpleDto> user = userService.getUserByEmail(username);
+
+        return movieService.addUserToMovie(movieId,user.get().getId());
     }
 
     @GetMapping("/recommended-for-user")
