@@ -34,7 +34,8 @@ public class UsersWatchedEpisode {
     @Column(name = "watched_number" , columnDefinition = "int default 1")
     private Long watchedNumber;
 
-    private LocalDateTime createdOn = LocalDateTime.now();
+    @Column(name = "createdOn", columnDefinition = "DATE DEFAULT CURRENT_DATE")
+    private LocalDateTime createdOn;
 
     @UpdateTimestamp
     private Instant lastUpdatedOn;

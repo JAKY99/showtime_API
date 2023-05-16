@@ -2,10 +2,7 @@ package com.m2i.showtime.yak.Repository;
 
 import com.m2i.showtime.yak.Dto.UserSimpleDto;
 import com.m2i.showtime.yak.Dto.UserWatchedMovieDto;
-import com.m2i.showtime.yak.Entity.Serie;
-import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Entity.UsersWatchedEpisode;
-import com.m2i.showtime.yak.Entity.UsersWatchedSeason;
+import com.m2i.showtime.yak.Entity.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,7 +30,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<UserSimpleDto> isSerieWatched(String email, long tmdbId);
     @Query("SELECT u FROM User u JOIN u.favoriteMovies w WHERE u.username = ?1 and w.tmdbId = ?2")
     Optional<UserSimpleDto> isMovieInFavorite(String email, long tmdbId);
-
+    @Query("SELECT u FROM User u JOIN u.favoriteSeries w WHERE u.username = ?1 and w.tmdbId = ?2")
+    Optional<UserSimpleDto> isTvInFavorite(String email, long tmdbId);
+    @Query("SELECT u FROM User u WHERE  u.username = ?1")
+    Optional<UserSimpleDto[]> getLastWatchedSeries(String username);
     @Query("SELECT u FROM User u JOIN u.watchlistMovies w WHERE u.username = ?1 and w.tmdbId = ?2")
     Optional<UserSimpleDto> isMovieInMovieToWatch(String email, long tmdbId);
     @Query("SELECT u FROM User u JOIN u.role r  WHERE r.role='ADMIN'")

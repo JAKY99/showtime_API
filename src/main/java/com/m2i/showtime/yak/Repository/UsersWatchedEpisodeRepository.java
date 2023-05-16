@@ -18,6 +18,9 @@ public interface UsersWatchedEpisodeRepository extends JpaRepository<UsersWatche
     @Query("SELECT u FROM Episode u  WHERE u.imbd_id = ?1")
     Optional<Episode> findEpisodeByTmdbId(Long tmdbId);
 
+    @Query("SELECT u FROM Episode u  WHERE u.imbd_id = ?1")
+    Optional<Episode[]> findEpisodesByUserId(Long tmdbId);
+
     @Query("SELECT u FROM Episode u INNER JOIN UsersWatchedEpisode s ON u.id = s.episode.id WHERE s.user.username = ?1 AND u.id = ?2")
     Optional<Episode> isEpisodeWatchedByUser(String username, Long episodeId);
 }
