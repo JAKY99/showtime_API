@@ -25,5 +25,8 @@ public interface UsersWatchedSeriesRepository extends JpaRepository<UsersWatched
     @Query("SELECT u FROM UsersWatchedSeries u WHERE u.status = '2' AND u.user.username = ?1")
     Optional<UsersWatchedSeries[]> getWatchedSeries(String username);
 
+    @Query("SELECT u FROM UsersWatchedSeries u WHERE u.status = '2' AND u.user.username = ?1 ORDER BY u.lastUpdatedOn DESC")
+    Optional<UsersWatchedSeries[]> getLastWatchedSeries(String username);
+
 
 }

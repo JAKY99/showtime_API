@@ -16,7 +16,6 @@ import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.*;
-import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Repository.ActorRepository;
 import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
@@ -24,9 +23,7 @@ import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import com.m2i.showtime.yak.Repository.*;
-import com.m2i.showtime.yak.Entity.*;
 import com.m2i.showtime.yak.Enum.Status;
-import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Service.LoggerService;
 import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.Service.RedisService;
@@ -47,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.crypto.SecretKey;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -77,7 +73,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.m2i.showtime.yak.common.notification.NotificationStatus;
 @Service
 @EnableAsync
 public class UserService {
@@ -338,6 +333,7 @@ public class UserService {
     public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
 
+
         // récup l'user
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
@@ -511,6 +507,22 @@ public class UserService {
             }
         }
     }
+
+    public ArrayList<Long> fetchLastTvSeriesWatched(UserMailDto userMailDto) {
+        // get all episodes seen by user
+        Optional<UsersWatchedSeries[]> usersWatchedSeries = this.usersWatchedSeriesRepository.getLastWatchedSeries(userMailDto.getUserMail());
+        ArrayList<Long> seriesIds = new ArrayList<>();
+        if (usersWatchedSeries.isPresent()) {
+            for (UsersWatchedSeries usersWatchedSerie : usersWatchedSeries.get()) {
+                seriesIds.add(usersWatchedSerie.getSerie().getTmdbId());
+            }
+            return seriesIds;
+        }else{
+            return null;
+        }
+    }
+
+
 
     public Episode getLastSeenEpisode(UserWatchedSerieAddDto userWatchedSerieAddDto){
         // récup tous les épisodes liés à userWatchedSerieAddDto.getTmdbId()
@@ -1102,6 +1114,32 @@ public class UserService {
         }
         return false;
     }
+
+    public boolean toggleTvInFavoritelist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        if(!user.getFavoriteSeries().contains(serie)){
+            user
+                    .getFavoriteSeries()
+                    .add(serie);
+            userRepository.save(user);
+            return true;
+        }
+        if(user.getFavoriteSeries().contains(serie)){
+            user
+                    .getFavoriteSeries()
+                    .remove(serie);
+            userRepository.save(user);
+            return false;
+        }
+        return false;
+    }
+
     public boolean toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                 userWatchedMovieAddDto.getMovieName());
@@ -1140,6 +1178,12 @@ public class UserService {
         return user.isPresent();
     }
 
+    public boolean isTvInFavoritelist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<UserSimpleDto> user = userRepository.isTvInFavorite(
+                userWatchedSerieAddDto.getUserMail() , userWatchedSerieAddDto.getTmdbId());
+        return user.isPresent();
+    }
+
     public fetchRangeListDto lastWatchedMoviesRange(fetchRangeDto fetchRangeDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
@@ -1153,6 +1197,23 @@ public class UserService {
         fetchRangeListDto.setTmdbIdList(listToUse);
         return fetchRangeListDto;
     }
+    public ArrayList<Long> fetchfavoritesSeries(UserMailDto userMailDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userMailDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        ArrayList<Long> seriesIds = new ArrayList<>();
+        if(optionalUser.isPresent()){
+            Serie[] series = Arrays.stream(user.getFavoriteSeries().toArray())
+                    .limit(10L)
+                    .toArray(Serie[]::new);
+            for(Serie serie : series){
+                seriesIds.add(serie.getTmdbId());
+            }
+            return seriesIds;
+        }else{
+            throw new IllegalStateException(UserNotFound);
+        }
+    }
+
     public fetchRangeListDto favoritesMoviesRange(fetchRangeDto fetchRangeDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
         User user = optionalUser.isPresent()? optionalUser.get() : null;

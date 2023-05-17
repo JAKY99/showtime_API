@@ -120,6 +120,17 @@ public class User implements UserDetails {
                     @JoinColumn(name = "movie_id", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Movie> favoriteMovies = new HashSet<>();
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_favorite_series",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "serie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Serie> favoriteSeries = new HashSet<>();
+
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_watchlist_movies",
             joinColumns = {

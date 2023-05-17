@@ -16,6 +16,8 @@ spring-test/test-output/
 argfile*
 activemq-data/
 /src/main/logs
+pom.xml
+activemq-data/
 
 classes/
 /build
@@ -46,6 +48,7 @@ atlassian-ide-plugin.xml
 src/main/resources/application.properties
 # database
 /local_pgdata
+/pgadmin-data
 /pgadmin-data
 elasticsearch-data
 airflow-data

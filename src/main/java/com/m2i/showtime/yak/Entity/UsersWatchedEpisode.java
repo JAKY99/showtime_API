@@ -4,8 +4,13 @@ import com.m2i.showtime.yak.Enum.Status;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users_watched_episodes")
@@ -28,5 +33,11 @@ public class UsersWatchedEpisode {
 
     @Column(name = "watched_number" , columnDefinition = "int default 1")
     private Long watchedNumber;
+
+    @Column(name = "createdOn", columnDefinition = "DATE DEFAULT CURRENT_DATE")
+    private LocalDateTime createdOn;
+
+    @UpdateTimestamp
+    private Instant lastUpdatedOn;
 
 }

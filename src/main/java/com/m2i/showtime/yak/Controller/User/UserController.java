@@ -3,7 +3,6 @@ package com.m2i.showtime.yak.Controller.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Episode;
-import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Entity.UsersWatchedSeries;
@@ -11,7 +10,6 @@ import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import com.m2i.showtime.yak.Service.User.UserService;
-import org.apache.kafka.common.metrics.Stat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +21,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.Set;
@@ -106,6 +103,11 @@ public class UserController {
         return userService.isMovieInFavoritelist(userWatchedMovieAddDto);
     }
 
+    @PostMapping("/isTvInFavoritelist")
+    public boolean isTvInFavoritelist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        return userService.isTvInFavoritelist(userWatchedSerieAddDto);
+    }
+
     @PostMapping("/addMovieInWatchlist")
     public boolean addMovieInWatchlist(Authentication authentication,
             @RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
@@ -119,6 +121,11 @@ public class UserController {
         String username = userService.getUserFromJwt(authentication);
         UserWatchedMovieAddDto.setUserMail(username);
         return userService.toggleMovieInFavoritelist(UserWatchedMovieAddDto);
+    }
+
+    @PostMapping("/toggleTvInFavoritelist")
+    public boolean toggleTvInFavoritelist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        return userService.toggleTvInFavoritelist(userWatchedSerieAddDto);
     }
 
     @PostMapping("/toggleMovieInMovieToWatchlist")
@@ -290,7 +297,14 @@ public class UserController {
         return userService.fetchTvWatched(userMailDto);
     }
 
-
+    @PostMapping("/fetchLastTvSeriesWatched")
+    public ArrayList<Long> fetchLastTvSeriesWatched(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchLastTvSeriesWatched(userMailDto);
+    }
+    @PostMapping("/fetchfavoritesSeries")
+    public ArrayList<Long> fetchfavoritesSeries(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchfavoritesSeries(userMailDto);
+    }
 
     @GetMapping("/refresh")
     public void refreshToken(
