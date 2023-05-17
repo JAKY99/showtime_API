@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DatabaseMigrationSettings" mainChangeLogDir="src\main\resources\db\migrations" mainChangeLogName="migration_pk_#date('HH')_#date('mm')_#date('ss')_#date('yyyyMMddHHmmss')" secondaryChangeLogDir="src\main\resources\db\migrations" secondaryChangeLogName="migration_pk_#date('HH')_#date('mm')_#date('ss')_#date('yyyyMMddHHmmss')">
+  <component name="DatabaseMigrationSettings" mainChangeLogDir="src\main\resources\db\migrations" mainChangeLogName="migration_zz_#date('HH')_#date('mm')_#date('ss')_#date('yyyyMMddHHmmss')" secondaryChangeLogDir="src\main\resources\db\migrations" secondaryChangeLogName="migration_pk_#date('HH')_#date('mm')_#date('ss')_#date('yyyyMMddHHmmss')">
     <database-infos>
       <database-info>
         <option name="enabled" value="true" />
