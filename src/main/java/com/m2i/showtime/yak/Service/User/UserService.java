@@ -294,8 +294,11 @@ public class UserService {
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
         }
 
-        // loop on all serie.getHasSeason()
-
+        //remove to watchlist bcz seen
+        if(user.getWatchlistSeries().contains(serie)){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
 
         serie.getHasSeason().forEach(season -> {
             UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto = new UserWatchedTvSeasonAddDto(
@@ -334,10 +337,17 @@ public class UserService {
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
 
 
+
         // récup l'user
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         Long userId = user.getId();
+
+        //remove to watchlist bcz seen
+        if(user.getWatchlistSeries().contains(serie)){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
 
         // récup obj episode
         Optional<Episode> episode = usersWatchedEpisodeRepository.findEpisodeByTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId());
@@ -596,6 +606,13 @@ public class UserService {
         //get user
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvSeasonAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+
+        //remove to watchlist bcz seen
+        if(user.getWatchlistSeries().contains(serie)){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
 
         //seek relation user_season
         Optional<UsersWatchedSeason> relationUserSeason =  usersWatchedSeasonRepository.findByTmdbIdAndUserId(
@@ -1140,6 +1157,40 @@ public class UserService {
         return false;
     }
 
+    public boolean toggleTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
+
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        if(user.getWatchlistSeries().contains(serie) || user.getWatchedSeries().contains(serie)){
+            user
+                    .getWatchlistSeries()
+                    .remove(serie);
+            userRepository.save(user);
+            return false;
+        }
+        if(!user.getWatchlistSeries().contains(serie)){
+            user
+                    .getWatchlistSeries()
+                    .add(serie);
+            userRepository.save(user);
+            return true;
+        }
+        if(user.getWatchlistSeries().contains(serie)){
+            user
+                    .getWatchlistSeries()
+                    .remove(serie);
+            userRepository.save(user);
+            return false;
+        }
+        return false;
+    }
+
+
+
     public boolean toggleMovieInMovieToWatchlist(UserWatchedMovieAddDto userWatchedMovieAddDto) {
         Movie movie = movieService.getMovieOrCreateIfNotExist(userWatchedMovieAddDto.getTmdbId(),
                 userWatchedMovieAddDto.getMovieName());
@@ -1184,6 +1235,14 @@ public class UserService {
         return user.isPresent();
     }
 
+    public boolean isTvInWatchlistSeries(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<UserSimpleDto> user = userRepository.isTvInWatchlistSeries(
+                userWatchedSerieAddDto.getUserMail() , userWatchedSerieAddDto.getTmdbId());
+        return user.isPresent();
+    }
+
+
+
     public fetchRangeListDto lastWatchedMoviesRange(fetchRangeDto fetchRangeDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(fetchRangeDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
@@ -1203,6 +1262,23 @@ public class UserService {
         ArrayList<Long> seriesIds = new ArrayList<>();
         if(optionalUser.isPresent()){
             Serie[] series = Arrays.stream(user.getFavoriteSeries().toArray())
+                    .limit(10L)
+                    .toArray(Serie[]::new);
+            for(Serie serie : series){
+                seriesIds.add(serie.getTmdbId());
+            }
+            return seriesIds;
+        }else{
+            throw new IllegalStateException(UserNotFound);
+        }
+    }
+
+    public ArrayList<Long> fetchTvWatchlist(UserMailDto userMailDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userMailDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        ArrayList<Long> seriesIds = new ArrayList<>();
+        if(optionalUser.isPresent()){
+            Serie[] series = Arrays.stream(user.getWatchlistSeries().toArray())
                     .limit(10L)
                     .toArray(Serie[]::new);
             for(Serie serie : series){
@@ -1616,6 +1692,9 @@ public class UserService {
         Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchingSeries(userMailDto.getUserMail());
         return getTvIdsFromList(watchingSeriesRelation);
     }
+
+
+
 
     public ArrayList<Long> fetchTvWatched(UserMailDto userMailDto) {
         Optional<UsersWatchedSeries[]> watchingSeriesRelation = usersWatchedSeriesRepository.getWatchedSeries(userMailDto.getUserMail());

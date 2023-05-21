@@ -141,6 +141,16 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> watchlistMovies = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "users_watchlist_series",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "serie_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Serie> watchlistSeries = new HashSet<>();
+
     @OneToMany
     private Set<Response> responses = new HashSet<>();
 
