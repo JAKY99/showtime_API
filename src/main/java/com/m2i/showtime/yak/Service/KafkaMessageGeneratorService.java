@@ -13,6 +13,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,6 +41,8 @@ public class KafkaMessageGeneratorService {
     @Autowired
     private KafkaAdmin kafkaAdmin;
     private final LoggerService LOGGER = new LoggerService();
+    @Value("${spring.profiles.active}")
+    private String env;
     public KafkaMessageGeneratorService(UserRepository userRepository, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.notificationRepository = notificationRepository;
@@ -79,7 +83,52 @@ public class KafkaMessageGeneratorService {
         return message + " " + severity;
     }
     public KafkaResponseDto sendMessage(KafkaMessageDto kafkaMessageDto) {
+        List<User> users = this.userRepository.findAll();
+        Notification notification = new Notification();
+        notification.setMessage(kafkaMessageDto.getMessage());
+        notification.setType("System");
+        notification.setSeverity("info");
+        this.notificationRepository.save(notification);
+        String typeUser=this.env+"User";
+        String notificationTopic=this.env+"UserNotificationToAllUsersService";
+        if(typeUser.equals(kafkaMessageDto.getTopicName())){
+            JSONObject data = new JSONObject();
+            data.put("message", notification.getMessage());
+            data.put("severity", notification.getSeverity());
+            data.put("type", notification.getType());
+            data.put("id", notification.getId());
+            data.put("dateCreated", notification.getDateCreated());
+            data.put("read", notification.getStatus());
+            data.put("dateRead", notification.getDateRead());
+            for (User user : users) {
+                user.getNotifications().add(notification);
+                this.userRepository.save(user);
+            }
+            LOGGER.print("Sending message to topic: " + notificationTopic);
+            LOGGER.print("With message : " + kafkaMessageDto.getMessage());
+            ListenableFuture<SendResult<String, String>> future =
+                    kafkaTemplate.send(notificationTopic, data.toString());
 
+            simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+            future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+
+                @Override
+                public void onSuccess(SendResult<String, String> result) {
+                    LOGGER.print("Sent message=[" + kafkaMessageDto.getMessage() +
+                            "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+                }
+                @Override
+                public void onFailure(Throwable ex) {
+                    LOGGER.print("Unable to send message=["
+                            + kafkaMessageDto.getMessage() + "] due to : " + ex.getMessage());
+                    AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                    client.close();
+                    kafkaAdmin.initialize();
+                }
+            });
+            return new KafkaResponseDto("Sending message to topic: " + notificationTopic + "With message : " + kafkaMessageDto.getMessage());
+        }
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
         LOGGER.print("With message : " + kafkaMessageDto.getMessage());
         ListenableFuture<SendResult<String, String>> future =

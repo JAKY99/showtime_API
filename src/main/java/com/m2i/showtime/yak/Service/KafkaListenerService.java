@@ -55,7 +55,12 @@ public class KafkaListenerService {
         LOGGER.print("Received Message in group " + env +"UserNotificationService : " + data.toString());
         simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env+"/"+data.get("target"), data.toString());
     }
-
+    @KafkaListener(topics = "${spring.profiles.active}UserNotificationToAllUsersService", groupId = "${spring.profiles.active}")
+    public void listenUserNotificationToAllUsersService(String message){
+        JSONObject data = new JSONObject(message);
+        LOGGER.print("Received Message in group " + env +"UserNotificationService : " + data.toString());
+        simpMessagingTemplate.convertAndSend("/topic/usernotification/"+env, data.toString());
+    }
     @KafkaListener(topics = "${spring.profiles.active}User", groupId = "${spring.profiles.active}")
     public void listenGroupFooUser(String message) {
         simpMessagingTemplate.convertAndSend("/topic/user/"+env, message);
