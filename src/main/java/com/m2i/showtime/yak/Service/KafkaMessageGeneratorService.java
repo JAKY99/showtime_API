@@ -90,11 +90,44 @@ public class KafkaMessageGeneratorService {
         notification.setSeverity("info");
         this.notificationRepository.save(notification);
         String typeUser=this.env+"User";
+        String notificationTopic=this.env+"UserNotificationToAllUsersService";
         if(typeUser.equals(kafkaMessageDto.getTopicName())){
+            JSONObject data = new JSONObject();
+            data.put("message", notification.getMessage());
+            data.put("severity", notification.getSeverity());
+            data.put("type", notification.getType());
+            data.put("id", notification.getId());
+            data.put("dateCreated", notification.getDateCreated());
+            data.put("read", notification.getStatus());
+            data.put("dateRead", notification.getDateRead());
             for (User user : users) {
                 user.getNotifications().add(notification);
                 this.userRepository.save(user);
             }
+            LOGGER.print("Sending message to topic: " + notificationTopic);
+            LOGGER.print("With message : " + kafkaMessageDto.getMessage());
+            ListenableFuture<SendResult<String, String>> future =
+                    kafkaTemplate.send(notificationTopic, data.toString());
+
+            simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+            future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+
+                @Override
+                public void onSuccess(SendResult<String, String> result) {
+                    LOGGER.print("Sent message=[" + kafkaMessageDto.getMessage() +
+                            "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+                }
+                @Override
+                public void onFailure(Throwable ex) {
+                    LOGGER.print("Unable to send message=["
+                            + kafkaMessageDto.getMessage() + "] due to : " + ex.getMessage());
+                    AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                    client.close();
+                    kafkaAdmin.initialize();
+                }
+            });
+            return new KafkaResponseDto("Sending message to topic: " + notificationTopic + "With message : " + kafkaMessageDto.getMessage());
         }
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
         LOGGER.print("With message : " + kafkaMessageDto.getMessage());
