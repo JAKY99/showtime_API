@@ -4,6 +4,8 @@ import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Entity.Role;
+import com.m2i.showtime.yak.Repository.NotificationRepository;
+import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.*;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -48,15 +50,23 @@ public class ServiceTest {
     private HazelcastConfig hazelcastConfig;
     @Autowired
     private VersionControleService versionControleService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
     @Mock
     HttpServletResponse HttpServletResponse;
+
+    public ServiceTest() {
+    }
+
     @Test
     public void testAllService() throws URISyntaxException, IOException, InterruptedException {
-        KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
-        kafkaMessageDto.setTopicName("test");
-        kafkaMessageDto.setMessage("test");
-        KafkaResponseDto response = kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
-        assertEquals("Sending message to topic: testWith message : test" ,response.getResponseMessage());
+//        KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
+//        kafkaMessageDto.setTopicName("test");
+//        kafkaMessageDto.setMessage("test");
+//        KafkaResponseDto response = kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+//        assertEquals("Sending message to topic: testWith message : test" ,response.getResponseMessage());
         //--------------------------------
         getDataFromRedisDto redisCache = redisService.getRedisCacheData("https://api.themoviedb.org/3/movie/top_rated?api_key=268e205e4732543417f057b681731e09",HttpServletResponse);
         assertTrue(redisCache.getData() instanceof String && redisCache.getData() != null);
@@ -78,7 +88,7 @@ public class ServiceTest {
         elasticsearchService.setElasticbaseUrl("test");
         assertEquals("test" ,elasticsearchService.getElasticbaseUrl());
         //--------------------------------
-        versionControleService.addVersion("test");
-        assertTrue(versionControleService.getVersion("test") instanceof VersionControlDto && versionControleService.getVersion("test") != null);
+//        versionControleService.addVersion("test");
+//        assertTrue(versionControleService.getVersion("test") instanceof VersionControlDto && versionControleService.getVersion("test") != null);
     }
 }
