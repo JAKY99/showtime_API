@@ -84,14 +84,14 @@ public class KafkaMessageGeneratorService {
     }
     public KafkaResponseDto sendMessage(KafkaMessageDto kafkaMessageDto) {
         List<User> users = this.userRepository.findAll();
-        Notification notification = new Notification();
-        notification.setMessage(kafkaMessageDto.getMessage());
-        notification.setType("System");
-        notification.setSeverity("info");
-        this.notificationRepository.save(notification);
+
         String typeUser=this.env+"User";
         String notificationTopic=this.env+"UserNotificationToAllUsersService";
         if(typeUser.equals(kafkaMessageDto.getTopicName())){
+            Notification notification = new Notification();
+            notification.setMessage(kafkaMessageDto.getMessage());
+            notification.setType("System");
+            notification.setSeverity("info");
             JSONObject data = new JSONObject();
             data.put("message", notification.getMessage());
             data.put("severity", notification.getSeverity());
@@ -101,7 +101,12 @@ public class KafkaMessageGeneratorService {
             data.put("read", notification.getStatus());
             data.put("dateRead", notification.getDateRead());
             for (User user : users) {
-                user.getNotifications().add(notification);
+                Notification notificationUser = new Notification();
+                notification.setMessage(kafkaMessageDto.getMessage());
+                notification.setType("System");
+                notification.setSeverity("info");
+                this.notificationRepository.save(notificationUser);
+                user.getNotifications().add(notificationUser);
                 this.userRepository.save(user);
             }
             LOGGER.print("Sending message to topic: " + notificationTopic);
