@@ -13,6 +13,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,6 +41,8 @@ public class KafkaMessageGeneratorService {
     @Autowired
     private KafkaAdmin kafkaAdmin;
     private final LoggerService LOGGER = new LoggerService();
+    @Value("${spring.profiles.active}")
+    private String env;
     public KafkaMessageGeneratorService(UserRepository userRepository, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.notificationRepository = notificationRepository;
@@ -79,7 +83,19 @@ public class KafkaMessageGeneratorService {
         return message + " " + severity;
     }
     public KafkaResponseDto sendMessage(KafkaMessageDto kafkaMessageDto) {
-
+        List<User> users = this.userRepository.findAll();
+        Notification notification = new Notification();
+        notification.setMessage(kafkaMessageDto.getMessage());
+        notification.setType("System");
+        notification.setSeverity("info");
+        this.notificationRepository.save(notification);
+        String typeUser=this.env+"User";
+        if(typeUser.equals(kafkaMessageDto.getTopicName())){
+            for (User user : users) {
+                user.getNotifications().add(notification);
+                this.userRepository.save(user);
+            }
+        }
         LOGGER.print("Sending message to topic: " + kafkaMessageDto.getTopicName());
         LOGGER.print("With message : " + kafkaMessageDto.getMessage());
         ListenableFuture<SendResult<String, String>> future =
