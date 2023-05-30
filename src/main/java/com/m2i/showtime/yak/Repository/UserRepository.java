@@ -32,6 +32,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<UserSimpleDto> isMovieInFavorite(String email, long tmdbId);
     @Query("SELECT u FROM User u JOIN u.favoriteSeries w WHERE u.username = ?1 and w.tmdbId = ?2")
     Optional<UserSimpleDto> isTvInFavorite(String email, long tmdbId);
+
+    @Query("SELECT u FROM User u JOIN u.watchlistSeries w WHERE u.username = ?1 and w.tmdbId = ?2")
+    Optional<UserSimpleDto> isTvInWatchlistSeries(String email, long tmdbId);
     @Query("SELECT u FROM User u WHERE  u.username = ?1")
     Optional<UserSimpleDto[]> getLastWatchedSeries(String username);
     @Query("SELECT u FROM User u JOIN u.watchlistMovies w WHERE u.username = ?1 and w.tmdbId = ?2")

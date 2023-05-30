@@ -52,5 +52,38 @@
                              referencedTableName="_user"/>
     </changeSet>
 
+    <changeSet id="1684096769817-6" author="cmoiy (generated)">
+        <createTable tableName="users_watchlist_series">
+            <column name="serie_id"
+                    type="BIGINT">
+                <constraints nullable="false"
+                             primaryKey="true"
+                             primaryKeyName="pk_users_watchlist_series"/>
+            </column>
+            <column name="user_id"
+                    type="BIGINT">
+                <constraints nullable="false"
+                             primaryKey="true"
+                             primaryKeyName="pk_users_watchlist_series"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1684096769817-7" author="cmoiy (generated)">
+        <addForeignKeyConstraint baseColumnNames="serie_id"
+                                 baseTableName="users_watchlist_series"
+                                 constraintName="fk_userwatchlist_on_serie"
+                                 referencedColumnNames="id"
+                                 referencedTableName="serie"/>
+    </changeSet>
+
+    <changeSet id="1684096769817-8" author="cmoiy (generated)">
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="users_watchlist_series"
+                                 constraintName="fk_userwatchlist_on_user"
+                                 referencedColumnNames="id"
+                                 referencedTableName="_user"/>
+    </changeSet>
+
 
 </databaseChangeLog>

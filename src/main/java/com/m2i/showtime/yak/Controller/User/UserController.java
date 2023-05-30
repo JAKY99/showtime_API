@@ -108,6 +108,11 @@ public class UserController {
         return userService.isTvInFavoritelist(userWatchedSerieAddDto);
     }
 
+    @PostMapping("/isTvInWatchlistSeries")
+    public boolean isTvInWatchlistSeries(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        return userService.isTvInWatchlistSeries(userWatchedSerieAddDto);
+    }
+
     @PostMapping("/addMovieInWatchlist")
     public boolean addMovieInWatchlist(Authentication authentication,
             @RequestBody UserWatchedMovieAddDto UserWatchedMovieAddDto) throws URISyntaxException, IOException, InterruptedException {
@@ -126,6 +131,11 @@ public class UserController {
     @PostMapping("/toggleTvInFavoritelist")
     public boolean toggleTvInFavoritelist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
         return userService.toggleTvInFavoritelist(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("/toggleTvInWatchlist")
+    public boolean toggleTvInWatchlist(@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        return userService.toggleTvInWatchlist(userWatchedSerieAddDto);
     }
 
     @PostMapping("/toggleMovieInMovieToWatchlist")
@@ -290,6 +300,8 @@ public class UserController {
         return userService.fetchTvWatching(userMailDto);
     }
 
+
+
     @PostMapping("/fetchTvWatched")
     public ArrayList<Long> fetchTvWatched(Authentication authentication,@RequestBody UserMailDto userMailDto) {
         String username = userService.getUserFromJwt(authentication);
@@ -304,6 +316,11 @@ public class UserController {
     @PostMapping("/fetchfavoritesSeries")
     public ArrayList<Long> fetchfavoritesSeries(@RequestBody UserMailDto userMailDto) {
         return userService.fetchfavoritesSeries(userMailDto);
+    }
+
+    @PostMapping("/fetchTvWatchlist")
+    public ArrayList<Long> fetchTvWatchlist(@RequestBody UserMailDto userMailDto) {
+        return userService.fetchTvWatchlist(userMailDto);
     }
 
     @GetMapping("/refresh")
