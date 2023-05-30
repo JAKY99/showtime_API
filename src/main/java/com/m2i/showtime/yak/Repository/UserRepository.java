@@ -55,4 +55,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<UsersWatchedSeason> getSeasonStatus(String email , long seasonTmdbId);
 
 
+    @Query(value = "SELECT * FROM get_users_with_role_user()", nativeQuery = true)
+    Optional<User[]> getUsersWithRoleUser();
 }
