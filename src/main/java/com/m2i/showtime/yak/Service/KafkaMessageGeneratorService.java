@@ -83,7 +83,7 @@ public class KafkaMessageGeneratorService {
         return message + " " + severity;
     }
     public KafkaResponseDto sendMessage(KafkaMessageDto kafkaMessageDto) {
-        List<User> users = this.userRepository.findAll();
+        Optional<User[]> users = this.userRepository.getUsersWithRoleUser();
 
         String typeUser=this.env+"User";
         String notificationTopic=this.env+"UserNotificationToAllUsersService";
@@ -101,7 +101,7 @@ public class KafkaMessageGeneratorService {
             data.put("dateCreated", notification.getDateCreated());
             data.put("read", notification.getStatus());
             data.put("dateRead", notification.getDateRead());
-            for (User user : users) {
+            for (User user : users.get()) {
                 Notification notificationUser = new Notification();
                 notificationUser.setMessage(kafkaMessageDto.getMessage());
                 notificationUser.setType("System");
