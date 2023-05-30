@@ -60,4 +60,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT * FROM get_users_with_role_user()", nativeQuery = true)
     Optional<User[]> getUsersWithRoleUser();
+
 }
