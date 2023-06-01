@@ -193,30 +193,30 @@ public class UserController {
     @PostMapping("profile/lazy/header")
     public ProfileLazyUserDtoHeader getProfileHeader(Authentication authentication,
             @RequestBody String email) throws URISyntaxException, IOException, InterruptedException {
-        String username = userService.getUserFromJwt(authentication);
-        email = username;
+//        String username = userService.getUserFromJwt(authentication);
+//        email = username;
         return userService.getProfileHeaderData(email);
     }
 
     @PostMapping("profile/lazy/avatar")
     public ProfileLazyUserDtoAvatar getProfileAvatar(Authentication authentication,@RequestBody String email) {
-        String username = userService.getUserFromJwt(authentication);
-        email = username;
+//        String username = userService.getUserFromJwt(authentication);
+//        email = username;
         return userService.getProfileAvatar(email);
     }
 
     @PostMapping("profile/lazy/socialInfos")
     public ProfileLazyUserDtoSocialInfos getProfileSocialInfos(Authentication authentication,@RequestBody String email) {
-        String username = userService.getUserFromJwt(authentication);
-        email = username;
+//        String username = userService.getUserFromJwt(authentication);
+//        email = username;
         return userService.getProfileSocialInfos(email);
     }
 
     @PostMapping("profile/lazy/socialInfos/followingStatus")
     public SocialFollowingResponseDto getProfileSocialInfosFollowing(Authentication authentication,
             @RequestBody SocialFollowingRequestDto information) {
-        String username = userService.getUserFromJwt(authentication);
-        information.setUsernameRequester(username);
+//        String username = userService.getUserFromJwt(authentication);
+//        information.setUsernameRequester(username);
         return userService.getFollowingStatus(information);
     }
 
@@ -331,8 +331,8 @@ public class UserController {
 
     @PostMapping("social/search/user/detail")
     public SocialInfoDto getUserSearchDetail(Authentication authentication,@RequestBody String username) {
-        String usernameFromJWT = userService.getUserFromJwt(authentication);
-        username = usernameFromJWT;
+//        String usernameFromJWT = userService.getUserFromJwt(authentication);
+//        username = usernameFromJWT;
         return userService.getSocialDetail(username);
     }
 
