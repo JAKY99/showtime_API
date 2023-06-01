@@ -99,7 +99,9 @@ jobs:
           rm src/test/resources/application.properties
           mv src/test/resources/application.ci.properties src/test/resources/application.properties
           echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
-          echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile 
+          echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile
+          rm pom.xml
+          mv pom.ci.xml pom.xml
           source /etc/profile
           touch .env  
           echo "$envStaging" >> .env 
