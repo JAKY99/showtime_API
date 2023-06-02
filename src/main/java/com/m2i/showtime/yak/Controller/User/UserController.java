@@ -341,8 +341,8 @@ public class UserController {
 
     @PostMapping("social/search/user")
     public SocialSearchResponseDto[] searchUser(Authentication authentication,@RequestBody String searchText) {
-        String username = userService.getUserFromJwt(authentication);
-        searchText = username;
+//        String username = userService.getUserFromJwt(authentication);
+//        searchText = username;
         return userService.searchUser(searchText);
     }
 
