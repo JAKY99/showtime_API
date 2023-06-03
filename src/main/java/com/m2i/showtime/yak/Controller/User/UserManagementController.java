@@ -100,4 +100,5 @@ public class UserManagementController {
     public ResponseApiAgGridDto deleteUpdateNotificationAgGrid(@RequestBody NotificationAgGridDto NotificationToDelete){
         return userManagementService.deleteNotification(NotificationToDelete);
     }
+
 }

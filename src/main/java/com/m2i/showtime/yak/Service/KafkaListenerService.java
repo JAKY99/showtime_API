@@ -77,4 +77,10 @@ public class KafkaListenerService {
 //        LOGGER.print("Activity Scheduler");
 //        simpMessagingTemplate.convertAndSend("/topic/activity", "Still active");
 //    }
+    @KafkaListener(topics = "${spring.profiles.active}PingUser", groupId = "${spring.profiles.active}")
+    public void checkUsersOnline(String message) {
+        JSONObject data = new JSONObject();
+        data.put("metrics_id", message);
+        simpMessagingTemplate.convertAndSend("/topic/user/ping/"+env, data.toString());
+    }
 }
