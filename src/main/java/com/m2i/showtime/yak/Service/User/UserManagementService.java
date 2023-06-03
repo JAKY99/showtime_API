@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Service.User;
 
 import com.m2i.showtime.yak.Dto.AddUserAGgridDto;
+import com.m2i.showtime.yak.Dto.NotificationAgGridDto;
 import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
@@ -200,5 +201,59 @@ public class UserManagementService {
     public List<Role> getAllRoles() {
         List<Role>  roles = this.roleRepository.findAll();
         return roles;
+    }
+
+    public List<Map<String, Object>>  getAllNotifications() {
+        List<Map<String, Object>>  notifications = this.notificationRepository.findAllNotificationAndAssociatedReciever();
+        return notifications;
+    }
+
+    public ResponseApiAgGridDto updateNotification(Notification notificationToUpdate) {
+        ResponseApiAgGridDto response = new ResponseApiAgGridDto();
+        try{
+            Notification notification = notificationRepository.findById(notificationToUpdate.getId())
+                    .orElseThrow(() -> new IllegalStateException(("user with id "+ notificationToUpdate.getId() + "does not exists")));
+            new ModelMapper().map(notificationToUpdate,notification);
+            notificationRepository.save(notification);
+
+            response.setSeverity("success");
+            response.setTitle("Success");
+            response.setDetails("Notification modified successfully");
+            response.setSticky(false);
+            return response;
+        }catch (Exception e){
+            response.setSeverity("error");
+            response.setTitle("Error");
+            response.setDetails("An error occurred while modifying the notification");
+            response.setSticky(false);
+            return response;
+        }
+    }
+
+    public ResponseApiAgGridDto deleteNotification(NotificationAgGridDto notificationToDelete) {
+        ResponseApiAgGridDto response = new ResponseApiAgGridDto();
+        try{
+            Notification notification = notificationRepository.findById(notificationToDelete.getId())
+                    .orElseThrow(() -> new IllegalStateException(("user with id "+ notificationToDelete.getId() + "does not exists")));
+            Optional<User> userToRemoveNotificationFrom =  userRepository.findUserByEmail(notificationToDelete.getReceiverName());
+            if(userToRemoveNotificationFrom.isPresent()){
+                User user = userToRemoveNotificationFrom.get();
+                user.getNotifications().remove(notification);
+                userRepository.save(user);
+            }
+            notificationRepository.delete(notification);
+
+            response.setSeverity("success");
+            response.setTitle("Success");
+            response.setDetails("Notification deleted successfully");
+            response.setSticky(false);
+            return response;
+        }catch (Exception e){
+            response.setSeverity("error");
+            response.setTitle("Error");
+            response.setDetails("An error occurred while deleting the notification");
+            response.setSticky(false);
+            return response;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.m2i.showtime.yak.Controller.User;
 
 import com.m2i.showtime.yak.Dto.AddUserAGgridDto;
+import com.m2i.showtime.yak.Dto.NotificationAgGridDto;
 import com.m2i.showtime.yak.Dto.ResponseApiAgGridDto;
 import com.m2i.showtime.yak.Dto.Search.PageListResultDto;
 import com.m2i.showtime.yak.Dto.Search.SearchParamsDto;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -81,5 +83,21 @@ public class UserManagementController {
     @PostMapping("role/aggrid/all")
     public List<Role> getRolesAgGrid(){
         return userManagementService.getAllRoles();
+    }
+
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("notification/aggrid/all")
+    public List<Map<String, Object>> getNotificationsAgGrid(){
+        return userManagementService.getAllNotifications();
+    }
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("notification/aggrid/edit")
+    public ResponseApiAgGridDto updateNotificationAgGrid(@RequestBody Notification NotificationToUpdate){
+        return userManagementService.updateNotification(NotificationToUpdate);
+    }
+    @PreAuthorize("hasAnyAuthority('user:manage_users')")
+    @PostMapping("notification/aggrid/delete")
+    public ResponseApiAgGridDto deleteUpdateNotificationAgGrid(@RequestBody NotificationAgGridDto NotificationToDelete){
+        return userManagementService.deleteNotification(NotificationToDelete);
     }
 }
