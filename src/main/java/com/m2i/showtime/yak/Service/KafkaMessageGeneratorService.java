@@ -50,18 +50,18 @@ public class KafkaMessageGeneratorService {
     public void generateMessageToAdmin(MessageAdminDto message) throws JsonProcessingException {
 
         Optional<User[]> userList = this.userRepository.findAllAdminUsers();
-
-        userList.ifPresent(users -> {
-            for (User user : users) {
-                Notification notification = new Notification(message.getMessage(), message.getSeverity(),"alert");
-                this.notificationRepository.save(notification);
-                user.getNotifications().add(notification);
-                this.userRepository.save(user);
-            }
-        });
+        String topicName = this.env+"Admin";
+//        userList.ifPresent(users -> {
+//            for (User user : users) {
+//                Notification notification = new Notification(message.getMessage(), message.getSeverity(),"info");
+//                this.notificationRepository.save(notification);
+//                user.getNotifications().add(notification);
+//                this.userRepository.save(user);
+//            }
+//        });
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String jsonMessage = ow.writeValueAsString(message);
-        KafkaMessageDto kafkaMessageDto = new KafkaMessageDto( jsonMessage,"admin");
+        KafkaMessageDto kafkaMessageDto = new KafkaMessageDto( jsonMessage,topicName);
         ListenableFuture<SendResult<String, String>> future =
                 kafkaTemplate.send(kafkaMessageDto.getTopicName(), kafkaMessageDto.getMessage());
         future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
@@ -218,6 +218,34 @@ public class KafkaMessageGeneratorService {
             public void onFailure(Throwable ex) {
                 LOGGER.print("Unable to send message=["
                         + notification.getMessage() + "] due to : " + ex.getMessage());
+                AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                client.close();
+                kafkaAdmin.initialize();
+            }
+        });
+        return true;
+    }
+
+
+    public boolean checkUserOnline(Long MetricsId) throws JSONException {
+        String topicName = this.env+"PingUser";
+        LOGGER.print("Sending message to topic: pingUser"+topicName);
+
+
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(topicName, MetricsId.toString());
+
+        simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                LOGGER.print("Sent message=[ PING ] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                LOGGER.print("Unable to send message=[ PING ] due to : " + ex.getMessage());
                 AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
                 client.close();
                 kafkaAdmin.initialize();
