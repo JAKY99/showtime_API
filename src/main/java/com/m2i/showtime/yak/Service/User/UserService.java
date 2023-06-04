@@ -1721,4 +1721,15 @@ public class UserService {
         }
         throw new IllegalStateException("invalid JWT - User not found");
     }
+
+    public boolean editAccountPasswordInfos(long idUser, EditPasswordDto passwordModifier) {
+        Optional<User> user = userRepository.findById(idUser);
+        PasswordEncoder passwordEncoder = this.encoder();
+        if(user.isPresent()){
+                user.get().setPassword(passwordEncoder.encode(passwordModifier.getNewPassword()));
+                userRepository.save(user.get());
+                return true;
+        }
+        return false;
+    }
 }
