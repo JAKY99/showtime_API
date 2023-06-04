@@ -236,60 +236,18 @@
             VALUES (1, NULL, 'France', '2022-10-04 18:15:05.304762', 'Achot-ADMIN', true, true, false, true, false,
                     true, false, false, false, 'Barseghyan',
                     '$2a$10$aIuZBDp8sd8kFDL5mD1q2./8LY/gwPuBEttDmDAiiv8EjKWZs/E4m', NULL, 0, 0, 0, 0, 0,
-                    'achot.barseghyan@gmail.com', 1);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (3, NULL, 'France', '2022-10-04 18:15:05.636051', 'Achot-REGISTER', true, true, false, true, false,
-                    true, false, false, false, 'Barseghyan',
-                    '$2a$10$JjR3E0bl3jc/h5sXa54/Y.AdoHQ.e4G6lajK.cq2l9B99TyI7/tO6', NULL, 0, 0, 0, 0, 0,
-                    'register.barseghyan@gmail.com', 2);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (2, NULL, 'France', '2022-10-04 18:15:05.452923', 'Achot-USER', true, true, false, true, false, true,
-                    false, false, false, 'Barseghyan', '$2a$10$SjU1T3wE3YpAeBr6m/G/5.2NONlzMuJMNUL8hqzmPhZ8xDvQCRfBW',
-                    NULL, 0, 0, 0, 0, 0, 'user.barseghyan@gmail.com', 2);
+                    'admin.achot.barseghyan@gmail.com', 1);
 
-
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
+               INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
                                       is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
                                       is_enabled, is_notifications_active, is_notifications_comments_active,
                                       is_notifications_trophies_active, last_name, _password, profile_picture,
                                       total_episodes_watched_number, total_movie_watched_number,
                                       total_movie_watched_time, total_series_watched_number, total_series_watched_time,
                                       email, role_id)
-            VALUES (4, NULL, 'France', '2022-10-04 18:15:05.304762', 'kevin-ADMIN', true, true, false, true, false,
+            VALUES (2, NULL, 'France', '2022-10-04 18:15:05.304762', 'kevin-ADMIN', true, true, false, true, false,
                     true, false, false, false, 'Pognon', '$2a$10$ZyIlhr6jvNBpJumQ3YqjYuffTo7sDtDdB1eoiGGASQjdt9afFDdvS',
-                    NULL, 0, 0, 0, 0, 0, 'kev972@gmail.com', 1);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (5, NULL, 'France', '2022-10-04 18:15:05.636051', 'kevin-REGISTER', true, true, false, true, false,
-                    true, false, false, false, 'Pognon', '$2a$10$8ZW9aQgRrhomF/hCY4u9nu6m3BAmGJeAA07KH6WUJ6HiPmuyhnGpC',
-                    NULL, 0, 0, 0, 0, 0, 'register.kev972@gmail.com', 2);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (6, NULL, 'France', '2022-10-04 18:15:05.452923', 'kevin-USER', true, true, false, true, false, true,
-                    false, false, false, 'Pognon', '$2a$10$Mqd8Xw0Bk7iBYU50JyPC4OsCJPbjaRdshM4Tau.EJ0yyt9vnMMdpu', NULL,
-                    0, 0, 0, 0, 0, 'user.kev972@gmail.com', 2);
+                    NULL, 0, 0, 0, 0, 0, 'admin.kev972@gmail.com', 1);
 
             INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
                                       is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
@@ -298,30 +256,9 @@
                                       total_episodes_watched_number, total_movie_watched_number,
                                       total_movie_watched_time, total_series_watched_number, total_series_watched_time,
                                       email, role_id)
-            VALUES (7, NULL, 'France', '2022-10-04 18:15:05.304762', 'Yvan-ADMIN', true, true, false, true, false, true,
+            VALUES (3, NULL, 'France', '2022-10-04 18:15:05.304762', 'Yvan-ADMIN', true, true, false, true, false, true,
                     false, false, false, 'Darmet', '$2a$10$yqdZPzieC1iKW9Y/zQP4AuBVRjjw6DSQ/zGRLWc.OmBeTac1T7Rgy', NULL,
-                    0, 0, 0, 0, 0, 'yvan.darmet@gmail.com', 1);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (8, NULL, 'France', '2022-10-04 18:15:05.636051', 'Yvan-REGISTER', true, true, false, true, false,
-                    true, false, false, false, 'Darmet', '$2a$10$PK10nm3lcsRm/iNFrzswcebxOW90UcQR3jWq7zKWDp9sMRrvGLeq6',
-                    NULL, 0, 0, 0, 0, 0, 'register.darmet@gmail.com', 2);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (9, NULL, 'France', '2022-10-04 18:15:05.452923', 'Yvan-USER', true, true, false, true, false, true,
-                    false, false, false, 'Darmet', '$2a$10$Qpom8fuzocKDqTy8bShl4uAt8Y1Rkzg98vtcmkLdstqbnL1OI0Qse', NULL,
-                    0, 0, 0, 0, 0, 'user.darmet@gmail.com', 2);
-
+                    0, 0, 0, 0, 0, 'admin.yvan.darmet@gmail.com', 1);
 
             INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
                                       is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
@@ -330,31 +267,9 @@
                                       total_episodes_watched_number, total_movie_watched_number,
                                       total_movie_watched_time, total_series_watched_number, total_series_watched_time,
                                       email, role_id)
-            VALUES (10, NULL, 'France', '2022-10-04 18:15:05.304762', 'Joe-ADMIN', true, true, false, true, false, true,
+            VALUES (4, NULL, 'France', '2022-10-04 18:15:05.304762', 'Joe-ADMIN', true, true, false, true, false, true,
                     false, false, false, 'Jean-claude', '$2a$10$yeJfbatx6WnK1nvc.92ZDuooE.cr4m/mwSgtFnQjuGsTMuyc3WF8m',
-                    NULL, 0, 0, 0, 0, 0, 'joe.jean-claude@gmail.com', 1);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (11, NULL, 'France', '2022-10-04 18:15:05.636051', 'Joe-REGISTER', true, true, false, true, false,
-                    true, false, false, false, 'Jean-claude',
-                    '$2a$10$4J5yiHNW9UTc18vVLxPDk.VUNsn1IUFzs3eE7P6WazEkWXPsIGpRe', NULL, 0, 0, 0, 0, 0,
-                    'register.jean-claude@gmail.com', 2);
-            INSERT INTO public._user (id, background_picture, country, date_created, first_name, is_account_non_expired,
-                                      is_account_non_locked, is_account_private, is_credentials_non_expired, is_deleted,
-                                      is_enabled, is_notifications_active, is_notifications_comments_active,
-                                      is_notifications_trophies_active, last_name, _password, profile_picture,
-                                      total_episodes_watched_number, total_movie_watched_number,
-                                      total_movie_watched_time, total_series_watched_number, total_series_watched_time,
-                                      email, role_id)
-            VALUES (12, NULL, 'France', '2022-10-04 18:15:05.452923', 'Joe-USER', true, true, false, true, false, true,
-                    false, false, false, 'Jean-claude', '$2a$10$DtLVmqsl3rG7k6BL0eAYJ.DP41mYNet//OHyebhjT1sGdjC5foLXy',
-                    NULL, 0, 0, 0, 0, 0, 'user.jean-claude@gmail.com', 2);
-
+                    NULL, 0, 0, 0, 0, 0, 'admin.joeleongj@gmail.com', 1);
 
         </sql>
     </changeSet>
