@@ -91,7 +91,7 @@ public class KafkaMessageGeneratorService {
             Notification notification = new Notification();
             notification.setMessage(kafkaMessageDto.getMessage());
             notification.setType("System");
-            notification.setSeverity("info");
+            notification.setSeverity(kafkaMessageDto.getSeverity());
             this.notificationRepository.save(notification);
             JSONObject data = new JSONObject();
             data.put("message", notification.getMessage());
@@ -105,7 +105,7 @@ public class KafkaMessageGeneratorService {
                 Notification notificationUser = new Notification();
                 notificationUser.setMessage(kafkaMessageDto.getMessage());
                 notificationUser.setType("System");
-                notificationUser.setSeverity("info");
+                notificationUser.setSeverity(kafkaMessageDto.getSeverity());
                 this.notificationRepository.save(notificationUser);
                 user.getNotifications().add(notificationUser);
                 this.userRepository.save(user);
