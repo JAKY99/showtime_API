@@ -59,9 +59,9 @@ public class VersionControleService {
         versionControle.setVersion(java.time.LocalDateTime.now());
         versionControleRepository.save(versionControle);
         KafkaMessageDto kafkaMessageDto = new KafkaMessageDto();
-        kafkaMessageDto.setTopicName(env + "User");
+        kafkaMessageDto.setTopicName(env + "UpdateAppUser");
         kafkaMessageDto.setMessage("New update");
-        this.kafkaMessageGeneratorService.sendMessage(kafkaMessageDto);
+        this.kafkaMessageGeneratorService.sendUpdateNotification(kafkaMessageDto);
         return true;
     }
 
