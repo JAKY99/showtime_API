@@ -74,7 +74,18 @@ public class UserController {
                                    .getId();
         userService.editAccountInfos(IdUser, modifiedUser);
     }
-
+    @PreAuthorize("hasAnyAuthority('user:edit')")
+    @PutMapping("/edit-account/password")
+    public boolean editAccountPassword(
+            @RequestBody EditPasswordDto passwordModifier, Authentication authentication) {
+        Optional<UserSimpleDto> userSimpleDto = userService.getUserByEmail(authentication.getPrincipal()
+                .toString());
+        long IdUser = userSimpleDto.orElseThrow(() -> {
+                    throw new IllegalStateException("User not found.");
+                })
+                .getId();
+        return userService.editAccountPasswordInfos(IdUser, passwordModifier);
+    }
     @PreAuthorize("hasAnyAuthority('user:delete', 'user:manage_users')")
     @DeleteMapping("{userId}")
     public void deleteUser(@PathVariable("userId") Long userId) {
