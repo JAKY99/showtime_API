@@ -83,4 +83,10 @@ public class KafkaListenerService {
         data.put("metrics_id", message);
         simpMessagingTemplate.convertAndSend("/topic/user/ping/"+env, data.toString());
     }
+    @KafkaListener(topics = "${spring.profiles.active}UpdateAppUser", groupId = "${spring.profiles.active}")
+    public void notificationUpdateApp(String message) {
+        JSONObject data = new JSONObject(message);
+        LOGGER.print("Received Message in group " + env +"UserNotificationService : " + data.toString());
+        simpMessagingTemplate.convertAndSend("/topic/update/"+env, data.toString());
+    }
 }
