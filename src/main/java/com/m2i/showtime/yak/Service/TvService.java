@@ -93,10 +93,10 @@ public class TvService {
             JSONObject documentObj2 = new JSONObject(resp.body().toString());
 
             AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2) , AddSeasonDto.class);
-            if(seasonDto.air_date != null) {
+            if(seasonDto.air_date != null||!seasonDto.episodes[0].air_date.equals("null")) {
 
                 LocalDate today = LocalDate.now();
-                LocalDate date = LocalDate.parse(seasonDto.air_date);
+                LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
 
                 if (!date.isAfter(today)) {
 
