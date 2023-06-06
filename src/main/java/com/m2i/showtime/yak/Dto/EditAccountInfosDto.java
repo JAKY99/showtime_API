@@ -8,4 +8,5 @@ import lombok.Setter;
 public class EditAccountInfosDto {
     public String firstName;
     public String lastName;
+    public Boolean isNotificationsActive;
 }

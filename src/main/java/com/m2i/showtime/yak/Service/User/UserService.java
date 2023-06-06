@@ -30,6 +30,7 @@ import com.m2i.showtime.yak.Service.RedisService;
 import com.m2i.showtime.yak.Service.TvService;
 import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -230,16 +231,8 @@ public class UserService {
                                  EditAccountInfosDto modifiedUser) {
         User user = userRepository.findById(userId)
                                   .orElseThrow(() -> new IllegalStateException(("user with id "+ userId + "does not exists")));
-        if (modifiedUser.getFirstName() != null &&
-                modifiedUser.getFirstName().length() > 0 &&
-                !Objects.equals(user.getFirstName(), modifiedUser.getFirstName())) {
-            user.setFirstName(modifiedUser.getFirstName());
-        }
-        if (modifiedUser.getLastName() != null &&
-                modifiedUser.getLastName().length() > 0 &&
-                !Objects.equals(user.getLastName(), modifiedUser.getLastName())) {
-            user.setLastName(modifiedUser.getLastName());
-        }
+
+        new ModelMapper().map(modifiedUser,user);
     }
     public boolean isMovieInWatchlist(UserWatchedMovieDto userWatchedMovieDto) {
         Optional<UserSimpleDto> user = userRepository.isMovieWatched(
@@ -1034,6 +1027,7 @@ public class UserService {
         profileLazyUserDtoAvatar.setFullName(user.getFullName());
         profileLazyUserDtoAvatar.setFirstName(user.getFirstName());
         profileLazyUserDtoAvatar.setLastName(user.getLastName());
+        profileLazyUserDtoAvatar.setNotification_system_status(user.getIsNotificationsActive());
         return profileLazyUserDtoAvatar;
     }
 
