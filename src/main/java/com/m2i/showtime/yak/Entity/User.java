@@ -59,7 +59,7 @@ public class User implements UserDetails {
     private String tokenResetPassword;
     //-------------------------------------------------
     private Boolean isDeleted = false;
-    private Boolean isNotificationsActive = false;
+    private Boolean isNotificationsActive = true;
     private Boolean isNotificationsTrophiesActive = false;
     private Boolean isNotificationsCommentsActive = false;
     private Boolean isAccountPrivate = false;

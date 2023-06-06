@@ -11,4 +11,5 @@ public class ProfileLazyUserDtoAvatar {
     private String fullName="";
     private String firstName = "";
     private String lastName = "";
+    private boolean notification_system_status;
 }
