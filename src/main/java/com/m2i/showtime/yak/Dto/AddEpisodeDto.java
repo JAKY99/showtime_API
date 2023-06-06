@@ -15,4 +15,5 @@ public class AddEpisodeDto {
     public String name;
     public Long episode_number;
     public Long season_number;
+    public String air_date;
 }
