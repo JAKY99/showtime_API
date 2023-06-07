@@ -30,7 +30,7 @@ public class MetricsService {
         List<Metrics> getLastMetrics = metricsRepository.findLastMetrics();
         return getLastMetrics;
     }
-    @Scheduled(fixedRate = 1 ,timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 30 ,timeUnit = TimeUnit.MINUTES)
     public boolean updateMetrics() throws JsonProcessingException {
         metricsRepository.deleteAll();
         metricsRepository.resetAutoIncrement();
