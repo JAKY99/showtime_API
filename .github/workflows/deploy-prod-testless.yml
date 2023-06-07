@@ -15,8 +15,7 @@ jobs:
       env:
         sshKey: ${{ secrets.SSH_KEY }}
         envDeploymentProd: ${{ secrets.ENVDEPLOYMENTPRODUCTION }}
-        applicationProdProperties: ${{ secrets.APPLICATION_PROD_PROPERTIES }}
-        liquibaseProdProperties: ${{ secrets.LIQUIBASE_PROD_PROPERTIES }}
+        postgresPassword: ${{ secrets.POSTGRES_PASSWORD }}
     steps:
       - name: Generate the updated target directory to push on production
         run: |
@@ -26,8 +25,7 @@ jobs:
           rm showtime_API/src/main/resources/application.properties 
           mv showtime_API/src/main/resources/application.prod.properties showtime_API/src/main/resources/application.properties
           touch showtime_API/src/main/resources/.env  && echo "$envDeploymentProd" >> showtime_API/src/main/resources/.env
-          source showtime_API/src/main/resources/.env 
-          sed -i "s/password=postgres/password=$POSTGRES_PASSWORD/g" showtime_API/src/main/resources/liquibase.properties 
+          sed -i "s/password=postgres/password=$postgresPassword/g" showtime_API/src/main/resources/liquibase.properties 
           cd showtime_API &&  mvn dependency:purge-local-repository && mvn clean install -DskipTests --update-snapshots
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
           cd playbook && ansible-playbook deploy-prod-api-backend.yml -e "ansible_ssh_timeout=180"
