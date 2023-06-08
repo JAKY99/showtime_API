@@ -2,6 +2,7 @@ package com.m2i.showtime.yak.Entity;
 
 
 import com.fasterxml.jackson.annotation.*;
+import com.m2i.showtime.yak.common.comment.CommentType;
 import lombok.Getter;
 import lombok.Setter;
 import org.modelmapper.ModelMapper;
@@ -21,7 +22,7 @@ public class Comment {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        private Long movie_id;
+        private Long element_id;
 
         @ManyToOne
         @JsonIgnoreProperties("comments")
@@ -38,17 +39,19 @@ public class Comment {
 
         @OneToMany(cascade = CascadeType.ALL)
         private Set<Response> responses;
-
+        @Enumerated(EnumType.STRING)
+        private CommentType typeElement;
         public Comment() {
         }
 
-        public Comment(Long movie_id, User user, String content, LocalDateTime datePublication, boolean isValidate, boolean isSpoiler, boolean isDeleted) {
-                this.movie_id = movie_id;
+        public Comment(Long element_id, User user, String content, LocalDateTime datePublication, boolean isValidate, boolean isSpoiler, boolean isDeleted,CommentType typeElement) {
+                this.element_id = element_id;
                 this.user = user;
                 this.content = content;
                 this.datePublication = datePublication;
                 this.isValidate = isValidate;
                 this.isSpoiler = isSpoiler;
                 this.isDeleted = isDeleted;
+                this.typeElement = typeElement;
         }
 }

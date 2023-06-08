@@ -8,6 +8,7 @@ import com.m2i.showtime.yak.Repository.*;
 
 import com.m2i.showtime.yak.Service.User.UserService;
 
+import com.m2i.showtime.yak.common.comment.CommentType;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -39,11 +40,13 @@ public class CommentService {
         try {
             User user = this.userRepository.findUserByEmail(userCommentDto.getUserMail()).orElseThrow(() -> new IllegalStateException(UserNotFound));
             Comment comment = new Comment();
+            CommentType commentType = CommentType.valueOf(userCommentDto.getTypeElement().toUpperCase());
             comment.setContent(userCommentDto.getCommentText());
             comment.setUser(user);
-            comment.setMovie_id(userCommentDto.getMovieId());
+            comment.setElement_id(userCommentDto.getElementId());
+            comment.setTypeElement(commentType);
             this.commentRepository.save(comment);
-            movieService.getMovieOrCreateIfNotExist(userCommentDto.getMovieId(), userCommentDto.getMovieTitle());
+            movieService.getMovieOrCreateIfNotExist(userCommentDto.getElementId(), userCommentDto.getElementTitle());
             return true;
         }catch (Exception e){
             System.out.println(e.getMessage());
@@ -51,9 +54,17 @@ public class CommentService {
         }
     }
 
-    public List<CommentGetDto> getComments(int movieId, UserSimpleDto userSimpleDto) {
+    public List<CommentGetDto> getComments(long elementId, UserSimpleDto userSimpleDto, String type) {
         List<CommentGetDto> response = new ArrayList<>();
-        Optional<Comment[]> commentOptional = this.commentRepository.getCommentsByMovieId((long) movieId);
+        Optional<Comment[]> commentOptional = null;
+        if(type.equals("movie")){
+            commentOptional = this.commentRepository.getCommentsByTypeAndId((long) elementId,CommentType.MOVIE);
+        }
+        if(type.equals("serie")){
+            commentOptional = this.commentRepository.getCommentsByTypeAndId((long) elementId,CommentType.SERIE);
+        }
+
+
         User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
         for (Comment comment : commentOptional.get()) {
             CommentGetDto commentGetDto = new CommentGetDto();
@@ -153,7 +164,7 @@ public class CommentService {
             comment1.setSpoiler(true);
             comment1.setValidate(false);
             this.commentRepository.save(comment1);
-            Optional<Movie> currentMovie = movieRepository.findByTmdbId(comment1.getMovie_id());
+            Optional<Movie> currentMovie = movieRepository.findByTmdbId(comment1.getElement_id());
             String message = "Votre commentaire sur le film " + currentMovie.get().getName() + " a été signalé comme spoil";
             this.commentRepository.save(comment1);
             Notification notification = new Notification();
