@@ -6,8 +6,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class userCommentDto {
-    long movieId;
-    String movieTitle;
+    long elementId;
+    String elementTitle;
     String commentText;
     String userMail;
+    String typeElement;
 }

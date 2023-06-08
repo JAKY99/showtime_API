@@ -37,14 +37,14 @@ public class CommentController {
         return true;
     }
 
-    @GetMapping("/getComments/{movieId}")
-    public List<CommentGetDto> getComments(Authentication authentication, @PathVariable("movieId") int movieId) {
+    @GetMapping("/getComments/{elementId}")
+    public List<CommentGetDto> getComments(Authentication authentication, @PathVariable("elementId") long elementId,@RequestParam("type") String type) {
         userService.getUserFromJwt(authentication);
         Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
-        return commentService.getComments(movieId, userSimpleDto.orElseThrow(() -> {
+        return commentService.getComments(elementId, userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");
-                }));
+                }) , type);
     }
 
     @GetMapping("/getUserComments/{movieId}")
