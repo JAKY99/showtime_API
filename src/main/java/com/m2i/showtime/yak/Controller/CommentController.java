@@ -47,13 +47,13 @@ public class CommentController {
                 }) , type);
     }
 
-    @GetMapping("/getUserComments/{movieId}")
-    public List<CommentGetDto> getUserComments(Authentication authentication, @PathVariable("movieId") int movieId) {
+    @GetMapping("/getUserComments/{elementId}")
+    public List<CommentGetDto> getUserComments(Authentication authentication, @PathVariable("elementId") int elementId,@RequestParam("type") String type) {
         Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
                 .toString());
-        return commentService.getUserComments(movieId, userSimpleDto.orElseThrow(() -> {
+        return commentService.getUserComments(elementId, userSimpleDto.orElseThrow(() -> {
                     throw new IllegalStateException("User not found.");
-                }));
+                }),type);
     }
 
     @GetMapping("/getAllComments")
