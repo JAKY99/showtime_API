@@ -23,5 +23,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c WHERE c.element_id = ?1 and c.user.id = ?2 and c.typeElement =?3 and c.isValidate = false and c.isDeleted = false")
     Optional<Comment[]> getUserCommentsByMovieIdAndUserIdAndType(long movieId, long id,CommentType type);
-
+    @Query("SELECT c FROM Comment c WHERE c.user.username = ?1 and c.isSpoiler = false and c.isValidate = true and c.isDeleted = false order by c.datePublication desc")
+    Optional<Comment[]> findByUsername(String username);
 }

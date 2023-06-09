@@ -104,4 +104,10 @@ public class CommentController {
     public List<Response> fetchResponseComment(@PathVariable("commentId") Long commentId) {
         return commentService.fetchResponseComment(commentId);
     }
+    @GetMapping("/getAllUserComments/{username}")
+    public List<CommentGetDto> getUserComments(Authentication authentication,@PathVariable("username") String username) {
+        Optional<UserSimpleDto> userSimpleDto = commentService.getUserByEmail(authentication.getPrincipal()
+                .toString());
+        return commentService.getAllCommentsFromAllType(username);
+    }
 }

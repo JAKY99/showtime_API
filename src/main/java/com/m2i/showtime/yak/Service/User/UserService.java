@@ -1726,4 +1726,25 @@ public class UserService {
         }
         return false;
     }
+
+    public boolean updateAboutUser(String username, String aboutYou) {
+        Optional<User> user = userRepository.findUserByEmail(username);
+        if(user.isPresent()){
+            user.get().setAbout(aboutYou);
+            userRepository.save(user.get());
+            return true;
+        }
+        return false;
+    }
+
+    public AboutYouResponseDto getAboutUser(String username) {
+        AboutYouResponseDto aboutYouResponseDto = new AboutYouResponseDto();
+        Optional<User> user = userRepository.findUserByEmail(username);
+        if(user.isPresent()){
+            if(user.get().getAbout() != null){
+                aboutYouResponseDto.setAboutYou(user.get().getAbout());
+            }
+        }
+        return aboutYouResponseDto;
+    }
 }
