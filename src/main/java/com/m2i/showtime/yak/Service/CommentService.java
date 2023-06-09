@@ -86,11 +86,18 @@ public class CommentService {
         return response;
     }
 
-    public List<CommentGetDto> getUserComments(int movieId, UserSimpleDto userSimpleDto) {
+    public List<CommentGetDto> getUserComments(int elementId, UserSimpleDto userSimpleDto, String type) {
         //A changer token
         List<CommentGetDto> response = new ArrayList<>();
         User user = this.userRepository.findById(userSimpleDto.getId()).orElseThrow(() -> new IllegalStateException(UserNotFound));
-        Optional<Comment[]> comments = this.commentRepository.getUserCommentsByMovieIdAndUserId((long) movieId, (long) user.getId());
+        Optional<Comment[]> comments = null;
+        if(type.equals("movie")){
+            comments = this.commentRepository.getUserCommentsByMovieIdAndUserIdAndType((long) elementId, (long) user.getId(),CommentType.MOVIE);
+        }
+        if(type.equals("serie")){
+            comments = this.commentRepository.getUserCommentsByMovieIdAndUserIdAndType((long) elementId, (long) user.getId(),CommentType.SERIE);
+        }
+
         for (Comment comment : comments.get()) {
             LocalDateTime pubishDate = comment.getDatePublication();
             LocalDateTime now = LocalDateTime.now();
