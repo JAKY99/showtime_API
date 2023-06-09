@@ -25,8 +25,10 @@ public class CommentService {
     private final UserService userService;
     private final ResponseRepository responseRepository;
 
+    private final SerieRepository serieRepository;
+     private final TvService tvService;
     public CommentService(MovieService movieService, MovieRepository movieRepository, UserRepository userRepository, CommentRepository commentRepository, LikeRepository likeRepository, UserService userService,
-                          ResponseRepository responseRepository) {
+                          ResponseRepository responseRepository, SerieRepository serieRepository, TvService tvService) {
         this.movieService = movieService;
         this.movieRepository = movieRepository;
         this.userRepository = userRepository;
@@ -34,6 +36,8 @@ public class CommentService {
         this.likeRepository = likeRepository;
         this.userService = userService;
         this.responseRepository = responseRepository;
+        this.serieRepository = serieRepository;
+        this.tvService = tvService;
     }
 
     public boolean saveComment(userCommentDto userCommentDto) {
@@ -46,7 +50,12 @@ public class CommentService {
             comment.setElement_id(userCommentDto.getElementId());
             comment.setTypeElement(commentType);
             this.commentRepository.save(comment);
-            movieService.getMovieOrCreateIfNotExist(userCommentDto.getElementId(), userCommentDto.getElementTitle());
+            if(commentType.equals(CommentType.MOVIE)){
+                movieService.getMovieOrCreateIfNotExist(userCommentDto.getElementId(), userCommentDto.getElementTitle());
+            }
+            if(commentType.equals(CommentType.SERIE)){
+                tvService.getSerieOrCreateIfNotExist(userCommentDto.getElementId());
+            }
             return true;
         }catch (Exception e){
             System.out.println(e.getMessage());
@@ -258,6 +267,15 @@ public class CommentService {
         Optional<User> user = this.userRepository.findUserByEmail(username);
         Optional<Comment[]> comments = this.commentRepository.findByUsername(username);
         for (Comment comment : comments.get()) {
+            String elementName=null;
+            if(comment.getTypeElement().getType().equals("movie")){
+                Optional<Movie> currentMovie= this.movieRepository.findByTmdbId(comment.getElement_id());
+                        elementName = currentMovie.get().getName();
+            }
+            if(comment.getTypeElement().getType().equals("serie")){
+                Optional<Serie> currentSerie=  this.serieRepository.findSerieByTmdbId(comment.getElement_id());
+                elementName = currentSerie.get().getName();
+            }
             CommentGetDto commentGetDto = new CommentGetDto();
             comment.getUser().setComments(null);
             comment.getUser().setPassword(null);
@@ -267,6 +285,7 @@ public class CommentService {
             Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.get().getId());
             List<Response> responses = this.responseRepository.getResponsesByCommentId(comment.getId());
             commentGetDto.setNumberResponse(responses.size());
+            commentGetDto.setElementName(elementName);
             if (like.isPresent()) {
                 commentGetDto.setLiked(true);
             }

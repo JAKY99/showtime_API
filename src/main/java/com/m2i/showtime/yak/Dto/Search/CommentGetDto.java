@@ -15,4 +15,6 @@ public class CommentGetDto {
 
     private int numberResponse;
 
+    private String elementName;
+
 }
