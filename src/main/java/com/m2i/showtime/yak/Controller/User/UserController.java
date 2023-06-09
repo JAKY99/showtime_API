@@ -442,4 +442,14 @@ public class UserController {
         email = username;
         return userService.getTempForCropUrl(email);
     }
+    @PutMapping("edit-account/about-you")
+    public boolean updateAboutUser(Authentication authentication,@RequestBody String aboutYou) {
+        String username = userService.getUserFromJwt(authentication);
+        return userService.updateAboutUser(username,aboutYou);
+    }
+    @GetMapping("get/about-you")
+    public AboutYouResponseDto getAboutUser(Authentication authentication) {
+        String username = userService.getUserFromJwt(authentication);
+        return userService.getAboutUser(username);
+    }
 }

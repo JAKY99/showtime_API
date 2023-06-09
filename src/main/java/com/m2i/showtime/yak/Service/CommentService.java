@@ -252,4 +252,28 @@ public class CommentService {
         }
         return responseList;
     }
+
+    public List<CommentGetDto> getAllCommentsFromAllType(String username) {
+        List<CommentGetDto> response = new ArrayList<>();
+        Optional<User> user = this.userRepository.findUserByEmail(username);
+        Optional<Comment[]> comments = this.commentRepository.findByUsername(username);
+        for (Comment comment : comments.get()) {
+            CommentGetDto commentGetDto = new CommentGetDto();
+            comment.getUser().setComments(null);
+            comment.getUser().setPassword(null);
+            comment.getUser().setFollowers(null);
+            comment.getUser().setFollowing(null);
+            commentGetDto.setComments(comment);
+            Optional<Like> like = this.likeRepository.getLikeByCommentIdAndUserId(comment.getId(), user.get().getId());
+            List<Response> responses = this.responseRepository.getResponsesByCommentId(comment.getId());
+            commentGetDto.setNumberResponse(responses.size());
+            if (like.isPresent()) {
+                commentGetDto.setLiked(true);
+            }
+            response.add(commentGetDto);
+
+        }
+
+        return response;
+    }
 }
