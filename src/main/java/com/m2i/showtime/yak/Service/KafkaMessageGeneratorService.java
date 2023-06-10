@@ -9,6 +9,7 @@ import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
 import com.m2i.showtime.yak.Repository.NotificationRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.common.trophy.TrophyType;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -299,5 +300,52 @@ public class KafkaMessageGeneratorService {
             }
         });
         return new KafkaResponseDto("Sending message to topic: " + kafkaMessageDto.getTopicName() + "With message : " + kafkaMessageDto.getMessage());
+    }
+
+
+    public void sendTrophyMessage(String username, String name, String image, TrophyType type) {
+        Optional<User> user = this.userRepository.findUserByEmail(username);
+        String topicName = this.env+"Trophy";
+        String message = "You have earned the trophy : "+ name +" - "+ type.getType() +"! Congratulations!";
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setType("System");
+        notification.setSeverity("info");
+        this.notificationRepository.save(notification);
+        user.get().getNotifications().add(notification);
+        this.userRepository.save(user.get());
+        JSONObject data = new JSONObject();
+        data.put("message", notification.getMessage());
+        data.put("severity", notification.getSeverity());
+        data.put("type", notification.getType());
+        data.put("id", notification.getId());
+        data.put("dateCreated", notification.getDateCreated());
+        data.put("read", notification.getStatus());
+        data.put("dateRead", notification.getDateRead());
+        data.put("target", username);
+        data.put("image", image);
+
+        LOGGER.print("Sending message to topic: " + topicName);
+        LOGGER.print("With message : " + message);
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(topicName , data.toString());
+        simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                LOGGER.print("Sent message=[" + message +
+                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                LOGGER.print("Unable to send message=["
+                        + message + "] due to : " + ex.getMessage());
+                AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                client.close();
+                kafkaAdmin.initialize();
+            }
+        });
+
     }
 }

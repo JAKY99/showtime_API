@@ -21,13 +21,9 @@ import com.m2i.showtime.yak.Repository.CommentRepository;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Repository.UsersWatchedMovieRepository;
-import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
+import com.m2i.showtime.yak.Service.*;
 import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Enum.Status;
-import com.m2i.showtime.yak.Service.LoggerService;
-import com.m2i.showtime.yak.Service.MovieService;
-import com.m2i.showtime.yak.Service.RedisService;
-import com.m2i.showtime.yak.Service.TvService;
 import com.m2i.showtime.yak.common.notification.NotificationStatus;
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
@@ -91,6 +87,8 @@ public class UserService {
     private final TvService tvService;
     private final UsersWatchedMovieRepository usersWatchedMovieRepository;
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
+    private final TrophyService trophyService;
+
     @Value("${application.bucketName}")
     private String bucketName;
     @Value("${application.awsAccessKey}")
@@ -128,6 +126,8 @@ public class UserService {
     private final UserAuthService userAuthService;
     @Value("${spring.profiles.active}")
     private String ENV;
+    private final TrophyRepository trophyRepository;
+
     @Autowired
     public UserService(UserRepository userRepository,
                        MovieRepository movieRepository,
@@ -149,8 +149,9 @@ public class UserService {
                        SeasonHasEpisodeRepository seasonHasEpisodeRepository,
                        SerieHasSeasonRepository serieHasSeasonRepository,
                        SerieRepository serieRepository,
-                       TvService tvService
-                        ) {
+                       TvService tvService,
+                       TrophyService trophyService,
+                       TrophyRepository trophyRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -172,6 +173,8 @@ public class UserService {
         this.serieHasSeasonRepository = serieHasSeasonRepository;
         this.serieRepository = serieRepository;
         this.userAuthService = userAuthService;
+        this.trophyService = trophyService;
+        this.trophyRepository = trophyRepository;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -254,6 +257,7 @@ public class UserService {
             .add(movie);
             userRepository.save(user);
             this.increaseWatchedNumber(userWatchedMovieAddDto);
+            trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId());
         }
         if(optionalUserWatchedMovie.isPresent()){
             Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
@@ -708,6 +712,7 @@ public class UserService {
         .getWatchedMovies()
         .remove(movie);
         userRepository.save(user);
+        trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId());
     }
 
     public void increaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
@@ -1139,6 +1144,7 @@ public class UserService {
                     .getFavoriteSeries()
                     .add(serie);
             userRepository.save(user);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId());
             return true;
         }
         if(user.getFavoriteSeries().contains(serie)){
@@ -1146,6 +1152,7 @@ public class UserService {
                     .getFavoriteSeries()
                     .remove(serie);
             userRepository.save(user);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId());
             return false;
         }
         return false;
@@ -1368,10 +1375,11 @@ public class UserService {
 
     public SocialInfoDto getSocialPageInfo(String email) {
         User user = this.userRepository.findUserByEmail(email).orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Set<Trophy> trophies = trophyRepository.findAllbyUser(user);
         SocialInfoDto socialInfoDto = new SocialInfoDto();
         socialInfoDto.setAbout(user.getAbout());
         socialInfoDto.setComments("No comments yet");
-        socialInfoDto.setTrophies("No trophies yet");
+        socialInfoDto.setTrophies(trophies);
         return socialInfoDto;
     }
 
@@ -1400,7 +1408,7 @@ public class UserService {
             socialTopTenUserDto.setFullName(user.getFirstName() + " " + user.getLastName());
             socialTopTenUserDto.setUsername(user.getUsername());
             socialTopTenUserDto.setProfilePicture(user.getProfilePicture());
-            socialTopTenUserDto.setScore(0);
+            socialTopTenUserDto.setScore(user.getTrophy().size());
             socialTopTenUserDto.setRank(i+1);
             SocialTopTenUserDtos[i] = socialTopTenUserDto;
             i++;
@@ -1412,7 +1420,7 @@ public class UserService {
         SocialInfoDto socialInfoDto = new SocialInfoDto();
         socialInfoDto.setAbout(user.getAbout());
         socialInfoDto.setComments("No comments yet");
-        socialInfoDto.setTrophies("No trophies yet");
+        socialInfoDto.setTrophies(user.getTrophy());
         return socialInfoDto;
     }
 

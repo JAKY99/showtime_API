@@ -29,4 +29,16 @@ public class Trophy {
     @Enumerated(EnumType.STRING)
     private TrophyType type;
     private LocalDateTime dateCreated = LocalDateTime.now();
+
+
+
+    public Trophy() {
+
+    }
+    public Trophy(String name, String description, String image, TrophyType type) {
+        this.name = name;
+        this.description = description;
+        this.image = image;
+        this.type = type;
+    }
 }
