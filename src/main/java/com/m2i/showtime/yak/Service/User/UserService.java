@@ -13,7 +13,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
-import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.*;
 import com.m2i.showtime.yak.Repository.ActorRepository;
@@ -109,7 +108,6 @@ public class UserService {
     private String JWT_SECRET;
     private int multiplicatorTime = 1;
     private RedisService redisService;
-    private HazelcastConfig hazelcastConfig;
     private final String UserNotFound="User not found";
     @Value("${spring.tempPathName}")
     private String tempPathName;
@@ -137,7 +135,6 @@ public class UserService {
                        UsersWatchedMovieRepository usersWatchedMovieRepository,
                        KafkaMessageGeneratorService kafkaMessageGeneratorService,
                        RedisService redisService,
-                       HazelcastConfig hazelcastConfig,
                        LoggerService LOGGER,
                        UserAuthService userAuthService,
                        ActorRepository actorRepository,
@@ -163,7 +160,6 @@ public class UserService {
         this.actorRepository = actorRepository;
         this.usersWatchedMovieRepository = usersWatchedMovieRepository;
         this.redisService = redisService;
-        this.hazelcastConfig = hazelcastConfig;
         this.LOGGER = LOGGER;
         this.usersWatchedSeriesRepository = usersWatchedSeriesRepository;
         this.usersWatchedEpisodeRepository = usersWatchedEpisodeRepository;
@@ -943,11 +939,6 @@ public class UserService {
     public ProfileLazyUserDtoHeader getProfileHeaderData(String email) throws URISyntaxException, IOException, InterruptedException {
         String inCachePrefix = "profileHeaderData";
         String inCacheKey = inCachePrefix + email;
-        String test = (String) hazelcastConfig.hazelcastInstance().getMap(inCachePrefix).get(inCacheKey);
-          if(test!=null){
-              return new ObjectMapper().readValue(test, ProfileLazyUserDtoHeader.class);
-          }
-
         String checkInCache = this.redisService.getRedisCacheDataBDD(inCacheKey);
         if(checkInCache!=null){
             return new ObjectMapper().readValue(checkInCache, ProfileLazyUserDtoHeader.class);
@@ -961,7 +952,6 @@ public class UserService {
         profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
         String totalDurationSeriesMonthDayHour = durationConvertor(user.getTotalSeriesWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedSeries(totalDurationSeriesMonthDayHour);
-        hazelcastConfig.hazelcastInstance().getMap(inCachePrefix).set(inCacheKey,new ObjectMapper().writeValueAsString(profileLazyUserDtoHeader), 1, TimeUnit.MINUTES);
         this.redisService.setRedisCacheDataBDD(inCacheKey, new ObjectMapper().writeValueAsString(profileLazyUserDtoHeader),60);
         return profileLazyUserDtoHeader;
     }

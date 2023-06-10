@@ -1,6 +1,4 @@
 package com.m2i.showtime.yak;
-import com.amazonaws.services.appstream.model.Application;
-import com.m2i.showtime.yak.Configuration.HazelcastConfig;
 import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Permission;
 import com.m2i.showtime.yak.Entity.Role;
@@ -44,10 +42,6 @@ public class ServiceTest {
     private CustomThreadService customThreadService;
     @Autowired
     private ElasticsearchService elasticsearchService;
-    @Autowired
-    private HazelcastService hazelcastService;
-    @Autowired
-    private HazelcastConfig hazelcastConfig;
     @Autowired
     private VersionControleService versionControleService;
     @Autowired
