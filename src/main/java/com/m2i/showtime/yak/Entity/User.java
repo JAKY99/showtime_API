@@ -208,6 +208,16 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
     private Set<User> following = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name = "user_trophys",
+            joinColumns = {
+                    @JoinColumn(name = "user_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "trophy_id", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Trophy> trophy = new HashSet<>();
+
     public User(String firstName,
                 String lastName,
                 String username,
