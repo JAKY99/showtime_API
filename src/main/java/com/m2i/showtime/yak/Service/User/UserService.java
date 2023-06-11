@@ -24,6 +24,7 @@ import com.m2i.showtime.yak.Service.*;
 import com.m2i.showtime.yak.Repository.*;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.common.notification.NotificationStatus;
+import com.m2i.showtime.yak.common.trophy.TrophyActionName;
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -253,7 +254,7 @@ public class UserService {
             .add(movie);
             userRepository.save(user);
             this.increaseWatchedNumber(userWatchedMovieAddDto);
-            trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId());
+            trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId(), TrophyActionName.ADD_MOVIE_IN_WATCHED_LIST);
         }
         if(optionalUserWatchedMovie.isPresent()){
             Long currentWatchedNumber = optionalUserWatchedMovie.get().getWatchedNumber();
@@ -708,7 +709,7 @@ public class UserService {
         .getWatchedMovies()
         .remove(movie);
         userRepository.save(user);
-        trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId());
+        trophyService.checkAllTrophys(userWatchedMovieAddDto.getUserMail(),movie.getId(),TrophyActionName.REMOVE_MOVIE_IN_WATCHED_LIST);
     }
 
     public void increaseWatchedNumber(UserWatchedMovieAddDto userWatchedMovieAddDto) {
@@ -1134,7 +1135,7 @@ public class UserService {
                     .getFavoriteSeries()
                     .add(serie);
             userRepository.save(user);
-            trophyService.checkAllTrophys(user.getUsername(),serie.getId());
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
             return true;
         }
         if(user.getFavoriteSeries().contains(serie)){
@@ -1142,7 +1143,7 @@ public class UserService {
                     .getFavoriteSeries()
                     .remove(serie);
             userRepository.save(user);
-            trophyService.checkAllTrophys(user.getUsername(),serie.getId());
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.REMOVE_SERIE_IN_WATCHED_LIST);
             return false;
         }
         return false;

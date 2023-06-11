@@ -2,6 +2,7 @@ package com.m2i.showtime.yak.Service;
 
 import com.m2i.showtime.yak.Repository.TrophyRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import com.m2i.showtime.yak.common.trophy.TrophyActionName;
 import com.m2i.showtime.yak.common.trophy.list.MovieWatcherBronzeTrophy;
 import com.m2i.showtime.yak.common.trophy.list.MovieWatcherPlatineTrophy;
 import com.m2i.showtime.yak.common.trophy.list.MovieWatcherSilverTrophy;
@@ -32,10 +33,10 @@ public class TrophyService {
     }
 
     @Async
-    public void checkAllTrophys(String username, long elementId) {
-        movieWatcherBronzeTrophy.checkTrophy(username, elementId);
-        movieWatcherSilverTrophy.checkTrophy(username, elementId);
-        movieWatchergGoldTrophy.checkTrophy(username, elementId);
-        movieWatcherPlatineTrophy.checkTrophy(username, elementId);
+    public void checkAllTrophys(String username, long elementId, TrophyActionName trophyActionName) {
+        movieWatcherBronzeTrophy.checkTrophy(username, elementId,trophyActionName);
+        movieWatcherSilverTrophy.checkTrophy(username, elementId,trophyActionName);
+        movieWatchergGoldTrophy.checkTrophy(username, elementId,trophyActionName);
+        movieWatcherPlatineTrophy.checkTrophy(username, elementId,trophyActionName);
     }
 }

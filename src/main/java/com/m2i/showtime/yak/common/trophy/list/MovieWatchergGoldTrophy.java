@@ -8,6 +8,7 @@ import com.m2i.showtime.yak.Repository.TrophyRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import com.m2i.showtime.yak.Service.MovieService;
+import com.m2i.showtime.yak.common.trophy.TrophyActionName;
 import com.m2i.showtime.yak.common.trophy.TrophyInterface;
 import com.m2i.showtime.yak.common.trophy.TrophyType;
 import org.modelmapper.ModelMapper;
@@ -62,17 +63,19 @@ public class MovieWatchergGoldTrophy implements TrophyInterface {
 
     @Override
     @Transactional
-    public void checkTrophy(String username, long elementId) {
+    public void checkTrophy(String username, long elementId, TrophyActionName trophyActionName) {
         createTrophyIfNotExist();
         updateTrophyIfNecessary();
         Optional<Trophy> trophy = trophyRepository.findByNameAndType(this.name, this.type);
          User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
             return new RuntimeException("User not found");
         });
-         Optional<Movie> movie = movieRepository.findById(elementId);
-         if(!movie.isPresent()){
-             return ;
-         }
+        if(
+                !trophyActionName.equals(TrophyActionName.ADD_MOVIE_IN_WATCHED_LIST)
+                        && !trophyActionName.equals(TrophyActionName.REMOVE_MOVIE_IN_WATCHED_LIST)
+        ){
+            return ;
+        }
         if (user.getWatchedMovies().size() >= 50 && !user.getTrophy().contains(trophy.get())) {
             user.getTrophy().add(trophy.get());
             userRepository.save(user);
