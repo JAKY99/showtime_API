@@ -69,7 +69,7 @@ public class MovieWatcherSilverTrophy implements TrophyInterface {
          User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
             return new RuntimeException("User not found");
         });
-         Optional<Movie> movie = movieRepository.findByTmdbId(elementId);
+         Optional<Movie> movie = movieRepository.findById(elementId);
          if(!movie.isPresent()){
              return ;
          }
