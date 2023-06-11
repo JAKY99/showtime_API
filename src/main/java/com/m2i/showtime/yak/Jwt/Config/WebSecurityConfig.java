@@ -62,7 +62,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception{
         http
-                .csrf().disable() //TODO: Enable csrf for production to prevent assholes breaking our API
+                .csrf().disable() // Not needed since we are using JWT
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
