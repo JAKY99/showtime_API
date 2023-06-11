@@ -81,6 +81,7 @@ public class User implements UserDetails {
     private Long followersCounter = 0L;
     private Long commentsCounter = 0L;
     private String about;
+    private Boolean isTermsOfUseAccepted = false;
     //-------------------------------------------------
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "users_excluded_actors",
