@@ -82,6 +82,7 @@ public class MovieWatcherBronzeTrophy implements TrophyInterface {
             user.getTrophy().add(trophy.get());
             userRepository.save(user);
             NotifyUser(username, elementId);
+            NotifyFollowers(username, elementId);
         } else if (user.getWatchedMovies().size() < 1 && user.getTrophy().contains(trophy.get())) {
             user.getTrophy().remove(trophy.get());
             userRepository.save(user);
@@ -91,6 +92,16 @@ public class MovieWatcherBronzeTrophy implements TrophyInterface {
     @Override
     public void NotifyUser(String username, long elementId) {
         kafkaMessageGeneratorService.sendTrophyMessage(username, this.name, this.image, this.type);
+    }
+
+    @Override
+    public void NotifyFollowers(String username, long elementId) {
+        User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
+            return new RuntimeException("User not found");
+        });
+        user.getFollowers().forEach(follower -> {
+            kafkaMessageGeneratorService.sendTrophyMessageToFollowers(follower.getUsername(),username, this.name, this.image, this.type);
+        });
     }
 
     @Override

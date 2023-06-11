@@ -348,4 +348,49 @@ public class KafkaMessageGeneratorService {
         });
 
     }
+
+    public void sendTrophyMessageToFollowers(String usernameRewarded,String usernameToNotify, String name, String image, TrophyType type) {
+        Optional<User> user = this.userRepository.findUserByEmail(usernameToNotify);
+        String topicName = this.env+"Trophy";
+        String message = "The user : " + usernameRewarded + "earned the trophy : "+ name +" - "+ type.getType() +"! Congratulations!";
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setType("System");
+        notification.setSeverity("info");
+        this.notificationRepository.save(notification);
+        user.get().getNotifications().add(notification);
+        this.userRepository.save(user.get());
+        JSONObject data = new JSONObject();
+        data.put("message", notification.getMessage());
+        data.put("severity", notification.getSeverity());
+        data.put("type", notification.getType());
+        data.put("id", notification.getId());
+        data.put("dateCreated", notification.getDateCreated());
+        data.put("read", notification.getStatus());
+        data.put("dateRead", notification.getDateRead());
+        data.put("target", usernameToNotify);
+        data.put("image", image);
+
+        LOGGER.print("Sending message to topic: " + topicName);
+        LOGGER.print("With message : " + message);
+        ListenableFuture<SendResult<String, String>> future =
+                kafkaTemplate.send(topicName , data.toString());
+        simpMessagingTemplate.convertAndSend("/web-socket/activity", "Still active");
+        future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+            @Override
+            public void onSuccess(SendResult<String, String> result) {
+                LOGGER.print("Sent message=[" + message +
+                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+
+            }
+            @Override
+            public void onFailure(Throwable ex) {
+                LOGGER.print("Unable to send message=["
+                        + message + "] due to : " + ex.getMessage());
+                AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties());
+                client.close();
+                kafkaAdmin.initialize();
+            }
+        });
+    }
 }
