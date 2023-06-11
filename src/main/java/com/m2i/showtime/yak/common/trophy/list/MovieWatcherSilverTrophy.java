@@ -12,6 +12,7 @@ import com.m2i.showtime.yak.common.trophy.TrophyInterface;
 import com.m2i.showtime.yak.common.trophy.TrophyType;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -60,6 +61,7 @@ public class MovieWatcherSilverTrophy implements TrophyInterface {
     }
 
     @Override
+    @Transactional
     public void checkTrophy(String username, long elementId) {
         createTrophyIfNotExist();
         updateTrophyIfNecessary();
@@ -67,7 +69,7 @@ public class MovieWatcherSilverTrophy implements TrophyInterface {
          User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
             return new RuntimeException("User not found");
         });
-         Optional<Movie> movie = movieRepository.findById(elementId);
+         Optional<Movie> movie = movieRepository.findByTmdbId(elementId);
          if(!movie.isPresent()){
              return ;
          }
