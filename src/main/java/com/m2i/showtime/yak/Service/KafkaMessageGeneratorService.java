@@ -349,8 +349,7 @@ public class KafkaMessageGeneratorService {
 
     }
 
-    public void sendTrophyMessageToFollowers(String usernameToNotify,String usernameRewarded, String name, String image, TrophyType type) {
-        Optional<User> user = this.userRepository.findUserByEmail(usernameToNotify);
+    public void sendTrophyMessageToFollowers(User userToNotify,String usernameRewarded, String name, String image, TrophyType type) {
         String topicName = this.env+"Trophy";
         String message = "The user : " + usernameRewarded + " earned the trophy : "+ name +" - "+ type.getType() +" !";
         Notification notification = new Notification();
@@ -358,8 +357,8 @@ public class KafkaMessageGeneratorService {
         notification.setType("System");
         notification.setSeverity("info");
         this.notificationRepository.save(notification);
-        user.get().getNotifications().add(notification);
-        this.userRepository.save(user.get());
+        userToNotify.getNotifications().add(notification);
+        this.userRepository.save(userToNotify);
         JSONObject data = new JSONObject();
         data.put("message", notification.getMessage());
         data.put("severity", notification.getSeverity());
@@ -368,7 +367,7 @@ public class KafkaMessageGeneratorService {
         data.put("dateCreated", notification.getDateCreated());
         data.put("read", notification.getStatus());
         data.put("dateRead", notification.getDateRead());
-        data.put("target", usernameToNotify);
+        data.put("target", userToNotify.getUsername());
         data.put("image", image);
 
         LOGGER.print("Sending message to topic: " + topicName);

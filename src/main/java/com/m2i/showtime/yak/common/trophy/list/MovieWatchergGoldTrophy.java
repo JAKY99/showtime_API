@@ -96,8 +96,9 @@ public class MovieWatchergGoldTrophy implements TrophyInterface {
         User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
             return new RuntimeException("User not found");
         });
+        String usernameToUse= user.getFullName().length()>0?user.getFullName():user.getUsername();
         user.getFollowers().forEach(follower -> {
-            kafkaMessageGeneratorService.sendTrophyMessageToFollowers(follower.getUsername(),username, this.name, this.image, this.type);
+            kafkaMessageGeneratorService.sendTrophyMessageToFollowers(follower,usernameToUse, this.name, this.image, this.type);
         });
     }
 
