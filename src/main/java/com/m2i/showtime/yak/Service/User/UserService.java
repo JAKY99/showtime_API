@@ -1754,4 +1754,14 @@ public class UserService {
         }
         return false;
     }
+
+    public boolean acceptTermOfUseInformation(String username) {
+        Optional<User> user = userRepository.findUserByEmail(username);
+        if(user.isPresent()){
+            user.get().setIsTermsOfUseAccepted(true);
+            userRepository.save(user.get());
+            return true;
+        }
+        return false;
+    }
 }

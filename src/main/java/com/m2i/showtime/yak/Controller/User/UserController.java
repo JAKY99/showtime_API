@@ -457,4 +457,9 @@ public class UserController {
         String username = userService.getUserFromJwt(authentication);
         return userService.getTermOfUseInformation(username);
     }
+    @GetMapping("accept/terms-of-use-agreement")
+    public boolean acceptTermOfUseInformation(Authentication authentication) {
+        String username = userService.getUserFromJwt(authentication);
+        return userService.acceptTermOfUseInformation(username);
+    }
 }
