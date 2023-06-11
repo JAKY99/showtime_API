@@ -71,7 +71,6 @@ public class MovieWatcherBronzeTrophy implements TrophyInterface {
          User user = userRepository.findUserByEmail(username).orElseThrow(() -> {
             return new RuntimeException("User not found");
         });
-         Optional<Movie> movie = movieRepository.findById(elementId);
          if(
                  !trophyActionName.equals(TrophyActionName.ADD_MOVIE_IN_WATCHED_LIST)
                  && !trophyActionName.equals(TrophyActionName.REMOVE_MOVIE_IN_WATCHED_LIST)
