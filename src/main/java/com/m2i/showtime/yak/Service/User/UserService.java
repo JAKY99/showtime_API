@@ -1746,4 +1746,12 @@ public class UserService {
         }
         return aboutYouResponseDto;
     }
+
+    public boolean getTermOfUseInformation(String username) {
+        Optional<User> user = userRepository.findUserByEmail(username);
+        if(user.isPresent()){
+            return user.get().getIsTermsOfUseAccepted();
+        }
+        return false;
+    }
 }
