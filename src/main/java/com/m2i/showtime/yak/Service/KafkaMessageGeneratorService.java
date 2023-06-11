@@ -349,10 +349,10 @@ public class KafkaMessageGeneratorService {
 
     }
 
-    public void sendTrophyMessageToFollowers(String usernameRewarded,String usernameToNotify, String name, String image, TrophyType type) {
+    public void sendTrophyMessageToFollowers(String usernameToNotify,String usernameRewarded, String name, String image, TrophyType type) {
         Optional<User> user = this.userRepository.findUserByEmail(usernameToNotify);
         String topicName = this.env+"Trophy";
-        String message = "The user : " + usernameRewarded + "earned the trophy : "+ name +" - "+ type.getType() +"! Congratulations!";
+        String message = "The user : " + usernameRewarded + " earned the trophy : "+ name +" - "+ type.getType() +" !";
         Notification notification = new Notification();
         notification.setMessage(message);
         notification.setType("System");
