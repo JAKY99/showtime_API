@@ -20,7 +20,6 @@ import java.util.Optional;
 @Component
 
 public class MovieWatcherPlatineTrophy implements TrophyInterface {
-    private final MovieService movieService;
     private final TrophyRepository trophyRepository;
     private final UserRepository userRepository;
     private final String name = "Movie Watcher";
@@ -29,15 +28,14 @@ public class MovieWatcherPlatineTrophy implements TrophyInterface {
     private final TrophyType type = TrophyType.PLATINUM;
 
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
-    private final MovieRepository movieRepository;
 
-    public MovieWatcherPlatineTrophy(MovieService movieService, TrophyRepository trophyRepository, UserRepository userRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService,
-                                     MovieRepository movieRepository) {
-        this.movieService = movieService;
+    public MovieWatcherPlatineTrophy(TrophyRepository trophyRepository,
+                                     UserRepository userRepository,
+                                     KafkaMessageGeneratorService kafkaMessageGeneratorService
+                                     ) {
         this.trophyRepository = trophyRepository;
         this.userRepository = userRepository;
         this.kafkaMessageGeneratorService = kafkaMessageGeneratorService;
-        this.movieRepository = movieRepository;
     }
     @Override
     public void createTrophyIfNotExist() {
