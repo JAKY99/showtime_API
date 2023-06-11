@@ -12,6 +12,7 @@ import com.m2i.showtime.yak.common.trophy.TrophyInterface;
 import com.m2i.showtime.yak.common.trophy.TrophyType;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -60,6 +61,7 @@ public class MovieWatchergGoldTrophy implements TrophyInterface {
     }
 
     @Override
+    @Transactional
     public void checkTrophy(String username, long elementId) {
         createTrophyIfNotExist();
         updateTrophyIfNecessary();

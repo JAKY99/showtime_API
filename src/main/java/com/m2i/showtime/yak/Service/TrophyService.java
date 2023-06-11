@@ -7,6 +7,7 @@ import com.m2i.showtime.yak.common.trophy.list.MovieWatcherPlatineTrophy;
 import com.m2i.showtime.yak.common.trophy.list.MovieWatcherSilverTrophy;
 import com.m2i.showtime.yak.common.trophy.list.MovieWatchergGoldTrophy;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,6 +21,7 @@ public class TrophyService {
     private final MovieWatchergGoldTrophy movieWatchergGoldTrophy;
     private final MovieWatcherPlatineTrophy movieWatcherPlatineTrophy;
 
+
     public TrophyService(TrophyRepository trophyRepository, UserRepository userRepository, MovieWatcherBronzeTrophy movieWatcherBronzeTrophy, MovieWatcherSilverTrophy movieWatcherSilverTrophy, MovieWatchergGoldTrophy movieWatchergGoldTrophy, MovieWatcherPlatineTrophy movieWatcherPlatineTrophy) {
         this.trophyRepository = trophyRepository;
         this.userRepository = userRepository;
@@ -28,6 +30,7 @@ public class TrophyService {
         this.movieWatchergGoldTrophy = movieWatchergGoldTrophy;
         this.movieWatcherPlatineTrophy = movieWatcherPlatineTrophy;
     }
+
     @Async
     public void checkAllTrophys(String username, long elementId) {
         movieWatcherBronzeTrophy.checkTrophy(username, elementId);

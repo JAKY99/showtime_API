@@ -11,11 +11,14 @@ import com.m2i.showtime.yak.Service.MovieService;
 import com.m2i.showtime.yak.common.trophy.TrophyInterface;
 import com.m2i.showtime.yak.common.trophy.TrophyType;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 @Component
-
 public class MovieWatcherBronzeTrophy implements TrophyInterface {
     private final MovieService movieService;
     private final TrophyRepository trophyRepository;
@@ -59,6 +62,7 @@ public class MovieWatcherBronzeTrophy implements TrophyInterface {
     }
 
     @Override
+    @Transactional
     public void checkTrophy(String username, long elementId) {
         createTrophyIfNotExist();
         updateTrophyIfNecessary();
