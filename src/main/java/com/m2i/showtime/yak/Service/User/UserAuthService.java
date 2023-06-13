@@ -10,6 +10,7 @@ import com.m2i.showtime.yak.Repository.RoleRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import com.m2i.showtime.yak.Service.KafkaMessageGeneratorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,6 +30,8 @@ public class UserAuthService implements UserDetailsService {
     private final RoleRepository roleRepository;
     @Autowired
     private final KafkaMessageGeneratorService kafkaMessageGeneratorService;
+    @Autowired
+    private LoginAttemptService loginAttemptService;
     @Autowired
     public UserAuthService(UserRepository userRepository, RoleRepository roleRepository, KafkaMessageGeneratorService kafkaMessageGeneratorService) {
         this.userRepository = userRepository;
@@ -78,6 +81,9 @@ public class UserAuthService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email){
+        if (loginAttemptService.isBlocked()) {
+            throw new InternalAuthenticationServiceException("Too many login attempts. Please try again later.");
+        }
         User user = userRepository
                 .findUserByEmail(email)
                 .orElseThrow(() ->
@@ -88,6 +94,7 @@ public class UserAuthService implements UserDetailsService {
 
         return user;
     }
+
     private User setAuthoritiesForNewUser(User user) {
         Optional<Role> ROLE_USER = roleRepository.findByRole(USER.name());
         user.setRole(ROLE_USER.get());
