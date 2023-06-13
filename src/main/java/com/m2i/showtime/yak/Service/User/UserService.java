@@ -882,10 +882,16 @@ public class UserService {
         if(user == null){
             throw new IllegalStateException(UserNotFound);
         }
-        if(user.getDateLastMailingResetPassword()!=null){
-            boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(30).isBefore(LocalDateTime.now());
+        if(!user.getTokenResetPassword().equals(null)){
+            boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(1).isBefore(LocalDateTime.now());
             if(!delayCheck){
                 return 403;
+            }
+        }
+        if(user.getDateLastMailingResetPassword()!=null){
+            boolean delayCheck = user.getDateLastMailingResetPassword().plusMinutes(5).isBefore(LocalDateTime.now());
+            if(!delayCheck){
+                return 405;
             }
         }
         Algorithm algorithm = Algorithm.HMAC256(JWT_SECRET);
@@ -928,12 +934,17 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         boolean checkToken = this.checkToken(resetPasswordUseDto.getToken());
         PasswordEncoder passwordEncoder = this.encoder();
-        if(checkToken && user.getTokenResetPassword().equals(resetPasswordUseDto.getToken())){
-            user.setPassword(passwordEncoder.encode(resetPasswordUseDto.getPassword()));
-            user.setTokenResetPassword(null);
-            userRepository.saveAndFlush(user);
-            return 200;
+        try{
+            if(checkToken && user.getTokenResetPassword().equals(resetPasswordUseDto.getToken())){
+                user.setPassword(passwordEncoder.encode(resetPasswordUseDto.getPassword()));
+                user.setTokenResetPassword(null);
+                userRepository.saveAndFlush(user);
+                return 200;
+            }
+        }catch (Exception e){
+            return 401;
         }
+
         return 401;
     }
 
