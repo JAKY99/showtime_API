@@ -57,7 +57,6 @@ public class TvService {
 
     public AddSerieDto getSerieDetails(Long tmdbId) throws URISyntaxException, IOException, InterruptedException {
         System.out.println("tmdb key :"+TMDB_KEY);
-        HttpClient client = HttpClient.newHttpClient();
         String urlToCall =  "https://api.themoviedb.org/3/tv/" + tmdbId + "?api_key=" + TMDB_KEY;
         System.out.println("urlToCall :"+urlToCall);
         JSONObject documentObj = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
