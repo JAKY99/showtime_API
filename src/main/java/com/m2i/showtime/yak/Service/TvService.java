@@ -9,11 +9,8 @@ import com.m2i.showtime.yak.Entity.Season;
 import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
-import org.joda.time.DateTime;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,7 +21,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.Future;
 
 @Service
 public class TvService {
@@ -35,11 +31,13 @@ public class TvService {
     private final UserRepository userRepository;
     private final RedisConfig redisConfig;
     private final TvRepository tvRepository;
+    private final RedisService redisService;
 
-    public TvService(UserRepository userRepository, RedisConfig redisConfig, TvRepository tvRepository) {
+    public TvService(UserRepository userRepository, RedisConfig redisConfig, TvRepository tvRepository, RedisService redisService) {
         this.userRepository = userRepository;
         this.redisConfig = redisConfig;
         this.tvRepository = tvRepository;
+        this.redisService = redisService;
     }
 
 
@@ -59,23 +57,15 @@ public class TvService {
 
     public AddSerieDto getSerieDetails(Long tmdbId) throws URISyntaxException, IOException, InterruptedException {
         System.out.println("tmdb key :"+TMDB_KEY);
-        HttpClient client = HttpClient.newHttpClient();
         String urlToCall =  "https://api.themoviedb.org/3/tv/" + tmdbId + "?api_key=" + TMDB_KEY;
         System.out.println("urlToCall :"+urlToCall);
-        HttpRequest dataFromSerie = HttpRequest.newBuilder()
-                .uri(new URI(urlToCall))
-                .GET()
-                .build();
-        HttpResponse response = client.send(dataFromSerie, HttpResponse.BodyHandlers.ofString());
-
-        JSONObject documentObj = new JSONObject(response.body().toString());
+        JSONObject documentObj = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
         Gson gson = new Gson();
         System.out.println("response :"+documentObj.toString());
         return gson.fromJson(String.valueOf(documentObj) , AddSerieDto.class);
     }
 
     public Serie createSerieWithSeasonsAndEpisodes(Long tmbdId) throws IOException, InterruptedException, URISyntaxException {
-        HttpClient client = HttpClient.newHttpClient();
         Gson gson = new Gson();
 
         AddSerieDto serie = getSerieDetails(tmbdId);
@@ -84,13 +74,7 @@ public class TvService {
         Set<Season> seasonList = new HashSet<>();
         for (int i = 0; i < seasons.length; i++) {
             String urlEpisode = "https://api.themoviedb.org/3/tv/" + tmbdId + "/season/" + seasons[i].season_number + "?api_key=" + TMDB_KEY;
-            HttpRequest dataEpisode = HttpRequest.newBuilder()
-                    .uri(new URI(urlEpisode))
-                    .GET()
-                    .build();
-            HttpResponse resp = client.send(dataEpisode, HttpResponse.BodyHandlers.ofString());
-
-            JSONObject documentObj2 = new JSONObject(resp.body().toString());
+            JSONObject documentObj2 = this.redisService.getDataFromRedisForInternalRequest(urlEpisode);
 
             AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2) , AddSeasonDto.class);
             if(seasonDto.air_date != null||!seasonDto.episodes[0].air_date.equals("null")) {

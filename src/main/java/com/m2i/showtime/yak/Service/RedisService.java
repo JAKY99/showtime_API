@@ -95,4 +95,26 @@ public class RedisService {
         redisLetuceConfig.redisClient().connect().sync().expire(key, expire);
         return true;
     }
+    public JSONObject getDataFromRedisForInternalRequest(String brutUrl) throws URISyntaxException, IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        URI encodedUrl = new URI(brutUrl);
+        String  check = redisLetuceConfig.redisClient().connect().sync().get(encodedUrl.toString());
+        JSONObject documentObj = null;
+        if(check==null) {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(encodedUrl)
+                    .GET()
+                    .build();
+            HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            documentObj = new JSONObject(response.body().toString());
+            redisLetuceConfig.redisClient().connect().sync().set(encodedUrl.toString(), documentObj.toString());
+            redisLetuceConfig.redisClient().connect().sync().expire(encodedUrl.toString(), 3600);
+            return documentObj;
+        }
+        if(check!=null) {
+            documentObj = new JSONObject(check);
+            return documentObj;
+        }
+        return documentObj;
+    }
 }

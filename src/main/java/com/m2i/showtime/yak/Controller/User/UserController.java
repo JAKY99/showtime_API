@@ -462,4 +462,47 @@ public class UserController {
         String username = userService.getUserFromJwt(authentication);
         return userService.acceptTermOfUseInformation(username);
     }
+    @PostMapping("serie/increaseWatchedNumber/")
+    public boolean increaseWatchedNumberSerie(Authentication authentication,@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        String username = userService.getUserFromJwt(authentication);
+        userWatchedSerieAddDto.setUserMail(username);
+        try {
+            userService.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    @PostMapping("serie/removeSerieFromViewInfo")
+    public boolean removeSerieFromViewInfo(Authentication authentication,@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userWatchedSerieAddDto.setUserMail(username);
+        return userService.removeSerieFromViewInfo(userWatchedSerieAddDto);
+    }
+    @PostMapping("serie/removeSeasonFromViewInfo")
+    public boolean removeSeasonFromViewInfo(Authentication authentication,@RequestBody UserRemoveSeasonDto userRemoveSeasonDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userRemoveSeasonDto.setUsername(username);
+        return userService.removeSeasonFromViewInfo(userRemoveSeasonDto);
+    }
+    @PostMapping("serie/removeEpisodeFromViewInfo")
+    public boolean removeEpisodeFromViewInfo(Authentication authentication,@RequestBody UserRemoveEpisodeDto userRemoveEpisodeDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userRemoveEpisodeDto.setUsername(username);
+        try {
+            return userService.removeEpisodeFromViewInfo(userRemoveEpisodeDto);
+        } catch (Exception e) {
+            throw  e;
+        }
+    }
+    @PostMapping("serie/addAgainEpisodeToWatchedList")
+    public boolean addAgainEpisodeToWatchedList(Authentication authentication,@RequestBody UserRemoveEpisodeDto userRemoveEpisodeDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userRemoveEpisodeDto.setUsername(username);
+        try {
+            return userService.removeEpisodeFromViewInfo(userRemoveEpisodeDto);
+        } catch (Exception e) {
+            throw  e;
+        }
+    }
 }
