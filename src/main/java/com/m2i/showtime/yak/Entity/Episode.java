@@ -6,7 +6,12 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "episode")
+@Table(name = "episode",
+        indexes = @Index(columnList = "imbd_id , season_number , episode_number"),
+        uniqueConstraints = {
+                @UniqueConstraint(name = "episode_imbd_id_unique", columnNames = "imbd_id")
+        }
+)
 @Getter
 @Setter
 public class Episode {
@@ -21,6 +26,7 @@ public class Episode {
             generator = "episode_sequence"
     )
     private Long id;
+
 
     private Long imbd_id;
 

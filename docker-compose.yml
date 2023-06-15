@@ -29,6 +29,7 @@ services:
       - '5432:5432'
     volumes:
       - ./local_pgdata:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
   pgadmin:
     build:  ./docker/pgadmin
     privileged: true
