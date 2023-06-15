@@ -13,4 +13,6 @@ public class UserWatchedTvEpisodeAddDto {
     Long tvTmdbId;
     Long tvSeasonid;
     Long episodeId;
+    Long episodeNumber;
+    Long seasonNumber;
 }

@@ -66,7 +66,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -126,6 +126,7 @@ public class UserService {
     @Value("${spring.profiles.active}")
     private String ENV;
     private final TrophyRepository trophyRepository;
+    private final EpisodeRepository episodeRepository;
 
     @Autowired
     public UserService(UserRepository userRepository,
@@ -149,7 +150,8 @@ public class UserService {
                        SerieRepository serieRepository,
                        TvService tvService,
                        TrophyService trophyService,
-                       TrophyRepository trophyRepository) {
+                       TrophyRepository trophyRepository,
+                       EpisodeRepository episodeRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -172,6 +174,7 @@ public class UserService {
         this.userAuthService = userAuthService;
         this.trophyService = trophyService;
         this.trophyRepository = trophyRepository;
+        this.episodeRepository = episodeRepository;
     }
     public Optional<UserSimpleDto> getUser(Long userId) {
         Optional<UserSimpleDto> user = userRepository.findSimpleUserById(userId);
@@ -286,6 +289,7 @@ public class UserService {
             relatedSerie.get().setStatus(Status.SEEN);
 
             this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+            trophyService.checkAllTrophys(userWatchedSerieAddDto.getUserMail(),serie.getId(), TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
         }
 
         //remove to watchlist bcz seen
@@ -321,16 +325,13 @@ public class UserService {
             usersWatchedSeriesRepository.save(optionalUserWatchedSerie.get());
         }
 
-//        @TODO trouver un moyen de compter la durée d'une saison et l'ajouter
-//        this.increaseTotalMovieWatchedTime(userWatchedSerieAddDto);
+
 
         return true;
     }
 
     public boolean addEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto ) throws URISyntaxException, IOException, InterruptedException {
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvEpisodeAddDto.getTvTmdbId());
-
-
 
         // récup l'user
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvEpisodeAddDto.getUserMail());
@@ -347,23 +348,22 @@ public class UserService {
         Optional<Episode> episode = usersWatchedEpisodeRepository.findEpisodeByTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId());
         //Check episode is in watchedListEpisode
         Optional<UsersWatchedEpisode> optionalUserWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episode.get().getId(), userId);
-
+        increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+        increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+        increaseDurationSerieDto.setUsername(userWatchedTvEpisodeAddDto.getUserMail());
+        increaseDurationSerieDto.setSeasonNumber(userWatchedTvEpisodeAddDto.getSeasonNumber());
+        increaseDurationSerieDto.setEpisodeNumber(userWatchedTvEpisodeAddDto.getEpisodeNumber());
         // si pas présent alors add
         if (!optionalUserWatchedEpisode.isPresent()) {
-
             user
                     .getWatchedEpisodes()
                     .add(episode.get());
             userRepository.save(user);
-
-
             increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
-
         }else{
             Long currentWatchedNumber = optionalUserWatchedEpisode.get().getWatchedNumber();
             optionalUserWatchedEpisode.get().setWatchedNumber(currentWatchedNumber+1L);
             usersWatchedEpisodeRepository.save(optionalUserWatchedEpisode.get());
-
             increaseWatchedNumberEpisode(userWatchedTvEpisodeAddDto);
         }
         // méthode pour rajouter la saison si tout les épisodes d'une saison sont visionnés && mettre le bon statut
@@ -375,7 +375,7 @@ public class UserService {
             updateSeasonStatus(seasonHasEpisode.get().getSeason().getTmdbSeasonId(), userWatchedTvEpisodeAddDto.getUserMail() , userWatchedTvEpisodeAddDto.getTvTmdbId());
         }
 
-        // @TODO methode pour ajouter le temps de visionnage de l'épisode
+        increaseWatchedDurationSeries(increaseDurationSerieDto);
 
         return true;
     }
@@ -601,7 +601,6 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedTvSeasonAddDto.getUserMail());
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
 
-
         //remove to watchlist bcz seen
         if(user.getWatchlistSeries().contains(serie)){
             user.getWatchlistSeries().remove(serie);
@@ -613,20 +612,20 @@ public class UserService {
                 userWatchedTvSeasonAddDto.getTvSeasonid(),
                 user.getId()
         );
-
+        Optional<Season> seasonToAdd = serie
+                .getHasSeason()
+                .stream()
+                .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
+                .findFirst();
         // create season if required
         if(relationUserSeason.isEmpty()) {
-            Optional<Season> seasonToAdd = serie
-                    .getHasSeason()
-                    .stream()
-                    .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
-                    .findFirst();
+
 
             // add season to user season's count
             if(!user.getWatchedSeasons().contains(seasonToAdd.get())){
                 user.getWatchedSeasons().add(seasonToAdd.get());
                 userRepository.save(user);
-                // @TODO ajouter le temps de la série au compteur
+
             }
 
             // seek new relation user_season and update status
@@ -642,6 +641,7 @@ public class UserService {
 
                 updateSerieStatus(user, serie.getTmdbId());
             }
+
             // create relation user_episode for every ep of the season
             createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
         }else{
@@ -649,13 +649,31 @@ public class UserService {
             relationUserSeason.get().setStatus(Status.SEEN);
             returnedStatus = Status.SEEN;
             relationUserSeason.get().setWatchedNumber(relationUserSeason.get().getWatchedNumber()+1L);
-            // @TODO ajouter le temps de la série au compteur v2
+
             usersWatchedSeasonRepository.save(relationUserSeason.get());
 
             updateSerieStatus(user, serie.getTmdbId());
 
             createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
 
+
+        }
+        List<Episode> episodes = new ArrayList<>(seasonToAdd.get().getHasEpisode());
+        for (Episode episode : episodes) {
+            increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+            increaseDurationSerieDto.setUsername(userWatchedTvSeasonAddDto.getUserMail());
+            increaseDurationSerieDto.setSeasonNumber(seasonToAdd.get().getSeason_number());
+            increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
+            increaseDurationSerieDto.setTvTmdbId(userWatchedTvSeasonAddDto.getTvTmdbId());
+            try {
+                increaseWatchedDurationSeries(increaseDurationSerieDto);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         return returnedStatus;
     }
@@ -729,6 +747,15 @@ public class UserService {
             throw new IllegalStateException(UserNotFound);
         }
         user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() + 1L);
+        userRepository.save(user);
+    }
+    public void decreaseWatchedNumberSeries(UserWatchedSerieAddDto userWatchedSerieAddDto) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        user.setTotalSeriesWatchedNumber(user.getTotalSeriesWatchedNumber() - 1L);
         userRepository.save(user);
     }
 
@@ -949,12 +976,6 @@ public class UserService {
     }
 
     public ProfileLazyUserDtoHeader getProfileHeaderData(String email) throws URISyntaxException, IOException, InterruptedException {
-        String inCachePrefix = "profileHeaderData";
-        String inCacheKey = inCachePrefix + email;
-        String checkInCache = this.redisService.getRedisCacheDataBDD(inCacheKey);
-        if(checkInCache!=null){
-            return new ObjectMapper().readValue(checkInCache, ProfileLazyUserDtoHeader.class);
-        }
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         ProfileLazyUserDtoHeader profileLazyUserDtoHeader = new ProfileLazyUserDtoHeader();
@@ -964,7 +985,6 @@ public class UserService {
         profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
         String totalDurationSeriesMonthDayHour = durationConvertor(user.getTotalSeriesWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedSeries(totalDurationSeriesMonthDayHour);
-        this.redisService.setRedisCacheDataBDD(inCacheKey, new ObjectMapper().writeValueAsString(profileLazyUserDtoHeader),60);
         return profileLazyUserDtoHeader;
     }
 
@@ -1774,5 +1794,196 @@ public class UserService {
             return true;
         }
         return false;
+    }
+
+    public boolean removeSerieFromViewInfo(UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedSerieAddDto.getTmdbId());
+
+        // récup l'user
+        Optional<User> optionalUser = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+
+        //remove to watchlist bcz seen
+        if(user.getWatchlistSeries().contains(serie)){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
+        if(user.getWatchedSeries().contains(serie)){
+            user.getWatchedSeries().remove(serie);
+            serie.getHasSeason().forEach(season -> {
+                if(user.getWatchedSeasons().contains(season)){
+                    user.getWatchedSeasons().remove(season);
+                }
+                season.getHasEpisode().forEach(episode -> {
+                    if(user.getWatchedEpisodes().contains(episode)){
+                        user.getWatchedEpisodes().remove(episode);
+                        increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+                        increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+                        increaseDurationSerieDto.setSeasonNumber(season.getSeason_number());
+                        increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
+                        increaseDurationSerieDto.setUsername(user.getUsername());
+                        try {
+                            this.decreaseWatchedDurationSeries(increaseDurationSerieDto);
+                        } catch (URISyntaxException | IOException | InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            });
+        }
+
+        decreaseWatchedNumberSeries(userWatchedSerieAddDto);
+        userRepository.save(user);
+
+
+        return true;
+    }
+
+
+
+    public boolean removeSeasonFromViewInfo(UserRemoveSeasonDto userRemoveSeasonDto) throws IOException, URISyntaxException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userRemoveSeasonDto.getTvTmdbId());
+
+        // récup l'user
+        Optional<User> optionalUser = userRepository.findUserByEmail(userRemoveSeasonDto.getUsername());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Optional<Season> seasonToRemove = seasonRepository.findByTmdbSeasonId(userRemoveSeasonDto.getSeasonTmdbId());
+         AtomicBoolean isSerieStilBeingWatched = new AtomicBoolean(false);
+        if(user.getWatchedSeasons().contains(seasonToRemove.get())){
+            user.getWatchedSeasons().remove(seasonToRemove.get());
+            serie.getHasSeason().forEach(season -> {
+               if(season.getSeason_number().equals(seasonToRemove.get().getSeason_number())){
+                   season.getHasEpisode().forEach(episode -> {
+                       if(user.getWatchedEpisodes().contains(episode)){
+                           user.getWatchedEpisodes().remove(episode);
+                           increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+                           increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+                           increaseDurationSerieDto.setSeasonNumber(seasonToRemove.get().getSeason_number());
+                           increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
+                           increaseDurationSerieDto.setUsername(user.getUsername());
+                           try {
+                               this.decreaseWatchedDurationSeries(increaseDurationSerieDto);
+                           } catch (URISyntaxException | IOException | InterruptedException e) {
+                               e.printStackTrace();
+                           }
+                       }
+                   });
+               }
+            });
+        }
+        userRepository.save(user);
+        //remove to watchlist bcz seen
+        if(user.getWatchlistSeries().contains(serie) && !isSerieStilBeingWatched.get()){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
+        if(user.getWatchedSeries().contains(serie)){
+            user.getWatchedSeries().remove(serie);
+            userRepository.save(user);
+        }
+        return true;
+    }
+
+    public boolean removeEpisodeFromViewInfo(UserRemoveEpisodeDto userRemoveEpisodeDto) throws IOException, URISyntaxException, InterruptedException {
+        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userRemoveEpisodeDto.getTvTmdbId());
+
+        // récup l'user
+        Optional<User> optionalUser = userRepository.findUserByEmail(userRemoveEpisodeDto.getUsername());
+        User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        Optional<Episode> episodeToRemove = episodeRepository.findByTmdbEpisodeId(userRemoveEpisodeDto.getEpisodeTmdbId());
+        Optional<Season> seasonToCheck = seasonRepository.findByTmdbSeasonId(userRemoveEpisodeDto.getSeasonTmdbId());
+        AtomicBoolean isSerieStilBeingWatched = new AtomicBoolean(false);
+        AtomicBoolean isSeasonStilBeingWatched = new AtomicBoolean(false);
+        increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+        increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+        increaseDurationSerieDto.setSeasonNumber(userRemoveEpisodeDto.getSeasonNumber());
+        increaseDurationSerieDto.setEpisodeNumber(userRemoveEpisodeDto.getEpisodeNumber());
+        increaseDurationSerieDto.setUsername(user.getUsername());
+        if(user.getWatchedEpisodes().contains(episodeToRemove.get())){
+            user.getWatchedEpisodes().remove(episodeToRemove.get());
+        }
+        userRepository.save(user);
+        int episodeInWatchedSeason = 0;
+        int saisonLength = 0;
+        for (Season season : user.getWatchedSeasons()) {
+            if(season.getTmdbSeasonId().equals(userRemoveEpisodeDto.getSeasonTmdbId())){
+                saisonLength = season.getHasEpisode().size();
+                for (Episode episode : season.getHasEpisode()) {
+                    Episode currentEpisode = episode;
+                    Set<Episode> userEpisodeList = user.getWatchedEpisodes();
+                    if(user.getWatchedEpisodes().contains(episode)){
+                        episodeInWatchedSeason++;
+                    }
+                }
+            }
+        }
+        if(episodeInWatchedSeason == 0){
+            user.getWatchedSeasons().remove(seasonToCheck.get());
+            userRepository.save(user);
+        }
+        serie.getHasSeason().forEach(season1 -> {
+            if(user.getWatchedSeasons().contains(season1)){
+                isSerieStilBeingWatched.set(true);
+            }
+        });
+        if(user.getWatchlistSeries().contains(serie) && !isSerieStilBeingWatched.get()){
+            user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
+        if(user.getWatchedSeries().contains(serie)){
+            user.getWatchedSeries().remove(serie);
+            userRepository.save(user);
+        }
+        this.decreaseWatchedDurationSeries(increaseDurationSerieDto);
+        return true;
+    }
+    @Async
+    public void increaseWatchedDurationSeries(increaseDurationSerieDto increaseDurationSerieDto) throws URISyntaxException, IOException, InterruptedException {
+
+        String urlToCall =  "https://api.themoviedb.org/3/tv/" + increaseDurationSerieDto.getTvTmdbId() + "/season/"+ increaseDurationSerieDto.getSeasonNumber()+"/episode/" +  increaseDurationSerieDto.getEpisodeNumber()+ "?api_key=" + this.apiKey;
+        JSONObject checkInCache = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
+        Gson gson = new Gson();
+        SearchSingleMovieApiDto result_search = gson.fromJson(String.valueOf(checkInCache), SearchSingleMovieApiDto.class);
+        Optional<User> optionalUser = userRepository.findUserByEmail(increaseDurationSerieDto.getUsername());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        Integer runtime = result_search.getRuntime();
+        result_search.setRuntime(runtime != null ? runtime : 0);
+        System.out.println(result_search.getTitle());
+        System.out.println(result_search.getRuntime());
+        System.out.println(checkInCache.toString());
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
+        Long newWatchedTotalTime = user.getTotalSeriesWatchedTime().getSeconds()+Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
+        user.setTotalSeriesWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
+
+        userRepository.save(user);
+
+    }
+    @Async
+    public void decreaseWatchedDurationSeries(increaseDurationSerieDto increaseDurationSerieDto) throws URISyntaxException, IOException, InterruptedException {
+        String urlToCall =  "https://api.themoviedb.org/3/tv/" + increaseDurationSerieDto.getTvTmdbId() + "/season/"+ increaseDurationSerieDto.getSeasonNumber()+"/episode/" +  increaseDurationSerieDto.getEpisodeNumber() + "?api_key=" + this.apiKey;
+        JSONObject checkInCache = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
+        Gson gson = new Gson();
+        SearchSingleMovieApiDto result_search = gson.fromJson(String.valueOf(checkInCache), SearchSingleMovieApiDto.class);
+        Optional<User> optionalUser = userRepository.findUserByEmail(increaseDurationSerieDto.getUsername());
+        User user = optionalUser.isPresent()? optionalUser.get() : null;
+        if(user == null){
+            throw new IllegalStateException(UserNotFound);
+        }
+        Integer runtime = result_search.getRuntime();
+        result_search.setRuntime(runtime != null ? runtime : 0);
+        System.out.println(result_search.getTitle());
+        System.out.println(result_search.getRuntime());
+        System.out.println(checkInCache.toString());
+        System.out.println(urlToCall);
+        System.out.println(this.apiKey);
+        Long newWatchedTotalTime = user.getTotalSeriesWatchedTime().getSeconds()-Duration.ofSeconds(result_search.getRuntime()*60L).getSeconds();
+        user.setTotalSeriesWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
+
+        userRepository.save(user);
+
     }
 }
