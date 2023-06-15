@@ -7,6 +7,10 @@ import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
 import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.RedisCommand;
 import org.json.JSONObject;
 import org.json.JSONString;
 import org.springframework.stereotype.Service;
@@ -25,27 +29,27 @@ import java.util.Base64;
 @Service
 public class RedisService {
 
-    private  RedisConfig redisConfig;
+    private final RedisClient redisClient;
     private RedisLetuceConfig redisLetuceConfig;
 
-    public RedisService(RedisConfig redisConfig,RedisLetuceConfig redisLetuceConfig) {
+    public RedisService(RedisLetuceConfig redisLetuceConfig) {
 
-        this.redisConfig = redisConfig;
         this.redisLetuceConfig = redisLetuceConfig;
+        this.redisClient = this.redisLetuceConfig.redisClient();
     }
 
     public getImageFromRedisDto getRedisCache(String urlApi) {
         getImageFromRedisDto getImageFromRedisDto = new getImageFromRedisDto();
-        String  check = redisLetuceConfig.redisClient().connect().sync().get(urlApi);
+        String  check = this.redisClient.connect().sync().get(urlApi);
         if(check==null) {
             String posterToInsert = this.getByteArrayFromImageURL(urlApi);
             String imageBase64 = "data:image/jpg;base64," + posterToInsert;
-            redisLetuceConfig.redisClient().connect().sync().set(urlApi, imageBase64);
-            redisLetuceConfig.redisClient().connect().sync().expire(urlApi, 3600);
-            getImageFromRedisDto.setUrlApi(redisLetuceConfig.redisClient().connect().sync().get(urlApi));
+            this.redisClient.connect().sync().set(urlApi, imageBase64);
+            this.redisClient.connect().sync().expire(urlApi, 3600);
+            getImageFromRedisDto.setUrlApi(this.redisClient.connect().sync().get(urlApi));
             return getImageFromRedisDto;
         }
-        getImageFromRedisDto.setUrlApi(redisLetuceConfig.redisClient().connect().sync().get(urlApi));
+        getImageFromRedisDto.setUrlApi(this.redisClient.connect().sync().get(urlApi));
         return getImageFromRedisDto;
     }
 
@@ -62,8 +66,11 @@ public class RedisService {
     public getDataFromRedisDto getRedisCacheData(String brutUrl, HttpServletResponse HttpServletResponse) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         URI encodedUrl = new URI(brutUrl);
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+
+        RedisCommands<String, String> commands = connection.sync();
         getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
-        String  check = redisLetuceConfig.redisClient().connect().sync().get(encodedUrl.toString());
+        String  check = commands.get(encodedUrl.toString());
         if(check==null) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(encodedUrl)
@@ -72,33 +79,24 @@ public class RedisService {
             HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
             JSONObject documentObj = new JSONObject(response.body().toString());
             getDataFromRedisDto.setData(documentObj.toString());
-            redisLetuceConfig.redisClient().connect().sync().set(encodedUrl.toString(), documentObj.toString());
-            redisLetuceConfig.redisClient().connect().sync().expire(encodedUrl.toString(), 3600);
+            commands.set(encodedUrl.toString(), documentObj.toString());
+            commands.expire(encodedUrl.toString(), 3600);
             HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
+            connection.close();
+
             return getDataFromRedisDto;
         }
         HttpServletResponse.addHeader("cache-control", "public, max-age=28800");
         getDataFromRedisDto.setData(check);
-
+        connection.close();
         return getDataFromRedisDto;
-    }
-    public String getRedisCacheDataBDD(String key) throws URISyntaxException, IOException, InterruptedException {
-        getDataFromRedisDto getDataFromRedisDto = new getDataFromRedisDto();
-        String  check = redisLetuceConfig.redisClient().connect().sync().get(key);
-        if(check==null) {
-            return null;
-        }
-        return check;
-    }
-    public Boolean setRedisCacheDataBDD(String key, String value, int expire) throws URISyntaxException, IOException, InterruptedException {
-        redisLetuceConfig.redisClient().connect().sync().set(key,value);
-        redisLetuceConfig.redisClient().connect().sync().expire(key, expire);
-        return true;
     }
     public JSONObject getDataFromRedisForInternalRequest(String brutUrl) throws URISyntaxException, IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
         URI encodedUrl = new URI(brutUrl);
-        String  check = redisLetuceConfig.redisClient().connect().sync().get(encodedUrl.toString());
+        String  check = commands.get(encodedUrl.toString());
         JSONObject documentObj = null;
         if(check==null) {
             HttpRequest request = HttpRequest.newBuilder()
@@ -107,14 +105,18 @@ public class RedisService {
                     .build();
             HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
             documentObj = new JSONObject(response.body().toString());
-            redisLetuceConfig.redisClient().connect().sync().set(encodedUrl.toString(), documentObj.toString());
-            redisLetuceConfig.redisClient().connect().sync().expire(encodedUrl.toString(), 3600);
+            commands.set(encodedUrl.toString(), documentObj.toString());
+            commands.expire(encodedUrl.toString(), 3600);
+            connection.close();
+
             return documentObj;
         }
         if(check!=null) {
             documentObj = new JSONObject(check);
+            connection.close();
             return documentObj;
         }
+        connection.close();
         return documentObj;
     }
 }

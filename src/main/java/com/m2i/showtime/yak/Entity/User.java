@@ -176,7 +176,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Season> watchedSeasons = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.EAGER)
     @JoinTable(name = "users_watched_episodes",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",
