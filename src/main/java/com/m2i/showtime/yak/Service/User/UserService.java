@@ -488,6 +488,7 @@ public class UserService {
             Serie serie = this.serieRepository.findSerieByTmdbId(tvTmdbId).get();
             user.getWatchedSeries().add(serie);
             this.userRepository.save(user);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
         }
 
         if(nbSeasonsSeen > 0) {
@@ -1833,6 +1834,7 @@ public class UserService {
         }
         if(user.getWatchedSeries().contains(serie)){
             user.getWatchedSeries().remove(serie);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.REMOVE_SERIE_IN_WATCHED_LIST);
             serie.getHasSeason().forEach(season -> {
                 if(user.getWatchedSeasons().contains(season)){
                     user.getWatchedSeasons().remove(season);
@@ -1902,6 +1904,7 @@ public class UserService {
         }
         if(user.getWatchedSeries().contains(serie)){
             user.getWatchedSeries().remove(serie);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.REMOVE_SERIE_IN_WATCHED_LIST);
             userRepository.save(user);
         }
         return true;
@@ -1955,6 +1958,7 @@ public class UserService {
         }
         if(user.getWatchedSeries().contains(serie)){
             user.getWatchedSeries().remove(serie);
+            trophyService.checkAllTrophys(user.getUsername(),serie.getId(),TrophyActionName.REMOVE_SERIE_IN_WATCHED_LIST);
             userRepository.save(user);
         }
         this.decreaseWatchedDurationSeries(increaseDurationSerieDto);

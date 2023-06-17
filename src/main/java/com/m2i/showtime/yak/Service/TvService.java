@@ -145,11 +145,17 @@ public class TvService {
                 }
                 AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2), AddSeasonDto.class);
 
-                if (seasonDto.air_date != null || !seasonDto.episodes[0].air_date.equals("null")) {
+                    boolean canBeAdd = false;
                     LocalDate today = LocalDate.now();
-                    LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
 
-                    if (!date.isAfter(today)) {
+                    if(seasonDto.air_date != null) {
+                        LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
+                        canBeAdd = !date.isAfter(today);
+                    }
+                    if(seasonDto.air_date == null) {
+                        canBeAdd = true;
+                    }
+                    if (canBeAdd) {
                         Set<Episode> episodeSet = new HashSet<>();
                         for (int j = 0; j < seasonDto.episodes.length; j++) {
                             Episode newEpisode = new Episode(
@@ -164,7 +170,7 @@ public class TvService {
                         Season season = new Season(seasonNumber, seasons[finalI].id, seasons[finalI].name, episodeSet);
                         seasonList.add(season);
                     }
-                }
+
             }, executorService);
 
             futures.add(future);
