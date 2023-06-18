@@ -147,14 +147,23 @@ public class TvService {
 
                     boolean canBeAdd = false;
                     LocalDate today = LocalDate.now();
+                    try{
+                        if(seasonDto.episodes[0].air_date != null) {
+                            LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
+                            canBeAdd = date.isBefore(today);
+                        }
+                        if(seasonDto.air_date != null) {
+                            LocalDate date = LocalDate.parse(seasonDto.air_date);
+                            canBeAdd = date.isBefore(today);
+                        }
+                        if(seasonDto.air_date == null) {
+                            canBeAdd = true;
+                        }
+                    }catch (Exception e){
+                        System.out.println("error :"+e.getMessage());
+                    }
 
-                    if(seasonDto.air_date != null) {
-                        LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
-                        canBeAdd = !date.isAfter(today);
-                    }
-                    if(seasonDto.air_date == null) {
-                        canBeAdd = true;
-                    }
+
                     if (canBeAdd) {
                         Set<Episode> episodeSet = new HashSet<>();
                         for (int j = 0; j < seasonDto.episodes.length; j++) {
