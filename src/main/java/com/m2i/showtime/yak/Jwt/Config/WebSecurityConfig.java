@@ -3,6 +3,7 @@ package com.m2i.showtime.yak.Jwt.Config;
 import com.m2i.showtime.yak.Jwt.JwtConfig;
 import com.m2i.showtime.yak.Jwt.JwtTokenVerifier;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
+import com.m2i.showtime.yak.Security.CustomAuthenticationEntryPoint;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -25,11 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 
 @Configuration
@@ -42,7 +37,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserAuthService userAuthService;
     private final SecretKey secretKey;
     private final JwtConfig jwtConfig;
-
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private static final RequestMatcher PROTECTED_URLS = new OrRequestMatcher(
             new AntPathRequestMatcher("/v1/**"),new AntPathRequestMatcher("management/**")
     );
@@ -51,18 +46,22 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                              DataSource dateSource,
                              UserAuthService userAuthService,
                              SecretKey secretKey,
-                             JwtConfig jwtConfig) {
+                             JwtConfig jwtConfig, CustomAuthenticationEntryPoint authenticationEntryPoint) {
         this.passwordEncoder = passwordEncoder;
         this.dateSource = dateSource;
         this.userAuthService = userAuthService;
         this.secretKey = secretKey;
         this.jwtConfig = jwtConfig;
+        this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception{
         http
-                .csrf().disable() //TODO: Enable csrf for production to prevent assholes breaking our API
+                .csrf().disable() // Not needed since we are using JWT
+                .exceptionHandling()
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .and()
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -70,7 +69,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
                 .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests()
-                .antMatchers("/api/v*/registration/**", "/api/v*/login/**").permitAll()
+                .antMatchers("/v*/**","/api/v*/documentation/**","/api/v*/registration/**", "/api/v*/login/**","/websocket/**","/api/v*/elasticsearch/**","/api/v1/health/**","/api/v1/version/**","api/v1/login/google").permitAll()
                 .anyRequest()
                 .authenticated();
     }
@@ -94,8 +93,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         //List<String> allowOrigins = Arrays.asList("*");
         configuration.addAllowedOriginPattern("*");
         configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
+        configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type", "Refresh"));
+        configuration.addExposedHeader("Content-Type,X-Requested-With,Accept,Authorization,Refresh,Origin,Access-Control-Request-Method,Access-Control-Request-Headers");
         //in case authentication is enabled this flag MUST be set, otherwise CORS requests will fail
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

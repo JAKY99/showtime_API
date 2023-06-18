@@ -1,13 +1,7 @@
 package com.m2i.showtime.yak.Entity;
-
-
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "movie")
@@ -16,15 +10,24 @@ import java.util.Set;
 public class Movie {
 
     @Id
+    @SequenceGenerator(
+            name = "movie_sequence",
+            sequenceName = "movie_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "movie_sequence"
+    )
     private Long id;
-
+    private Long tmdbId;
     private String name;
 
     public Movie() {
     }
 
-    public Movie(Long id, String name) {
-        this.id = id;
+    public Movie(Long tmdbId, String name) {
+        this.tmdbId = tmdbId;
         this.name = name;
     }
 }

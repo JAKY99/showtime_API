@@ -1,0 +1,145 @@
+name: workflow staging
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Deploy staging'
+        required: true
+        default: 'latest'
+jobs:
+  sonarqube-test:
+    environment: production
+    runs-on: ubuntu-latest
+    container:
+#      image: kevinpsirius/javadeployspring:v3
+      image: kevinpsirius/dind-ci-springboot:v1
+    services:
+        postgres:
+          image: postgres:14.2-alpine
+          env:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: dev_showtime
+          ports:
+            - 5432:5432
+            - 5438:5432
+          options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        elasticsearch:
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+          env:
+            discovery.type: "single-node"
+            ES_JAVA_OPTS: "-Xms512m -Xmx2g"
+            ELASTIC_PASSWORD: "elastictest2"
+          ports:
+            - 9200:9200
+            - 9300:9300
+        zookeeper:
+          image: wurstmeister/zookeeper
+          ports:
+            - 2181:2181
+          options: >-
+            --health-cmd "echo ruok | nc localhost 2181"
+            --health-interval 10s
+            --health-timeout 10s
+            --health-retries 4
+        kafka:
+          image: wurstmeister/kafka
+          ports:
+            - 9092:9092
+          env:
+            KAFKA_ADVERTISED_HOST_NAME: kafka
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_CREATE_TOPICS: "showtime:1:1"
+          options: >-
+            --health-cmd "kafka-topics.sh --list --zookeeper zookeeper:2181"
+            --health-interval 10s
+            --health-timeout 10s
+            --health-retries 4
+        redis:
+          image: bitnami/redis:latest
+          env:
+            REDIS_PASSWORD: 123456
+            REDIS_DISABLE_COMMANDS: FLUSHDB,FLUSHALL,CONFIG
+            REDIS_AOF_ENABLED: no
+            REDIS_PORT_NUMBER: 6379
+            REDIS_IO_THREADS: 4
+            REDIS_IO_THREADS_DO_READS: yes
+          ports:
+            - 6379:6379
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Cache SonarQube packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Maven packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_STAGING }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          envStaging: ${{ secrets.ENVSTAGING }}
+#        run: apk add docker && apk add docker-compose && (dockerd &) && touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API/ && mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=showtime_API
+#        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && sudo mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
+#        run: chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
+        run: |
+          rm src/main/resources/liquibase.properties 
+          mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties 
+          rm src/main/resources/application.properties 
+          mv src/main/resources/application.ci.properties src/main/resources/application.properties 
+          rm src/test/resources/application.properties
+          mv src/test/resources/application.ci.properties src/test/resources/application.properties
+          echo 'MAVEN_HOME="/opt/maven"' >> /etc/profile 
+          echo 'PATH="$PATH:$MAVEN_HOME/bin"' >> /etc/profile
+          rm pom.xml
+          mv pom.ci.xml pom.xml
+          source /etc/profile
+          touch .env  
+          echo "$envStaging" >> .env 
+          touch src/main/resources/.env  
+          echo "$envStaging" >> src/main/resources/.env 
+          sleep 15 
+          sed -i "s/hostname-postgres/postgres/g" src/main/resources/application.properties 
+          sed -i "s/hostname-postgres/postgres/g" src/test/resources/application.properties 
+          sed -i "s/hostname-postgres/postgres/g" src/main/resources/liquibase.properties 
+          sed -i "s/hostname-elasticsearch/elasticsearch/g" src/main/resources/application.properties
+          sed -i "s/hostname-elasticsearch/elasticsearch/g" src/test/resources/application.properties
+          sed -i "s/hostname-kafka/kafka/g" src/main/resources/application.properties
+          sed -i "s/hostname-kafka/kafka/g" src/test/resources/application.properties
+          sed -i "s/hostname-redis/redis/g" src/main/resources/application.properties
+          sed -i "s/hostname-redis/redis/g" src/test/resources/application.properties
+          mvn -B liquibase:dropAll
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API_dev -Dsonar.jacoco.reportPaths=target/jacoco.exec
+
+  staging-deploy:
+    needs: sonarqube-test
+    environment: staging
+    runs-on: ubuntu-latest
+    container:
+      image: kevinpsirius/javadeployspring:v2
+      env:
+        sshKey: ${{ secrets.SSH_KEY }}
+        envDeploymentStaging: ${{ secrets.ENVDEPLOYMENTSTAGING }}
+        postgresPassword: ${{ secrets.POSTGRES_PASSWORD }}
+    steps:
+      - name: Generate the updated target directory to push on staging
+        run: |
+          git clone https://github.com/JAKY99/showtime_API.git
+          rm showtime_API/src/main/resources/liquibase.properties 
+          mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
+          rm showtime_API/src/main/resources/application.properties 
+          mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
+          touch showtime_API/src/main/resources/.env && echo "$envDeploymentStaging" >> showtime_API/src/main/resources/.env 
+          sed -i "s/password=postgres/password=$postgresPassword/g" showtime_API/src/main/resources/liquibase.properties
+          cd showtime_API &&  mvn dependency:purge-local-repository && mvn clean install -DskipTests --update-snapshots
+          touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
+          cd playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"

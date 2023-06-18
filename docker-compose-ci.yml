@@ -1,0 +1,84 @@
+version: '3.8'
+services:
+  db:
+    container_name: show_time_db
+    image: postgres:14.2-alpine
+    privileged: true
+#    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=dev_showtime
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./local_pgdata:/var/lib/postgresql/data
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    container_name: elasticsearch
+    privileged: true
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx2g"
+      - ELASTIC_PASSWORD=elastictest2
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./elasticsearch-data:/usr/share/elasticsearch/data:rw
+#      - ./elasticsearch-config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9200:9200
+      - 9300:9300
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2000M
+        reservations:
+          cpus: '1'
+          memory: 512M
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis_showtime
+    environment:
+      - REDIS_PASSWORD=123456
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+      - REDIS_AOF_ENABLED=no
+      - REDIS_PORT_NUMBER=6379
+      - REDIS_IO_THREADS=4
+      - REDIS_IO_THREADS_DO_READS=yes
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb --maxmemory-policy allkeys-lru
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis/data:/bitnami/redis/data
+volumes:
+  local_pgdata:
+  pgadmin-data:
+  elasticsearch-data:
+    driver: local
+networks:
+  default:
+    name: showtime_network
+    driver: bridge
+

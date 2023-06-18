@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1686852627245-1" author="kevin (generated)">
+        <addUniqueConstraint columnNames="imbd_id" constraintName="episode_imbd_id_unique" tableName="episode"/>
+    </changeSet>
+    <changeSet id="1686852627245-2" author="kevin (generated)">
+        <createIndex indexName="idx_62f78b2ccb8edf2e49906ccf7" tableName="episode">
+            <column name="imbd_id"/>
+            <column name="season_number"/>
+            <column name="episode_number"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

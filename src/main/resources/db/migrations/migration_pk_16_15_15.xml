@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.5.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1683382514982-1" author="Achot (generated)">
+        <createTable tableName="genre">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_genre"/>
+            </column>
+            <column name="tmdb_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1683382514982-2" author="Achot (generated)">
+        <createTable tableName="users_excluded_genres">
+            <column name="genre_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_users_excluded_genres"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_users_excluded_genres"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1683382514982-3" author="Achot (generated)">
+        <addUniqueConstraint columnNames="tmdb_id" constraintName="uc_genre_tmdbid" tableName="genre"/>
+    </changeSet>
+    <changeSet id="1683382514982-4" author="Achot (generated)">
+        <addForeignKeyConstraint baseColumnNames="genre_id" baseTableName="users_excluded_genres"
+                                 constraintName="fk_useexcgen_on_genre" referencedColumnNames="id"
+                                 referencedTableName="genre"/>
+    </changeSet>
+    <changeSet id="1683382514982-5" author="Achot (generated)">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="users_excluded_genres"
+                                 constraintName="fk_useexcgen_on_user" referencedColumnNames="id"
+                                 referencedTableName="_user"/>
+    </changeSet>
+
+</databaseChangeLog>

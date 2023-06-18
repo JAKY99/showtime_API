@@ -14,6 +14,8 @@ derby.log
 spring-test/test-output/
 .gradle
 argfile*
+activemq-data/
+/src/main/logs
 pom.xml
 activemq-data/
 
@@ -30,7 +32,7 @@ target
 .classpath
 .project
 spring-*/src/main/java/META-INF/MANIFEST.MF
-
+.env
 # IDEA artifacts and output dirs
 *.iml
 *.ipr
@@ -40,10 +42,16 @@ out
 test-output
 atlassian-ide-plugin.xml
 .gradletasknamecache
-
+.jpb
 # VS Code
 .vscode/
-
+src/main/resources/application.properties
 # database
 /local_pgdata
 /pgadmin-data
+/pgadmin-data
+elasticsearch-data
+airflow-data
+db_backups
+dags
+/redis
