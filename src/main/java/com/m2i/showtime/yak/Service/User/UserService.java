@@ -312,82 +312,77 @@ public class UserService {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         ConcurrentHashMap<Season, Boolean> watchedSeasonsMap = new ConcurrentHashMap<>();
-        List<CompletableFuture<Void>> episodeFutures = new ArrayList<>();
-        List<CompletableFuture<Void>> seasonFutures = serie.getHasSeason().stream()
+
+        List<CompletableFuture<Void>> futures = serie.getHasSeason().stream()
                 .parallel()
                 .map(season -> CompletableFuture.runAsync(() -> {
                     if (!watchedSeasonsMap.containsKey(season)) {
-                        watchedSeasonsMap.put(season, true);
 
-                        // Perform other operations related to the watched season
+                        if (!watchedSeasonsMap.containsKey(season)) {
+                            watchedSeasonsMap.put(season, true);
 
-                        // Add the season to the user's watched seasons
+                            // Perform other operations related to the watched season
 
-                        if (!user.getWatchedSeasons().contains(season)) {
-                            user.getWatchedSeasons().add(season);
+                            // Add the season to the user's watched seasons
+
+                            if (!user.getWatchedSeasons().contains(season)) {
+                                user.getWatchedSeasons().add(season);
+                            }
+
                         }
+
                     }
+
+
+
+                    season.getHasEpisode().forEach(episode -> {
+
+                        if (!user.getWatchedEpisodes().contains(episode)) {
+                            increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+                            increaseDurationSerieDto.setUsername(user.getUsername());
+                            increaseDurationSerieDto.setSeasonNumber(season.getSeason_number());
+                            increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
+                            increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+                            try {
+                                if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
+                                    user.getWatchedEpisodes().add(episode);
+                                    increaseWatchedDurationSeries(increaseDurationSerieDto);
+                                }
+                            } catch (URISyntaxException | IOException | InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                    });
                 }, executorService))
                 .collect(Collectors.toList());
 
-        serie.getHasSeason().forEach(season -> {
-            season.getHasEpisode().stream()
-                    .parallel()
-                    .forEach(episode -> {
-                        CompletableFuture<Void> episodeFuture = CompletableFuture.runAsync(() -> {
-                            if (!user.getWatchedEpisodes().contains(episode)) {
-                                increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
-                                increaseDurationSerieDto.setUsername(user.getUsername());
-                                increaseDurationSerieDto.setSeasonNumber(season.getSeason_number());
-                                increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
-                                increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
-                                try {
-                                    if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
-                                        user.getWatchedEpisodes().add(episode);
-                                        increaseWatchedDurationSeries(increaseDurationSerieDto);
-                                    }
-                                } catch (URISyntaxException | IOException | InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }, executorService);
-                        episodeFutures.add(episodeFuture);
-                    });
-        });
+// Wait for all CompletableFuture to complete
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 
-        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
-        allFutures.addAll(episodeFutures);
-        allFutures.addAll(seasonFutures);
+// Update the user and save changes
+        allFutures.thenRun(() -> {
 
-        // Combine episode and season futures into a single global future
-        CompletableFuture<Void> globalFuture = CompletableFuture.allOf(
-                allFutures.toArray(new CompletableFuture[0])
-        );
+            // Remove duplicate elements from the watched seasons and episodes
+            user.getWatchedSeasons().removeIf(season -> Collections.frequency(user.getWatchedSeasons(), season) > 1);
+            user.getWatchedEpisodes().removeIf(episode -> Collections.frequency(user.getWatchedEpisodes(), episode) > 1);
 
-        // Update the user and save changes after all futures are completed
-        globalFuture.thenRun(() -> {
-            synchronized (user) {
-                // Remove duplicate elements from the watched seasons and episodes
-                user.getWatchedSeasons().removeIf(season -> Collections.frequency(user.getWatchedSeasons(), season) > 1);
-                user.getWatchedEpisodes().removeIf(episode -> Collections.frequency(user.getWatchedEpisodes(), episode) > 1);
+            // Save the user
+            userRepository.save(user);
+            serie.getHasSeason().forEach(season->{
+                if(user.getWatchedSeasons().contains(season) && user.getWatchedEpisodes().containsAll(season.getHasEpisode())){
+                    Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                            season.getTmdbSeasonId(),
+                            user.getId()
+                    );
+                    relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
+                    usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+                }
+            });
 
-                // Save the user
-                userRepository.save(user);
-
-                serie.getHasSeason().forEach(season -> {
-                    if (user.getWatchedSeasons().contains(season) && user.getWatchedEpisodes().containsAll(season.getHasEpisode())) {
-                        Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
-                                season.getTmdbSeasonId(),
-                                user.getId()
-                        );
-                        relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
-                        usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
-                    }
-                });
-            }
         }).join();
 
-// Shutdown the executor service
+        // Shutdown the executor service
         executorService.shutdown();
 
 
