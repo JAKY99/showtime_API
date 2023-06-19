@@ -89,6 +89,7 @@ jobs:
         #        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && sudo mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
         #        run: chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
         run: |
+          git config --global --add safe.directory /__w/showtime_API/showtime_API
           git checkout develop
           rm src/main/resources/liquibase.properties 
           mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties 
@@ -131,6 +132,7 @@ jobs:
       - name: Generate the updated target directory to push on staging
         run: |
           git clone https://github.com/JAKY99/showtime_API.git
+          git config --global --add safe.directory /__w/showtime_API/showtime_API
           rm showtime_API/src/main/resources/liquibase.properties 
           mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
           rm showtime_API/src/main/resources/application.properties 
