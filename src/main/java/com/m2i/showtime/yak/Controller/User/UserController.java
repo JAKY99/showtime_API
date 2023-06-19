@@ -5,7 +5,6 @@ import com.m2i.showtime.yak.Dto.*;
 import com.m2i.showtime.yak.Entity.Episode;
 import com.m2i.showtime.yak.Entity.Notification;
 import com.m2i.showtime.yak.Entity.User;
-import com.m2i.showtime.yak.Entity.UsersWatchedSeries;
 import com.m2i.showtime.yak.Enum.Status;
 import com.m2i.showtime.yak.Jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.m2i.showtime.yak.Service.User.UserAuthService;
@@ -249,14 +248,14 @@ public class UserController {
     }
 
     @PostMapping("/addSerieInWatchlist")
-    public boolean addSerieInWatchlist(Authentication authentication,@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    public boolean addSerieInWatchlist(Authentication authentication, @RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
         String username = userService.getUserFromJwt(authentication);
         userWatchedSerieAddDto.setUserMail(username);
         return userService.addSerieInWatchlist(userWatchedSerieAddDto);
     }
 
     @PostMapping("/addSeasonInWatchlist")
-    public Status addSeasonInWatchlist(Authentication authentication,@RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    public Status addSeasonInWatchlist(Authentication authentication, @RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
         String username = userService.getUserFromJwt(authentication);
         userWatchedTvSeasonAddDto.setUserMail(username);
         return userService.addSeasonInWatchlist(userWatchedTvSeasonAddDto);
