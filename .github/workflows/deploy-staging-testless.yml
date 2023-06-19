@@ -22,6 +22,7 @@ jobs:
           git clone https://github.com/JAKY99/showtime_API.git
           git config --global --add safe.directory /__w/showtime_API/showtime_API
           cd showtime_API && git checkout develop
+          ls showtime_API
           rm showtime_API/src/main/resources/liquibase.properties 
           mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
           rm showtime_API/src/main/resources/application.properties 
