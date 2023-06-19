@@ -8,7 +8,7 @@
     <changeSet id="1687168458808-1" author="kevin (generated)">
         <addColumn tableName="episode">
             <column name="air_date" type="VARCHAR(255)"/>
-            <column name="runtime" type="INT"/>
+            <column name="runtime" type="INT" defaultValue="0"/>
         </addColumn>
     </changeSet>
     <changeSet id="1687168458808-3" author="kevin (generated)">
