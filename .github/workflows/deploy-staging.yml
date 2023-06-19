@@ -92,6 +92,7 @@ jobs:
 #        run: sudo chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && sudo mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
 #        run: chmod 777 -R $(pwd)/showtime_API && sudo touch $(pwd)/showtime_API/.env && echo "$envStaging" >> $(pwd)/showtime_API/.env  && sudo docker-compose -f $(pwd)/showtime_API/docker-compose-ci.yml up -d  && sleep 15 && cd $(pwd)/showtime_API && mvn -B liquibase:dropAll install org.sonarsource.scanner.maven:sonar-maven-plugin:sonar  -Dsonar.projectKey=showtime_API -Dsonar.jacoco.reportPaths=target/jacoco.exec && sudo docker-compose -f $(pwd)/docker-compose-ci.yml down
         run: |
+          git config --global --add safe.directory /__w/showtime_API/showtime_API
           git checkout develop
           rm src/main/resources/liquibase.properties 
           mv src/main/resources/liquibase.ci.properties src/main/resources/liquibase.properties 
@@ -135,12 +136,14 @@ jobs:
       - name: Generate the updated target directory to push on staging
         run: |
           git clone https://github.com/JAKY99/showtime_API.git
+          git config --global --add safe.directory /__w/showtime_API/showtime_API
+          cd showtime_API && git checkout develop
           rm showtime_API/src/main/resources/liquibase.properties 
           mv showtime_API/src/main/resources/liquibase.dev.properties showtime_API/src/main/resources/liquibase.properties 
           rm showtime_API/src/main/resources/application.properties 
           mv showtime_API/src/main/resources/application.dev.properties showtime_API/src/main/resources/application.properties
           touch showtime_API/src/main/resources/.env && echo "$envDeploymentStaging" >> showtime_API/src/main/resources/.env 
           sed -i "s/password=postgres/password=$postgresPassword/g" showtime_API/src/main/resources/liquibase.properties
-          cd showtime_API && git checkout develop &&  mvn dependency:purge-local-repository && mvn clean install -DskipTests --update-snapshots
+          cd showtime_API &&  mvn dependency:purge-local-repository && mvn clean install -DskipTests --update-snapshots
           touch /var/www/html/mypckey.pem &&  chmod 600 /var/www/html/mypckey.pem && echo "$sshKey" >> /var/www/html/mypckey.pem
           cd playbook && ansible-playbook deploy-dev-api-backend.yml -e "ansible_ssh_timeout=180"
