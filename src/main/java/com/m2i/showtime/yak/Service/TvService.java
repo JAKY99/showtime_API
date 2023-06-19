@@ -171,7 +171,10 @@ public class TvService {
                                     seasonDto.episodes[j].id,
                                     seasonDto.episodes[j].name,
                                     seasonDto.episodes[j].season_number,
-                                    seasonDto.episodes[j].episode_number
+                                    seasonDto.episodes[j].episode_number,
+                                    seasonDto.episodes[j].air_date,
+                                    seasonDto.episodes[j].runtime
+
                             );
                             episodeSet.add(newEpisode);
                         }

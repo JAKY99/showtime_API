@@ -37,7 +37,7 @@ public class Serie {
     public Serie() {
     }
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.EAGER)
     @JoinTable(name = "serie_has_seasons",
             joinColumns = {
                     @JoinColumn(name = "serie_id", referencedColumnName = "id",

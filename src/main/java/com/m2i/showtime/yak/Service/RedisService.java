@@ -119,4 +119,21 @@ public class RedisService {
         connection.close();
         return documentObj;
     }
+
+    public boolean getLastCheckOnAirDateEpisode(String key){
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+        String  check = commands.get(key);
+        JSONObject documentObj = null;
+        if(check==null) {
+            return false;
+        }
+        if(check!=null) {
+            commands.set(key, "true");
+            commands.expire(key, 3600*24*7);
+            connection.close();
+            return true;
+        }
+        return true;
+    }
 }

@@ -122,7 +122,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> favoriteMovies = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.EAGER)
     @JoinTable(name = "users_favorite_series",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",
@@ -142,7 +142,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> watchlistMovies = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.EAGER)
     @JoinTable(name = "users_watchlist_series",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",
@@ -156,7 +156,7 @@ public class User implements UserDetails {
     private Set<Response> responses = new HashSet<>();
 
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.EAGER)
     @JoinTable(name = "users_watched_series",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",
@@ -166,7 +166,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Serie> watchedSeries = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.EAGER)
     @JoinTable(name = "users_watched_seasons",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",
@@ -176,7 +176,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Season> watchedSeasons = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.EAGER)
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.EAGER)
     @JoinTable(name = "users_watched_episodes",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",

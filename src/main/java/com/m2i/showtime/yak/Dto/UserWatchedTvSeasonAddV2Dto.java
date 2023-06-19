@@ -1,5 +1,6 @@
 package com.m2i.showtime.yak.Dto;
 
+import com.m2i.showtime.yak.Entity.Season;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,12 +10,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddEpisodeDto {
-
-    public Long id;
-    public String name;
-    public Long episode_number;
-    public Long season_number;
-    public String air_date;
-    public int runtime;
+public class UserWatchedTvSeasonAddV2Dto {
+    String userMail ;
+    Long tvTmdbId;
+    Season season;
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "episode",
@@ -36,6 +37,9 @@ public class Episode {
 
     private Long episode_number;
 
+    private int runtime;
+    public String air_date;
+
 
     public Episode() {
     }
@@ -45,5 +49,14 @@ public class Episode {
         this.season_number = season_number;
         this.episode_number = episode_number;
 
+    }
+
+    public Episode(Long imbd_id, String name, Long seasonNumber, Long episodeNumber, String airDate, int runtime) {
+        this.imbd_id = imbd_id;
+        this.name = name;
+        this.season_number = seasonNumber;
+        this.episode_number = episodeNumber;
+        this.air_date = airDate;
+        this.runtime = runtime;
     }
 }
