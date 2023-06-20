@@ -324,18 +324,13 @@ public class UserService {
 
                             if (!user.getWatchedSeasons().contains(season)) {
                                 user.getWatchedSeasons().add(season);
-                                userRepository.save(user);
                             }
 
                         }
 
                     }
-                    Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
-                            season.getTmdbSeasonId(),
-                            user.getId()
-                    );
-                    relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
-                    usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+
+
 
 
                     season.getHasEpisode().forEach(episode -> {
@@ -350,7 +345,6 @@ public class UserService {
                                 if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
                                     user.getWatchedEpisodes().add(episode);
                                     increaseWatchedDurationSeries(increaseDurationSerieDto);
-                                    userRepository.save(user);
                                 }
                             } catch (URISyntaxException | IOException | InterruptedException e) {
                                 throw new RuntimeException(e);
@@ -358,6 +352,16 @@ public class UserService {
                         }
 
                     });
+                    userRepository.save(user);
+                    if(user.getWatchedEpisodes().containsAll(season.getHasEpisode())){
+                        Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                                season.getTmdbSeasonId(),
+                                user.getId()
+                        );
+                        relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
+                        usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+                    }
+
                 });
 
         return true;
@@ -2141,16 +2145,20 @@ public class UserService {
         try {
             if (result_search.air_date != null) {
                 dateOnAir = LocalDate.parse(result_search.air_date);
+                this.redisService.setLastCheckOnAirDateEpisode(String.valueOf(increaseDurationSerieDto.getTvTmdbId())+"-checkIfEpisodeOnAir",dateOnAir.isBefore(today) || dateOnAir.isEqual(today));
                 return dateOnAir.isBefore(today) || dateOnAir.isEqual(today);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            this.redisService.setLastCheckOnAirDateEpisode(String.valueOf(increaseDurationSerieDto.getTvTmdbId())+"-checkIfEpisodeOnAir",false);
             return false;
         }
-
+        this.redisService.setLastCheckOnAirDateEpisode(String.valueOf(increaseDurationSerieDto.getTvTmdbId())+"-checkIfEpisodeOnAir",false);
         return true;
 
     }
+
+
 
     private void updateSerieStatus2(User user, Long tvTmdbId) {
         Optional<UsersWatchedSeries> optionalUserWatchedSeries = this.usersWatchedSeriesRepository.findByImdbIdAndUserMail(tvTmdbId, user.getUsername());
@@ -2325,27 +2333,5 @@ public class UserService {
         allFutures.join();
 
         executor.shutdown();
-    }
-
-
-    public boolean checkIfEpisodeOnAirAsync(increaseDurationSerieDto increaseDurationSerieDto) throws URISyntaxException, IOException, InterruptedException {
-        String urlToCall = "https://api.themoviedb.org/3/tv/" + increaseDurationSerieDto.getTvTmdbId() + "/season/" + increaseDurationSerieDto.getSeasonNumber() + "/episode/" + increaseDurationSerieDto.getEpisodeNumber() + "?api_key=" + this.apiKey;
-        JSONObject checkInCache = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
-        Gson gson = new Gson();
-        AddSeasonDto result_search = gson.fromJson(String.valueOf(checkInCache), AddSeasonDto.class);
-        LocalDate today = LocalDate.now();
-        LocalDate dateOnAir = null;
-        try {
-            if (result_search.air_date != null) {
-                dateOnAir = LocalDate.parse(result_search.air_date);
-                return dateOnAir.isBefore(today) || dateOnAir.isEqual(today);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
-
-        return false;
-
     }
 }
