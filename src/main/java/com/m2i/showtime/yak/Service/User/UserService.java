@@ -2334,26 +2334,4 @@ public class UserService {
 
         executor.shutdown();
     }
-
-
-    public boolean checkIfEpisodeOnAirAsync(increaseDurationSerieDto increaseDurationSerieDto) throws URISyntaxException, IOException, InterruptedException {
-        String urlToCall = "https://api.themoviedb.org/3/tv/" + increaseDurationSerieDto.getTvTmdbId() + "/season/" + increaseDurationSerieDto.getSeasonNumber() + "/episode/" + increaseDurationSerieDto.getEpisodeNumber() + "?api_key=" + this.apiKey;
-        JSONObject checkInCache = this.redisService.getDataFromRedisForInternalRequest(urlToCall);
-        Gson gson = new Gson();
-        AddSeasonDto result_search = gson.fromJson(String.valueOf(checkInCache), AddSeasonDto.class);
-        LocalDate today = LocalDate.now();
-        LocalDate dateOnAir = null;
-        try {
-            if (result_search.air_date != null) {
-                dateOnAir = LocalDate.parse(result_search.air_date);
-                return dateOnAir.isBefore(today) || dateOnAir.isEqual(today);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
-
-        return false;
-
-    }
 }
