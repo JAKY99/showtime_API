@@ -10,7 +10,6 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.gson.Gson;
 import com.m2i.showtime.yak.Dto.*;
@@ -48,7 +47,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -295,13 +293,7 @@ public class UserService {
                     .getWatchedSeries()
                     .add(serie);
             userRepository.save(user);
-            // change status serie
-            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
-            relatedSerie.get().setStatus(Status.SEEN);
-            usersWatchedSeriesRepository.save(relatedSerie.get());
-            this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
-            trophyService.checkAllTrophys(userWatchedSerieAddDto.getUserMail(), serie.getId(), TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
-        }
+           }
 
         //remove to watchlist bcz seen
         if (user.getWatchlistSeries().contains(serie)) {
@@ -309,7 +301,7 @@ public class UserService {
             userRepository.save(user);
         }
         ConcurrentHashMap<Season, Boolean> watchedSeasonsMap = new ConcurrentHashMap<>();
-
+        AtomicInteger watchedSeasonCount = new AtomicInteger();
         serie
                 .getHasSeason()
                 .forEach(season -> {
@@ -360,10 +352,26 @@ public class UserService {
                         );
                         relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
                         usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
+                        watchedSeasonCount.getAndIncrement();
                     }
 
                 });
 
+        if (watchedSeasonCount.get() == serie.getHasSeason().size()) {
+            // change status serie
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
+            relatedSerie.get().setStatus(Status.SEEN);
+            usersWatchedSeriesRepository.save(relatedSerie.get());
+            this.increaseWatchedNumberSeries(userWatchedSerieAddDto);
+            trophyService.checkAllTrophys(userWatchedSerieAddDto.getUserMail(), serie.getId(), TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
+
+        }
+        if (watchedSeasonCount.get() != serie.getHasSeason().size()) {
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
+            relatedSerie.get().setStatus(Status.WATCHING);
+            usersWatchedSeriesRepository.save(relatedSerie.get());
+
+        }
         return true;
     }
 
@@ -568,56 +576,28 @@ public class UserService {
 
 
     public Episode getLastSeenEpisode(UserWatchedSerieAddDto userWatchedSerieAddDto) {
-        // récup tous les épisodes liés à userWatchedSerieAddDto.getTmdbId()
-
-        Optional<Serie> serie = this.serieRepository.findSerieByTmdbId(
-                userWatchedSerieAddDto.getTmdbId()
-        );
-        if (serie.isEmpty()) {
-            return new Episode(
-                    0L, "Serie not downloaded yet", 1L, 1L
-            );
-
-        }
-        ArrayList<Episode> EpisodesSeen = new ArrayList<>();
-        serie.get().getHasSeason().forEach(season -> {
-            season.getHasEpisode().forEach(episode -> {
-                Optional<Episode> ep = this.usersWatchedEpisodeRepository.isEpisodeWatchedByUser(
-                        userWatchedSerieAddDto.getUserMail(),
-                        episode.getId()
-                );
-                ep.ifPresent(EpisodesSeen::add);
-            });
-        });
-        if (EpisodesSeen.isEmpty()) {
-            return new Episode(
-                    0L, "no realtion with this user yet", 1L, 1L
-            );
+        Optional<Serie> optionalSerie = serieRepository.findSerieByTmdbId(userWatchedSerieAddDto.getTmdbId());
+        if (optionalSerie.isEmpty()) {
+            return new Episode(0L, "Serie not downloaded yet", 1L, 1L);
         }
 
-        AtomicReference<Episode> latestEpisode = new AtomicReference<>(EpisodesSeen.get(0));
+        User user = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail()).orElseThrow(() -> new IllegalStateException("User not found"));
+        Set<Episode> episodesWatched = user.getWatchedEpisodes();
 
-        EpisodesSeen.forEach(episode -> {
-            // return episode with the highest season_number and episode_number
-            if (episode.getSeason_number() >= latestEpisode.get().getSeason_number()
-                    && episode.getEpisode_number() >= latestEpisode.get().getEpisode_number()) {
-                latestEpisode.set(episode);
-            }
-        });
+        List<Episode> episodes = optionalSerie.get().getHasSeason().stream()
+                .flatMap(season -> season.getHasEpisode().stream())
+                .collect(Collectors.toList());
 
-        //vérif que latestEpisode est contenu dans serie
-        serie.get().getHasSeason().forEach(season -> {
-            if (season.getSeason_number() == latestEpisode.get().getSeason_number()) {
-                Long upperEpisodeNumber = latestEpisode.get().getEpisode_number() + 1L;
-                season.getHasEpisode().forEach(episode -> {
-                    if (episode.getEpisode_number() == upperEpisodeNumber) {
-                        latestEpisode.set(episode);
-                    }
-                });
-            }
+        List<Episode> episodesToWatch = episodes.stream()
+                .filter(episode -> !episodesWatched.contains(episode))
+                .sorted(Comparator.comparing(Episode::getSeason_number)
+                        .thenComparing(Episode::getEpisode_number))
+                .collect(Collectors.toList());
 
-        });
-        return latestEpisode.get();
+        if (episodesToWatch.isEmpty()) {
+            return new Episode(0L, "No episode to watch", 1L, 1L);
+        }
+        return episodesToWatch.get(0);
     }
 
     private boolean checkAllSeasonSeen(Long tvTmdbId, Long userId) {
@@ -645,117 +625,52 @@ public class UserService {
             user.getWatchlistSeries().remove(serie);
             userRepository.save(user);
         }
-
-        //seek relation user_season
-        Optional<UsersWatchedSeason> relationUserSeason = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
-                userWatchedTvSeasonAddDto.getTvSeasonid(),
-                user.getId()
-        );
         Optional<Season> seasonToAdd = serie
                 .getHasSeason()
                 .stream()
                 .filter(season -> season.getTmdbSeasonId().equals(userWatchedTvSeasonAddDto.getTvSeasonid()))
                 .findFirst();
-        // create season if required
-        if (relationUserSeason.isEmpty()) {
 
-
-            // add season to user season's count
-            if (!user.getWatchedSeasons().contains(seasonToAdd.get())) {
-                user.getWatchedSeasons().add(seasonToAdd.get());
-                userRepository.save(user);
-
-            }
-
-            // seek new relation user_season and update status
-            Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
-                    userWatchedTvSeasonAddDto.getTvSeasonid(),
-                    user.getId()
-            );
-
-            if (relationUserSeasonWhenCreated.isPresent()) {
-                returnedStatus = Status.SEEN;
-                relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
-                usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
-                updateSerieStatus(user, serie.getTmdbId());
-            }
-
-            // create relation user_episode for every ep of the season
-            createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
-        } else {
-            // update relation to SEEN + compteur de vues
-            relationUserSeason.get().setStatus(Status.SEEN);
-            returnedStatus = Status.SEEN;
-            relationUserSeason.get().setWatchedNumber(relationUserSeason.get().getWatchedNumber() + 1L);
-
-            usersWatchedSeasonRepository.save(relationUserSeason.get());
-
-            updateSerieStatus(user, serie.getTmdbId());
-
-            createOrIncreaseUserWatchedEpisodeRelation(userWatchedTvSeasonAddDto, user);
-
-
+        if(!user.getWatchedSeasons().contains(seasonToAdd.get())){
+            user.getWatchedSeasons().add(seasonToAdd.get());
         }
+
+        // create season if required
         List<Episode> episodes = new ArrayList<>(seasonToAdd.get().getHasEpisode());
         for (Episode episode : episodes) {
-            increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
-            increaseDurationSerieDto.setUsername(userWatchedTvSeasonAddDto.getUserMail());
-            increaseDurationSerieDto.setSeasonNumber(seasonToAdd.get().getSeason_number());
-            increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
-            increaseDurationSerieDto.setTvTmdbId(userWatchedTvSeasonAddDto.getTvTmdbId());
-            try {
-                if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
-                    increaseWatchedDurationSeries(increaseDurationSerieDto);
+            if (!user.getWatchedEpisodes().contains(episode)) {
+                increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
+                increaseDurationSerieDto.setUsername(user.getUsername());
+                increaseDurationSerieDto.setSeasonNumber(seasonToAdd.get().getSeason_number());
+                increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
+                increaseDurationSerieDto.setTvTmdbId(serie.getTmdbId());
+                try {
+                    if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
+                        user.getWatchedEpisodes().add(episode);
+                        increaseWatchedDurationSeries(increaseDurationSerieDto);
+                    }
+                } catch (URISyntaxException | IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
-
-            } catch (URISyntaxException e) {
-                System.out.println("error in addSeasonInWatchlist");
-                System.out.println(e.getMessage());
-            } catch (IOException e) {
-                System.out.println("error in addSeasonInWatchlist");
-                System.out.println(e.getMessage());
-            } catch (InterruptedException e) {
-                System.out.println("error in addSeasonInWatchlist");
-                System.out.println(e.getMessage());
             }
         }
+        userRepository.save(user);
+        //seek relation user_season
+        Optional<UsersWatchedSeason> relationUserSeason = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                userWatchedTvSeasonAddDto.getTvSeasonid(),
+                user.getId()
+        );
+        returnedStatus = Status.WATCHING;
+        if(user.getWatchedEpisodes().containsAll(seasonToAdd.get().getHasEpisode())){
+            relationUserSeason.ifPresent(usersWatchedSeason -> {
+                usersWatchedSeason.setStatus(Status.SEEN);
+                usersWatchedSeasonRepository.save(usersWatchedSeason);
+            });
+            returnedStatus = Status.SEEN;
+        }
+
         return returnedStatus;
     }
-
-    @Async
-    public void createOrIncreaseUserWatchedEpisodeRelation(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto, User user) {
-
-        seasonHasEpisodeRepository.findBySeasonImdbId(userWatchedTvSeasonAddDto.getTvSeasonid())
-                .forEach(seasonHasEpisode -> {
-                    Episode episode = seasonHasEpisode.getEpisode();
-                    if (!user.getWatchedEpisodes().contains(episode)) {
-                        increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
-                        increaseDurationSerieDto.setUsername(userWatchedTvSeasonAddDto.getUserMail());
-                        increaseDurationSerieDto.setSeasonNumber(seasonHasEpisode.getSeason().getSeason_number());
-                        increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
-                        increaseDurationSerieDto.setTvTmdbId(userWatchedTvSeasonAddDto.getTvTmdbId());
-                        try {
-                            if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
-                                user.getWatchedEpisodes().add(episode);
-                                userRepository.save(user);
-                            }
-                        } catch (URISyntaxException e) {
-                            throw new RuntimeException(e);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                    } else {
-                        // increase watch_number
-                        Optional<UsersWatchedEpisode> usersWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeImdbIdAndUserId(episode.getImbd_id(), user.getId());
-                        usersWatchedEpisode.get().setWatchedNumber(usersWatchedEpisode.get().getWatchedNumber() + 1L);
-                        usersWatchedEpisodeRepository.save(usersWatchedEpisode.get());
-                    }
-                });
-    }
-
     public StatusDto isTvInWatchlist(UserWatchedSerieAddDto userWatchedSerieAddDto) {
 
         Optional<UsersWatchedSeries> serieStatus = usersWatchedSeriesRepository.findByImdbIdAndUserMail(
@@ -2241,97 +2156,5 @@ public class UserService {
             }
         }
         return returnedStatus;
-    }
-
-    public User addSeasonInWatchlistAsync(UserWatchedTvSeasonAddV2Dto userWatchedTvSeasonAddDto,User user) throws URISyntaxException, IOException, InterruptedException {
-        //create serie or get it
-
-        Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvSeasonAddDto.getTvTmdbId());
-        Status returnedStatus = Status.NOTSEEN;
-
-        //remove to watchlist bcz seen
-        if (user.getWatchlistSeries().contains(serie)) {
-            user.getWatchlistSeries().remove(serie);
-            userRepository.save(user);
-
-        }
-
-
-
-        // add season to user season's count
-        if (!user.getWatchedSeasons().contains(userWatchedTvSeasonAddDto.getSeason())) {
-            user.getWatchedSeasons().remove(userWatchedTvSeasonAddDto.getSeason());
-            userRepository.save(user);
-            user.getWatchedSeasons().add(userWatchedTvSeasonAddDto.getSeason());
-            userRepository.save(user);
-        }
-
-        // seek new relation user_season and update status
-        Optional<UsersWatchedSeason> relationUserSeasonWhenCreated = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
-                userWatchedTvSeasonAddDto.getSeason().getTmdbSeasonId(),
-                user.getId()
-        );
-
-        if (relationUserSeasonWhenCreated.isPresent()) {
-            returnedStatus = Status.SEEN;
-            relationUserSeasonWhenCreated.get().setStatus(Status.SEEN);
-            usersWatchedSeasonRepository.save(relationUserSeasonWhenCreated.get());
-            updateSerieStatus(user, serie.getTmdbId());
-        }
-        // create relation user_episode for every ep of the season
-        createOrIncreaseUserWatchedEpisodeRelationAsync(userWatchedTvSeasonAddDto, user);
-
-        return user;
-    }
-
-    public void createOrIncreaseUserWatchedEpisodeRelationAsync(UserWatchedTvSeasonAddV2Dto userWatchedTvSeasonAddDto, User user) {
-        List<SeasonHasEpisode> seasonHasEpisodes = seasonHasEpisodeRepository.findBySeasonImdbId(userWatchedTvSeasonAddDto.getSeason().getTmdbSeasonId());
-
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
-        List<CompletableFuture<Void>> futures = seasonHasEpisodes.stream()
-                .parallel()
-                .map(seasonHasEpisode -> CompletableFuture.runAsync(() -> {
-                    Episode episode = seasonHasEpisode.getEpisode();
-                    if (!user.getWatchedEpisodes().contains(episode)) {
-                        increaseDurationSerieDto increaseDurationSerieDto = new increaseDurationSerieDto();
-                        increaseDurationSerieDto.setUsername(userWatchedTvSeasonAddDto.getUserMail());
-                        increaseDurationSerieDto.setSeasonNumber(seasonHasEpisode.getSeason().getSeason_number());
-                        increaseDurationSerieDto.setEpisodeNumber(episode.getEpisode_number());
-                        increaseDurationSerieDto.setTvTmdbId(userWatchedTvSeasonAddDto.getTvTmdbId());
-                        try {
-                            if (checkIfEpisodeOnAir(increaseDurationSerieDto)) {
-                                user.getWatchedEpisodes().remove(episode);
-                                userRepository.save(user);
-                                user.getWatchedEpisodes().add(episode);
-                                increaseWatchedDurationSeries(increaseDurationSerieDto);
-                                userRepository.save(user);
-                            }
-                        } catch (URISyntaxException e) {
-                            user.getWatchedEpisodes().remove(episode);
-                            userRepository.save(user);
-                        } catch (IOException e) {
-                            user.getWatchedEpisodes().remove(episode);
-                            userRepository.save(user);
-                        } catch (InterruptedException e) {
-                            user.getWatchedEpisodes().remove(episode);
-                            userRepository.save(user);
-                        }catch (Exception e){
-                            System.out.println(e.getMessage());
-                        }
-                    } else {
-                        // increase watch_number
-                        Optional<UsersWatchedEpisode> usersWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeImdbIdAndUserId(episode.getImbd_id(), user.getId());
-                        usersWatchedEpisode.get().setWatchedNumber(usersWatchedEpisode.get().getWatchedNumber() + 1L);
-                        usersWatchedEpisodeRepository.save(usersWatchedEpisode.get());
-                    }
-                }, executor))
-                .collect(Collectors.toList());
-
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-
-        allFutures.join();
-
-        executor.shutdown();
     }
 }
