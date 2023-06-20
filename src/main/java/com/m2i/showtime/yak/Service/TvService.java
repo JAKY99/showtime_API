@@ -7,25 +7,21 @@ import com.m2i.showtime.yak.Dto.AddSeasonDto;
 import com.m2i.showtime.yak.Dto.AddSerieDto;
 import com.m2i.showtime.yak.Dto.increaseDurationSerieDto;
 import com.m2i.showtime.yak.Entity.Episode;
-import com.m2i.showtime.yak.Entity.EpisodeRepository;
+import com.m2i.showtime.yak.Repository.EpisodeRepository;
 import com.m2i.showtime.yak.Entity.Season;
 import com.m2i.showtime.yak.Entity.Serie;
 import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.json.JSONObject;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class TvService {
@@ -210,9 +206,15 @@ public class TvService {
             System.out.println("Serie " + newSerie.getName() + " created");
             return newSerie ;
         }
-
+        String key = "updated_"+ tmdbId;
+        boolean checkIfUpdateSerieDone = this.redisService.checkIfUpdateSerieDone(key);
+        if(!checkIfUpdateSerieDone){
+            Serie newSerie = this.updateSerieWithSeasonsAndEpisodes(tmdbId,serie);
+            return newSerie ;
+        }
         return tvRepository.findByTmdbId(tmdbId).get();
     }
+
 
     public void createSeasonIfNotExist(increaseDurationSerieDto increaseDurationSerieDto) throws URISyntaxException, IOException, InterruptedException {
         Optional<Season> season = tvRepository.findByTmdbId(increaseDurationSerieDto.getTvTmdbId()).get().getHasSeason().stream().filter(s -> s.getSeason_number() == increaseDurationSerieDto.getSeasonNumber()).findFirst();
@@ -311,5 +313,91 @@ public class TvService {
 
 
 
+    }
+    public Serie updateSerieWithSeasonsAndEpisodes(Long tmbdId,Serie serieToUpdate) throws IOException, InterruptedException, URISyntaxException {
+        Gson gson = new Gson();
+
+        AddSerieDto serie = getSerieDetails(tmbdId);
+        AddSeasonDto[] seasons = serie.seasons;
+
+        Set<Season> seasonList = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (int i = 0; i < seasons.length; i++) {
+            long seasonNumber = seasons[i].season_number;
+            String urlEpisode = "https://api.themoviedb.org/3/tv/" + tmbdId + "/season/" + seasonNumber + "?api_key=" + TMDB_KEY;
+
+            int finalI = i;
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                JSONObject documentObj2 = null;
+                try {
+                    documentObj2 = this.redisService.getDataFromRedisForInternalRequest(urlEpisode);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                AddSeasonDto seasonDto = gson.fromJson(String.valueOf(documentObj2), AddSeasonDto.class);
+
+                boolean canBeAdd = false;
+                LocalDate today = LocalDate.now();
+                try{
+                    if(seasonDto.episodes[0].air_date != null) {
+                        LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
+                        canBeAdd = date.isBefore(today);
+                    }
+                    if(seasonDto.air_date != null) {
+                        LocalDate date = LocalDate.parse(seasonDto.air_date);
+                        canBeAdd = date.isBefore(today);
+                    }
+                    if(seasonDto.air_date == null) {
+                        canBeAdd = true;
+                    }
+                }catch (Exception e){
+                    System.out.println("error :"+e.getMessage());
+                }
+
+
+                if (canBeAdd) {
+                    Set<Episode> episodeSet = new HashSet<>();
+                    for (int j = 0; j < seasonDto.episodes.length; j++) {
+                        Episode newEpisode = new Episode(
+                                seasonDto.episodes[j].id,
+                                seasonDto.episodes[j].name,
+                                seasonDto.episodes[j].season_number,
+                                seasonDto.episodes[j].episode_number,
+                                seasonDto.episodes[j].air_date,
+                                seasonDto.episodes[j].runtime
+
+                        );
+                        episodeSet.add(newEpisode);
+                    }
+
+                    Season season = new Season(seasonNumber, seasons[finalI].id, seasons[finalI].name, episodeSet);
+                    seasonList.add(season);
+                }
+
+            }, executorService);
+
+            futures.add(future);
+        }
+
+        // Wait for all futures to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // Shutdown the executor service
+        executorService.shutdown();
+
+        Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
+        new ModelMapper().map(serieToUpdate,newSerie);
+        tvRepository.save(newSerie);
+        String key = "updated_"+ serieToUpdate.getTmdbId();
+        this.redisService.setCheckiIfUpdateSerieDone(key);
+        return newSerie;
     }
 }

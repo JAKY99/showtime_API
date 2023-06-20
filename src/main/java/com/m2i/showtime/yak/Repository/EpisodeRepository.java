@@ -1,5 +1,8 @@
-package com.m2i.showtime.yak.Entity;
+package com.m2i.showtime.yak.Repository;
 
+import com.m2i.showtime.yak.Entity.Episode;
+import com.m2i.showtime.yak.Entity.UsersWatchedEpisode;
+import com.m2i.showtime.yak.Entity.UsersWatchedSeason;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

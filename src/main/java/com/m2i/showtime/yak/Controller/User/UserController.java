@@ -494,14 +494,23 @@ public class UserController {
             throw  e;
         }
     }
-    @PostMapping("serie/addAgainEpisodeToWatchedList")
-    public boolean addAgainEpisodeToWatchedList(Authentication authentication,@RequestBody UserRemoveEpisodeDto userRemoveEpisodeDto) throws IOException, URISyntaxException, InterruptedException {
+    @PostMapping("serie/incrementAddSerieInWatchlist")
+    public boolean incrementAddSerieInWatchlist(Authentication authentication,@RequestBody UserWatchedSerieAddDto userWatchedSerieAddDto) throws IOException, URISyntaxException, InterruptedException {
         String username = userService.getUserFromJwt(authentication);
-        userRemoveEpisodeDto.setUsername(username);
-        try {
-            return userService.removeEpisodeFromViewInfo(userRemoveEpisodeDto);
-        } catch (Exception e) {
-            throw  e;
-        }
+        userWatchedSerieAddDto.setUserMail(username);
+        return userService.incrementAddSerieInWatchlist(userWatchedSerieAddDto);
+    }
+
+    @PostMapping("serie/incrementAddSeasonInWatchlist")
+    public Status incrementAddSeasonInWatchlist(Authentication authentication, @RequestBody UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userWatchedTvSeasonAddDto.setUserMail(username);
+        return userService.incrementAddSeasonInWatchlist(userWatchedTvSeasonAddDto);
+    }
+    @PostMapping("serie/incrementAddEpisodeInWatchlist")
+    public boolean incrementAddEpisodeInWatchlist(Authentication authentication, @RequestBody UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto) throws IOException, URISyntaxException, InterruptedException {
+        String username = userService.getUserFromJwt(authentication);
+        userWatchedTvEpisodeAddDto.setUserMail(username);
+        return userService.incrementAddEpisodeInWatchlist(userWatchedTvEpisodeAddDto);
     }
 }
