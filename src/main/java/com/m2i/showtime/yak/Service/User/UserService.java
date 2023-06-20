@@ -599,19 +599,6 @@ public class UserService {
         }
         return episodesToWatch.get(0);
     }
-
-    private boolean checkAllSeasonSeen(Long tvTmdbId, Long userId) {
-        // select all seasons realted to tvTmdbId in serie_has_season
-        List<SerieHasSeason> allSeasons = this.serieHasSeasonRepository.findAllRelatedSeason(tvTmdbId);
-        boolean allSeasonsSeen = true;
-        for (int i = 0; i < allSeasons.size(); i++) {
-            if (this.usersWatchedSeasonRepository.findSeasonSeenByIdAndUserId(allSeasons.get(i).getSeason().getId(), userId).isEmpty()) {
-                allSeasonsSeen = false;
-            }
-        }
-        return allSeasonsSeen;
-    }
-
     public Status addSeasonInWatchlist(UserWatchedTvSeasonAddDto userWatchedTvSeasonAddDto) throws URISyntaxException, IOException, InterruptedException {
         //create serie or get it
         Serie serie = this.tvService.getSerieOrCreateIfNotExist(userWatchedTvSeasonAddDto.getTvTmdbId());
