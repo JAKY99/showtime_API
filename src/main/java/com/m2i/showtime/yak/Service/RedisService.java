@@ -177,4 +177,29 @@ public class RedisService {
     }
 
 
+    public boolean checkIfUpdateSerieDone(String key) {
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+        String  check = commands.get(key);
+        JSONObject documentObj = null;
+        if(check==null) {
+            return false;
+        }
+        boolean checkBool = Boolean.parseBoolean(check);
+        connection.close();
+        return checkBool;
+    }
+    public boolean setCheckiIfUpdateSerieDone(String key) {
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+        String  check = commands.set(key, String.valueOf(true));
+        commands.expire(key, 3600*24*7);
+        JSONObject documentObj = null;
+        if(check==null) {
+            return false;
+        }
+        boolean checkBool = Boolean.parseBoolean(check);
+        connection.close();
+        return checkBool;
+    }
 }
