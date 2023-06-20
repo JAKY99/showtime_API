@@ -128,6 +128,7 @@ public class UserService {
     private String ENV;
     private final TrophyRepository trophyRepository;
     private final EpisodeRepository episodeRepository;
+    private final NotificationRepository notificationRepository;
 
     @Autowired
     public UserService(UserRepository userRepository,
@@ -152,7 +153,8 @@ public class UserService {
                        TvService tvService,
                        TrophyService trophyService,
                        TrophyRepository trophyRepository,
-                       EpisodeRepository episodeRepository) {
+                       EpisodeRepository episodeRepository,
+                       NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.tvService = tvService;
@@ -176,6 +178,7 @@ public class UserService {
         this.trophyService = trophyService;
         this.trophyRepository = trophyRepository;
         this.episodeRepository = episodeRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     public Optional<UserSimpleDto> getUser(Long userId) {
@@ -2410,5 +2413,21 @@ public class UserService {
             }
         }
         return returnedStatus;
+    }
+
+    public boolean deleteUserNotification(crudNotificationDto crudNotificationDto) {
+        Notification notificationToDelete = notificationRepository.findById(crudNotificationDto.getId()).orElseThrow(() -> new IllegalStateException("Notification not found"));
+        User user = userRepository.findUserByEmail(crudNotificationDto.getUsername()).orElseThrow(() -> new IllegalStateException("User not found"));
+        user.getNotifications().remove(notificationToDelete);
+        userRepository.save(user);
+        notificationRepository.delete(notificationToDelete);
+        return true;
+    }
+
+    public boolean markAsReadUserNotification(crudNotificationDto crudNotificationDto) {
+        Notification notificationToMarkAsRead = notificationRepository.findById(crudNotificationDto.getId()).orElseThrow(() -> new IllegalStateException("Notification not found"));
+        notificationToMarkAsRead.setStatus(NotificationStatus.READ);
+        notificationRepository.save(notificationToMarkAsRead);
+        return true;
     }
 }

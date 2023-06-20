@@ -411,6 +411,18 @@ public class UserController {
         email = username;
         return userService.getUserNotification(email);
     }
+    @PostMapping("delete/notifications")
+    public boolean deleteUserNotifications(Authentication authentication,@RequestBody crudNotificationDto crudNotificationDto) {
+        String username = userService.getUserFromJwt(authentication);
+        crudNotificationDto.setUsername(username);
+        return userService.deleteUserNotification(crudNotificationDto);
+    }
+    @PostMapping("markasread/notifications")
+    public boolean markAsReadUserNotifications(Authentication authentication,@RequestBody crudNotificationDto crudNotificationDto) {
+        String username = userService.getUserFromJwt(authentication);
+        crudNotificationDto.setUsername(username);
+        return userService.markAsReadUserNotification(crudNotificationDto);
+    }
 
     @PostMapping("update/notifications")
     public boolean updateUserNotifications(Authentication authentication,@RequestBody String email) {
