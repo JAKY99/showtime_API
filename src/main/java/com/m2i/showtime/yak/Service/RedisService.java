@@ -1,10 +1,10 @@
 package com.m2i.showtime.yak.Service;
 
+import com.google.gson.Gson;
 import com.m2i.showtime.yak.Configuration.RedisConfig;
 import com.m2i.showtime.yak.Configuration.RedisLetuceConfig;
-import com.m2i.showtime.yak.Dto.RunInsertRedisCacheDto;
-import com.m2i.showtime.yak.Dto.getDataFromRedisDto;
-import com.m2i.showtime.yak.Dto.getImageFromRedisDto;
+import com.m2i.showtime.yak.Dto.*;
+import com.m2i.showtime.yak.Entity.Episode;
 import com.m2i.showtime.yak.Repository.MovieRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import io.lettuce.core.RedisClient;
@@ -128,12 +128,53 @@ public class RedisService {
         if(check==null) {
             return false;
         }
-        if(check!=null) {
-            commands.set(key, "true");
-            commands.expire(key, 3600*24*7);
+        boolean checkBool = Boolean.parseBoolean(check);
+        connection.close();
+        return checkBool;
+
+    }
+    public boolean setLastCheckOnAirDateEpisode(String key, boolean value){
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+        String  check = commands.get(key);
+        JSONObject documentObj = null;
+        if(check==null) {
+            commands.set(key, String.valueOf(value));
+            commands.expire(key, 3600*24*2);
             connection.close();
-            return true;
         }
         return true;
     }
+    public void setEpisodeDataToCache(increaseDurationSerieDto increaseDurationSerieDto, Episode episode) {
+        String cacheKey = increaseDurationSerieDto.getTvTmdbId()+"_episode";
+        String episodeJson = episode.toString();
+
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+
+        commands.set(cacheKey, episodeJson);
+        commands.expire(cacheKey, 3600 * 24 * 7); // Set cache expiration to 7 days
+
+        connection.close();
+    }
+
+    public Episode getEpisodeDataFromCache(increaseDurationSerieDto increaseDurationSerieDto) {
+        String cacheKey = increaseDurationSerieDto.getTvTmdbId()+"_episode";
+        Gson gson = new Gson();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> commands = connection.sync();
+
+        String episodeJson = commands.get(cacheKey);
+
+        connection.close();
+
+        if (episodeJson != null) {
+            Episode episode = gson.fromJson(episodeJson, Episode.class);
+            return episode;
+        }
+
+        return null; // Episode data not found in cache
+    }
+
+
 }
