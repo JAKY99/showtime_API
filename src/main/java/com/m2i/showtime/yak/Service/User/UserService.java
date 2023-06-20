@@ -360,7 +360,6 @@ public class UserService {
             relatedSerie.get().setStatus(Status.SEEN);
             usersWatchedSeriesRepository.save(relatedSerie.get());
             trophyService.checkAllTrophys(userWatchedSerieAddDto.getUserMail(), serie.getId(), TrophyActionName.ADD_SERIE_IN_WATCHED_LIST);
-
         }
         if (watchedSeasonCount.get() != serie.getHasSeason().size()) {
             Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serieId, userId);
@@ -1219,9 +1218,15 @@ public class UserService {
     public ProfileLazyUserDtoHeader getProfileHeaderData(String email) throws URISyntaxException, IOException, InterruptedException {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
+        long countSeriesWithSeenStatus = user.getWatchedSeries()
+                .stream()
+                .filter(series -> {
+                    Optional<UsersWatchedSeries> optionalUserWatchedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(series.getId(), user.getId());
+                    return optionalUserWatchedSerie.get().getStatus()==Status.SEEN;
+                }).count();
         ProfileLazyUserDtoHeader profileLazyUserDtoHeader = new ProfileLazyUserDtoHeader();
-        profileLazyUserDtoHeader.setNumberOfWatchedSeries(user.getTotalSeriesWatchedNumber());
-        profileLazyUserDtoHeader.setNumberOfWatchedMovies(user.getTotalMovieWatchedNumber());
+        profileLazyUserDtoHeader.setNumberOfWatchedSeries(countSeriesWithSeenStatus);
+        profileLazyUserDtoHeader.setNumberOfWatchedMovies(user.getWatchedMovies().size());
         String totalDurationMoviesMonthDayHour = durationConvertor(user.getTotalMovieWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
         String totalDurationSeriesMonthDayHour = durationConvertor(user.getTotalSeriesWatchedTime());
