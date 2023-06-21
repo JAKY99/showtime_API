@@ -122,7 +122,7 @@ public class User implements UserDetails {
                             nullable = false, updatable = false)})
     private Set<Movie> favoriteMovies = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.ALL,fetch=FetchType.LAZY)
     @JoinTable(name = "users_favorite_series",
             joinColumns = {
                     @JoinColumn(name = "user_id", referencedColumnName = "id",

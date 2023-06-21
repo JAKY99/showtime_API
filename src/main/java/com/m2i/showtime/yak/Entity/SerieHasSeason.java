@@ -16,7 +16,7 @@ public class SerieHasSeason {
     private SerieHasSeasonId id;
 
     @MapsId("seasonId")
-    @ManyToOne(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH}, fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH}, fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
 

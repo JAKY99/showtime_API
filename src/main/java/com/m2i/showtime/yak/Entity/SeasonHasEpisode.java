@@ -16,12 +16,12 @@ public class SeasonHasEpisode {
     private SeasonHasEpisodeId id;
 
     @MapsId("episodeId")
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "episode_id", nullable = false)
     private Episode episode;
 
     @MapsId("seasonId")
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
 
