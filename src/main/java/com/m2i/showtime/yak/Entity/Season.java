@@ -36,7 +36,7 @@ public class Season {
     public Season() {
 
     }
-    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.EAGER)
+    @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch=FetchType.LAZY)
     @JoinTable(name = "season_has_episodes",
             joinColumns = {
                     @JoinColumn(name = "season_id", referencedColumnName = "id",
