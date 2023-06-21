@@ -25,12 +25,12 @@ public class UsersWatchedSeries {
     private UsersWatchedSeriesId id;
 
     @MapsId("serieId")
-    @ManyToOne(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(cascade={CascadeType.PERSIST,CascadeType.REMOVE, CascadeType.REFRESH},fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "serie_id", nullable = false)
     private Serie serie;
 
     @MapsId("userId")
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

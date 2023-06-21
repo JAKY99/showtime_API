@@ -29,4 +29,5 @@ public interface UsersWatchedSeriesRepository extends JpaRepository<UsersWatched
     Optional<UsersWatchedSeries[]> getLastWatchedSeries(String username);
 
 
+
 }
