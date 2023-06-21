@@ -14,7 +14,10 @@ import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.json.JSONObject;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,13 +38,17 @@ public class TvService {
     private final RedisService redisService;
     private final EpisodeRepository episodeRepository;
 
+    @Qualifier("ThreadPoolTaskExecutorCustom")
+    @Autowired
+    private final ThreadPoolTaskExecutor executorCustom;
     public TvService(UserRepository userRepository, RedisConfig redisConfig, TvRepository tvRepository, RedisService redisService,
-                     EpisodeRepository episodeRepository) {
+                     EpisodeRepository episodeRepository, @Qualifier("ThreadPoolTaskExecutorCustom") ThreadPoolTaskExecutor executorCustom) {
         this.userRepository = userRepository;
         this.redisConfig = redisConfig;
         this.tvRepository = tvRepository;
         this.redisService = redisService;
         this.episodeRepository = episodeRepository;
+        this.executorCustom = executorCustom;
     }
 
 
@@ -119,8 +126,6 @@ public class TvService {
 
         Set<Season> seasonList = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (int i = 0; i < seasons.length; i++) {
@@ -179,7 +184,7 @@ public class TvService {
                         seasonList.add(season);
                     }
 
-            }, executorService);
+            }, executorCustom);
 
             futures.add(future);
         }
@@ -187,8 +192,6 @@ public class TvService {
         // Wait for all futures to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-        // Shutdown the executor service
-        executorService.shutdown();
 
         Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
         tvRepository.save(newSerie);
@@ -209,8 +212,8 @@ public class TvService {
         String key = "updated_"+ tmdbId;
         boolean checkIfUpdateSerieDone = this.redisService.checkIfUpdateSerieDone(key);
         if(!checkIfUpdateSerieDone){
-            Serie newSerie = this.updateSerieWithSeasonsAndEpisodes(tmdbId,serie);
-            return newSerie ;
+
+            return this.updateSerieWithSeasonsAndEpisodes(tmdbId,serie);
         }
         return tvRepository.findByTmdbId(tmdbId).get();
     }
@@ -322,7 +325,7 @@ public class TvService {
 
         Set<Season> seasonList = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -382,7 +385,7 @@ public class TvService {
                     seasonList.add(season);
                 }
 
-            }, executorService);
+            }, executorCustom);
 
             futures.add(future);
         }
@@ -390,14 +393,13 @@ public class TvService {
         // Wait for all futures to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-        // Shutdown the executor service
-        executorService.shutdown();
 
         Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
         new ModelMapper().map(serieToUpdate,newSerie);
         tvRepository.save(newSerie);
         String key = "updated_"+ serieToUpdate.getTmdbId();
         this.redisService.setCheckiIfUpdateSerieDone(key);
-        return newSerie;
+
+        return tvRepository.findByTmdbId(serieToUpdate.getTmdbId()).get();
     }
 }
