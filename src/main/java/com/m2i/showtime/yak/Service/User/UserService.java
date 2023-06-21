@@ -1436,7 +1436,7 @@ public class UserService {
         if (user == null) {
             throw new IllegalStateException(UserNotFound);
         }
-        if (user.getWatchlistSeries().contains(serie) || user.getWatchedSeries().contains(serie)) {
+        if (user.getWatchlistSeries().contains(serie)) {
             user
                     .getWatchlistSeries()
                     .remove(serie);
