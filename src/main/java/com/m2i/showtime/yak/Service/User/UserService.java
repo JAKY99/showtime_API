@@ -545,11 +545,7 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> new IllegalStateException(UserNotFound));
         Long userId = user.getId();
 
-        //remove to watchlist bcz seen
-        if (user.getWatchlistSeries().contains(serie)) {
-            user.getWatchlistSeries().remove(serie);
-            userRepository.save(user);
-        }
+
         Season seasonToCheck = serie.getHasSeason()
                 .stream()
                 .filter(season -> season.getSeason_number().equals(userWatchedTvEpisodeAddDto.getSeasonNumber()))
@@ -562,8 +558,6 @@ public class UserService {
         increaseDurationSerieDto.setEpisodeNumber(userWatchedTvEpisodeAddDto.getEpisodeNumber());
         // récup obj episode
         Episode episode = usersWatchedEpisodeRepository.findEpisodeByTmdbId(userWatchedTvEpisodeAddDto.getEpisodeId()).get();
-        //Check episode is in watchedListEpisode
-        Optional<UsersWatchedEpisode> optionalUserWatchedEpisode = usersWatchedEpisodeRepository.findByEpisodeIdAndUserId(episode.getId(), userId);
 
        if(!user.getWatchedSeries().contains(serie)){
             user.getWatchedSeries().add(serie);
@@ -600,7 +594,13 @@ public class UserService {
                 .stream()
                 .forEach(season -> {
                     if(user.getWatchedSeasons().contains(season)){
-                        countSeasonSeenInSerie.getAndIncrement();
+                        Optional<UsersWatchedSeason> relationUserSeasonWhenCreated1 = usersWatchedSeasonRepository.findByTmdbIdAndUserId(
+                                season.getTmdbSeasonId(),
+                                user.getId()
+                        );
+                        if(relationUserSeasonWhenCreated1.get().getStatus().equals(Status.SEEN)){
+                            countSeasonSeenInSerie.getAndIncrement();
+                        }
                     }
                 });
         if(countSeasonSeenInSerie.get() == serie.getHasSeason().size()){
@@ -852,6 +852,10 @@ public class UserService {
         //remove to watchlist bcz seen
         if (user.getWatchlistSeries().contains(serie)) {
             user.getWatchlistSeries().remove(serie);
+            userRepository.save(user);
+        }
+        if(!user.getWatchedSeries().contains(serie)){
+            user.getWatchedSeries().add(serie);
             userRepository.save(user);
         }
         Optional<Season> seasonToAdd = serie
