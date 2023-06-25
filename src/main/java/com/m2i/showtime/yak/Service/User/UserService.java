@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Service
 @EnableAsync
@@ -539,56 +540,28 @@ public class UserService {
 
 
     public Episode getLastSeenEpisode(UserWatchedSerieAddDto userWatchedSerieAddDto) {
-        // récup tous les épisodes liés à userWatchedSerieAddDto.getTmdbId()
-
-        Optional<Serie> serie = this.serieRepository.findSerieByTmdbId(
-                userWatchedSerieAddDto.getTmdbId()
-        );
-        if (serie.isEmpty()) {
-            return new Episode(
-                    0L, "Serie not downloaded yet", 1L, 1L
-            );
-
-        }
-        ArrayList<Episode> EpisodesSeen = new ArrayList<>();
-        serie.get().getHasSeason().forEach(season -> {
-            season.getHasEpisode().forEach(episode -> {
-                Optional<Episode> ep = this.usersWatchedEpisodeRepository.isEpisodeWatchedByUser(
-                        userWatchedSerieAddDto.getUserMail(),
-                        episode.getId()
-                );
-                ep.ifPresent(EpisodesSeen::add);
-            });
-        });
-        if (EpisodesSeen.isEmpty()) {
-            return new Episode(
-                    0L, "no realtion with this user yet", 1L, 1L
-            );
+        Optional<Serie> optionalSerie = serieRepository.findSerieByTmdbId(userWatchedSerieAddDto.getTmdbId());
+        if (optionalSerie.isEmpty()) {
+            return new Episode(0L, "Serie not downloaded yet", 1L, 1L);
         }
 
-        AtomicReference<Episode> latestEpisode = new AtomicReference<>(EpisodesSeen.get(0));
+        User user = userRepository.findUserByEmail(userWatchedSerieAddDto.getUserMail()).orElseThrow(() -> new IllegalStateException("User not found"));
+        Set<Episode> episodesWatched = user.getWatchedEpisodes();
 
-        EpisodesSeen.forEach(episode -> {
-            // return episode with the highest season_number and episode_number
-            if (episode.getSeason_number() >= latestEpisode.get().getSeason_number()
-                    && episode.getEpisode_number() >= latestEpisode.get().getEpisode_number()) {
-                latestEpisode.set(episode);
-            }
-        });
+        List<Episode> episodes = optionalSerie.get().getHasSeason().stream()
+                .flatMap(season -> season.getHasEpisode().stream())
+                .collect(Collectors.toList());
 
-        //vérif que latestEpisode est contenu dans serie
-        serie.get().getHasSeason().forEach(season -> {
-            if (season.getSeason_number() == latestEpisode.get().getSeason_number()) {
-                Long upperEpisodeNumber = latestEpisode.get().getEpisode_number() + 1L;
-                season.getHasEpisode().forEach(episode -> {
-                    if (episode.getEpisode_number() == upperEpisodeNumber) {
-                        latestEpisode.set(episode);
-                    }
-                });
-            }
+        List<Episode> episodesToWatch = episodes.stream()
+                .filter(episode -> !episodesWatched.contains(episode))
+                .sorted(Comparator.comparing(Episode::getSeason_number)
+                        .thenComparing(Episode::getEpisode_number))
+                .collect(Collectors.toList());
 
-        });
-        return latestEpisode.get();
+        if (episodesToWatch.isEmpty()) {
+            return new Episode(0L, "No episode to watch", 1L, 1L);
+        }
+        return episodesToWatch.get(0);
     }
 
     private boolean checkAllSeasonSeen(Long tvTmdbId, Long userId) {
