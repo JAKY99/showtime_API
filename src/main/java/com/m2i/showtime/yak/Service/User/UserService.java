@@ -1234,20 +1234,22 @@ public class UserService {
         ProfileLazyUserDtoHeader profileLazyUserDtoHeader = new ProfileLazyUserDtoHeader();
         profileLazyUserDtoHeader.setNumberOfWatchedSeries(countSeriesWithSeenStatus);
         profileLazyUserDtoHeader.setNumberOfWatchedMovies(user.getWatchedMovies().size());
-        String totalDurationMoviesMonthDayHour = durationConvertor(user.getTotalMovieWatchedTime());
+        String totalDurationMoviesMonthDayHour = durationConverter(user.getTotalMovieWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedMovies(totalDurationMoviesMonthDayHour);
-        String totalDurationSeriesMonthDayHour = durationConvertor(user.getTotalSeriesWatchedTime());
+        String totalDurationSeriesMonthDayHour = durationConverter(user.getTotalSeriesWatchedTime());
         profileLazyUserDtoHeader.setTotalTimeWatchedSeries(totalDurationSeriesMonthDayHour);
         return profileLazyUserDtoHeader;
     }
 
-    public String durationConvertor(Duration duration) {
-        duration = Duration.ofDays(duration.toDaysPart()).plusHours(duration.toHoursPart());
+    public String durationConverter(Duration duration) {
+        long totalHours = duration.toHours();
+        int years = (int) (totalHours / (24 * 360));
+        int remainingHours = (int) (totalHours % (24 * 360));
+        int months = remainingHours / (24 * 30);
+        int remainingDays = remainingHours % (24 * 30);
+        int days = remainingDays / 24;
+        int hours = remainingDays % 24;
 
-        Period period = Period.between(LocalDate.ofEpochDay(0), LocalDate.ofEpochDay(duration.toDays()));
-        int months = period.getMonths();
-        int days = period.getDays();
-        int hours = (int) (duration.toHours() - (days + months * 30) * 24);
         return months + "/" + days + "/" + hours;
     }
 
@@ -2265,7 +2267,7 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findUserByEmail(increaseDurationSerieDto.getUsername());
         Episode episode = serieRepository.findSerieByTmdbId(increaseDurationSerieDto.getTvTmdbId()).get().getHasSeason().stream().filter(season -> season.getSeason_number().equals(increaseDurationSerieDto.getSeasonNumber())).findFirst().get().getHasEpisode().stream().filter(episode1 -> episode1.getEpisode_number().equals(increaseDurationSerieDto.getEpisodeNumber())).findFirst().get();
         if(episode.getRuntime()>0){
-            Long newWatchedTotalTime = optionalUser.get().getTotalSeriesWatchedTime().getSeconds() + Duration.ofSeconds(episode.getRuntime() * 60L).getSeconds();
+            Long newWatchedTotalTime = optionalUser.get().getTotalSeriesWatchedTime().getSeconds() - Duration.ofSeconds(episode.getRuntime() * 60L).getSeconds();
             optionalUser.get().setTotalSeriesWatchedTime(Duration.ofSeconds(newWatchedTotalTime));
         }
         if(episode.getRuntime() == 0){
