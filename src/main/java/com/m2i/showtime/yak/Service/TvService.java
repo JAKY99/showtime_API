@@ -10,6 +10,7 @@ import com.m2i.showtime.yak.Entity.Episode;
 import com.m2i.showtime.yak.Repository.EpisodeRepository;
 import com.m2i.showtime.yak.Entity.Season;
 import com.m2i.showtime.yak.Entity.Serie;
+import com.m2i.showtime.yak.Repository.SeasonRepository;
 import com.m2i.showtime.yak.Repository.TvRepository;
 import com.m2i.showtime.yak.Repository.UserRepository;
 import org.json.JSONObject;
@@ -37,17 +38,18 @@ public class TvService {
     private final TvRepository tvRepository;
     private final RedisService redisService;
     private final EpisodeRepository episodeRepository;
-
+    private final SeasonRepository seasonRepository;
     @Qualifier("ThreadPoolTaskExecutorCustom")
     @Autowired
     private final ThreadPoolTaskExecutor executorCustom;
     public TvService(UserRepository userRepository, RedisConfig redisConfig, TvRepository tvRepository, RedisService redisService,
-                     EpisodeRepository episodeRepository, @Qualifier("ThreadPoolTaskExecutorCustom") ThreadPoolTaskExecutor executorCustom) {
+                     EpisodeRepository episodeRepository, SeasonRepository seasonRepository, @Qualifier("ThreadPoolTaskExecutorCustom") ThreadPoolTaskExecutor executorCustom) {
         this.userRepository = userRepository;
         this.redisConfig = redisConfig;
         this.tvRepository = tvRepository;
         this.redisService = redisService;
         this.episodeRepository = episodeRepository;
+        this.seasonRepository = seasonRepository;
         this.executorCustom = executorCustom;
     }
 
@@ -210,12 +212,9 @@ public class TvService {
             return newSerie ;
         }
         String key = "updated_"+ tmdbId;
-        boolean checkIfUpdateSerieDone = this.redisService.checkIfUpdateSerieDone(key);
-        if(!checkIfUpdateSerieDone){
-
-            return this.updateSerieWithSeasonsAndEpisodes(tmdbId,serie);
-        }
-        return tvRepository.findByTmdbId(tmdbId).get();
+//        boolean checkIfUpdateSerieDone = this.redisService.checkIfUpdateSerieDone(key);
+        return this.updateSerieWithSeasonsAndEpisodes(tmdbId,serie);
+//        return tvRepository.findByTmdbId(tmdbId).get();
     }
 
 
@@ -352,11 +351,11 @@ public class TvService {
                 try{
                     if(seasonDto.episodes[0].air_date != null) {
                         LocalDate date = LocalDate.parse(seasonDto.episodes[0].air_date);
-                        canBeAdd = date.isBefore(today);
+                        canBeAdd = date.isBefore(today)||date.isEqual(today);
                     }
                     if(seasonDto.air_date != null) {
                         LocalDate date = LocalDate.parse(seasonDto.air_date);
-                        canBeAdd = date.isBefore(today);
+                        canBeAdd = date.isBefore(today)||date.isEqual(today);
                     }
                     if(seasonDto.air_date == null) {
                         canBeAdd = true;
@@ -395,11 +394,35 @@ public class TvService {
 
 
         Serie newSerie = new Serie(tmbdId, serie.name, seasonList);
-        new ModelMapper().map(serieToUpdate,newSerie);
-        tvRepository.save(newSerie);
-        String key = "updated_"+ serieToUpdate.getTmdbId();
-        this.redisService.setCheckiIfUpdateSerieDone(key);
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setSkipNullEnabled(true);
+        newSerie.getHasSeason().forEach(season -> {
+            Season existingSeason = seasonRepository.findByTmdbSeasonId(season.getTmdbSeasonId()).orElse(null);
+            if(existingSeason != null){
+                season.setId(existingSeason.getId());
 
-        return tvRepository.findByTmdbId(serieToUpdate.getTmdbId()).get();
+            }
+            if(existingSeason == null){
+                serieToUpdate.getHasSeason().add(season);
+            }
+            season.getHasEpisode().forEach(episode -> {
+                Episode existingEpisode = episodeRepository.findByTmdbEpisodeId(episode.getImbd_id()).orElse(null);
+                if(existingEpisode != null){
+                    episode.setId(existingEpisode.getId());
+                }
+                if(existingEpisode == null){
+                    // Save each episode explicitly
+                    episodeRepository.save(episode);
+                    Episode savedEpisode = episodeRepository.findByTmdbEpisodeId(episode.getImbd_id()).orElse(null);
+                    episode.setId(savedEpisode.getId());
+                }
+
+            });
+
+        });
+        modelMapper.map(newSerie, serieToUpdate);
+        tvRepository.save(serieToUpdate);
+        Serie serieToReturn = tvRepository.findByTmdbId(serieToUpdate.getTmdbId()).get();
+        return serieToReturn;
     }
 }
