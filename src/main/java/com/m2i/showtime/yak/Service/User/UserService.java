@@ -608,6 +608,12 @@ public class UserService {
             relatedSerie.get().setStatus(Status.SEEN);
             usersWatchedSeriesRepository.save(relatedSerie.get());
         }
+        if(countSeasonSeenInSerie.get() != serie.getHasSeason().size()){
+            // change status serie
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serie.getId(), userId);
+            relatedSerie.get().setStatus(Status.WATCHING);
+            usersWatchedSeriesRepository.save(relatedSerie.get());
+        }
         return true;
     }
     public boolean incrementAddEpisodeInWatchlist(UserWatchedTvEpisodeAddDto userWatchedTvEpisodeAddDto) throws URISyntaxException, IOException, InterruptedException {
@@ -2254,6 +2260,12 @@ public class UserService {
             // change status serie
             Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serie.getId(), user.getId());
             relatedSerie.get().setStatus(Status.SEEN);
+            usersWatchedSeriesRepository.save(relatedSerie.get());
+        }
+        if(countSeasonSeenInSerie.get() != serie.getHasSeason().size()){
+            // change status serie
+            Optional<UsersWatchedSeries> relatedSerie = usersWatchedSeriesRepository.findBySerieAndUserId(serie.getId(), user.getId());
+            relatedSerie.get().setStatus(Status.WATCHING);
             usersWatchedSeriesRepository.save(relatedSerie.get());
         }
         this.decreaseWatchedDurationSeries(increaseDurationSerieDto);
